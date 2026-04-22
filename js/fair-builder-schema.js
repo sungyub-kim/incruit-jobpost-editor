@@ -26,6 +26,30 @@ const FAIR_BUILDER_SCHEMA = {
   },
 
   /* ─────────────────────────────────────
+   * 섹션 0 — 버튼 (그라디언트 배너)
+   * ───────────────────────────────────── */
+  section_gradient: {
+    id: 'section_gradient',
+    name: '버튼 배너',
+    sectionClass: 'section section-color-gradient',
+    anchorId: '',
+    enabled: true,
+    fields: {
+      buttons: {
+        type: 'repeater',
+        label: '버튼 목록',
+        itemLabel: '버튼',
+        maxItems: 4,
+        fields: {
+          label: { type: 'text', label: '버튼 텍스트', default: '' },
+          href:  { type: 'link', label: '링크 URL',    default: '' },
+          style: { type: 'text', label: '추가 클래스 (예: btn--puple)', default: '' },
+        }
+      }
+    }
+  },
+
+  /* ─────────────────────────────────────
    * 섹션 1 — 행사안내
    * ───────────────────────────────────── */
   section_event_info: {
@@ -253,6 +277,7 @@ const FAIR_BUILDER_SCHEMA = {
 /* 섹션 기본 순서 */
 const FAIR_BUILDER_DEFAULT_ORDER = [
   'section_event_info',
+  'section_gradient',
   'section_greetings',
   'section_intro_links',
   'section_joblist',
