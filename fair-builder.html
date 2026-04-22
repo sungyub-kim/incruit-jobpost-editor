@@ -28,6 +28,7 @@
     #top-bar .divider { width: 1px; height: 20px; background: #2e3a52; }
     #top-bar input[type=text] { background: #1e2433; border: 1px solid #2e3a52; border-radius: 6px; color: #e5e7eb; font-size: 13px; padding: 5px 10px; width: 180px; outline: none; }
     #top-bar input[type=text]:focus { border-color: #0066cc; }
+    #top-bar #ver-badge { font-size: 11px; color: #6b7280; background: #0d1117; padding: 2px 8px; border-radius: 4px; white-space: nowrap; border: 1px solid #2e3a52; }
     #top-bar .spacer { flex: 1; }
     #top-bar .btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; transition: background .15s; }
     #top-bar .btn-outline { background: transparent; border: 1px solid #2e3a52; color: #9ca3af; }
@@ -141,6 +142,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
+  <span id="ver-badge" title="배포 버전">v0.3.6</span>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
   <div class="divider"></div>
