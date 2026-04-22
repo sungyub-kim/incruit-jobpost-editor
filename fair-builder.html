@@ -245,10 +245,26 @@ function loadState() {
     if (s.fairCode)  document.getElementById('fair-code').value  = s.fairCode;
     if (s.logoHref)  document.getElementById('logo-href').value  = s.logoHref;
     if (s.logoTitle) document.getElementById('logo-title').value = s.logoTitle;
-    if (s.sectionOrder)    sectionOrder    = s.sectionOrder;
-    if (s.sectionEnabled)  sectionEnabled  = s.sectionEnabled;
-    if (s.sectionBgColors) sectionBgColors = s.sectionBgColors;
-    if (s.cssColors)       cssColors       = s.cssColors;
+    if (s.sectionOrder) {
+      sectionOrder = s.sectionOrder;
+      FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
+        if (sectionOrder.indexOf(id) === -1) sectionOrder.push(id);
+      });
+    }
+    if (s.sectionEnabled) {
+      sectionEnabled = s.sectionEnabled;
+      FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
+        if (sectionEnabled[id] === undefined)
+          sectionEnabled[id] = FAIR_BUILDER_SCHEMA[id].enabled !== false;
+      });
+    }
+    if (s.sectionBgColors) {
+      sectionBgColors = s.sectionBgColors;
+      FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
+        if (sectionBgColors[id] === undefined) sectionBgColors[id] = '';
+      });
+    }
+    if (s.cssColors) cssColors = s.cssColors;
   } catch(e) {}
 }
 

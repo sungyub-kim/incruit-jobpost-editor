@@ -289,10 +289,10 @@ const FAIR_BUILDER_DEFAULT_ORDER = [
 
 /* CSS :root 색상 토큰 */
 const FAIR_BUILDER_COLORS = {
-  '--c-color':  { label: '메인 컬러',    default: '#0066cc' },
-  '--s-color':  { label: '서브 컬러 1',  default: '#0066cc' },
-  '--s-color1': { label: '서브 컬러 2',  default: '#0066cc' },
-  '--s-color2': { label: '배경 컬러 1',  default: '#eaf4fb' },
-  '--s-color3': { label: '포인트 컬러',  default: '#00aad2' },
-  '--s-color4': { label: '배경 컬러 2',  default: '#f0f7ff' },
+  '--c-color':  { label: '메인 컬러',          default: '#e4007f' },
+  '--s-color':  { label: '서브 컬러',           default: '#752782' },
+  '--s-color1': { label: '온라인 뱃지 컬러',    default: '#ef8796' },
+  '--s-color2': { label: '오프라인 뱃지 컬러',  default: '#d185dd' },
+  '--s-color3': { label: '버튼1 컬러',          default: '#f46d80' },
+  '--s-color4': { label: '버튼2 컬러',          default: '#c91be5' },
 };
