@@ -142,7 +142,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.3.6</span>
+  <span id="ver-badge" title="배포 버전">v0.3.7</span>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
   <div class="divider"></div>
@@ -264,7 +264,12 @@ function loadState() {
         if (sectionBgColors[id] === undefined) sectionBgColors[id] = '';
       });
     }
-    if (s.cssColors) cssColors = s.cssColors;
+    if (s.cssColors) {
+      cssColors = s.cssColors;
+      Object.keys(FAIR_BUILDER_COLORS).forEach(function(v) {
+        if (cssColors[v] === undefined) cssColors[v] = FAIR_BUILDER_COLORS[v].default;
+      });
+    }
   } catch(e) {}
 }
 
