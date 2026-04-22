@@ -56,6 +56,14 @@
     .section-item .section-name { flex: 1; font-size: 13px; color: #d1d5db; }
     .section-item .section-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #1f3a5f; color: #60a5fa; }
     .section-item .section-badge.fixed { background: #1f2937; color: #6b7280; }
+    /* 섹션 배경 색상 스와치 */
+    .section-bg-swatch { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #374151; position: relative; overflow: hidden; cursor: pointer; flex-shrink: 0; background: repeating-conic-gradient(#374151 0% 25%, #1e2433 0% 50%) 0 0 / 8px 8px; }
+    .section-bg-swatch.has-color { background: var(--swatch-bg, #fff); }
+    .section-bg-swatch input[type=color] { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer; }
+    #top-bar .btn-danger { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
+    #top-bar .btn-danger:hover { background: #ef4444; color: #fff; }
+    #top-bar .btn-zip { background: #059669; color: #fff; }
+    #top-bar .btn-zip:hover { background: #047857; }
 
     /* 토글 스위치 */
     .toggle-wrap { display: flex; align-items: center; }
@@ -132,10 +140,13 @@
 <div id="top-bar">
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
-  <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다">
+  <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
   <div class="spacer"></div>
-  <button class="btn btn-outline" onclick="exportCSS()">CSS 다운로드</button>
-  <button class="btn btn-primary" onclick="exportASP()">ASP 다운로드</button>
+  <button class="btn btn-danger" onclick="resetAll()">초기화</button>
+  <div class="divider"></div>
+  <button class="btn btn-outline" onclick="exportCSS()">CSS</button>
+  <button class="btn btn-outline" onclick="exportASP()">ASP</button>
+  <button class="btn btn-zip" onclick="exportZIP()">일괄 다운로드</button>
 </div>
 
 <!-- 메인 영역 -->
@@ -195,10 +206,60 @@
 
 <script src="js/fair-builder-schema.js"></script>
 <script>
+var STATE_KEY = 'fair_builder_state_v1';
+
+/* ── 상태 초기값 ── */
+var sectionOrder   = [...FAIR_BUILDER_DEFAULT_ORDER];
+var sectionEnabled = {};
+var sectionBgColors = {};
+var cssColors = {};
+
+FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
+  sectionEnabled[id]  = FAIR_BUILDER_SCHEMA[id].enabled !== false;
+  sectionBgColors[id] = '';
+});
+Object.keys(FAIR_BUILDER_COLORS).forEach(function(v) {
+  cssColors[v] = FAIR_BUILDER_COLORS[v].default;
+});
+
+/* ── localStorage 저장/복원 ── */
+function saveState() {
+  localStorage.setItem(STATE_KEY, JSON.stringify({
+    fairCode:       document.getElementById('fair-code').value,
+    logoHref:       document.getElementById('logo-href').value,
+    logoTitle:      document.getElementById('logo-title').value,
+    sectionOrder:   sectionOrder,
+    sectionEnabled: sectionEnabled,
+    sectionBgColors:sectionBgColors,
+    cssColors:      cssColors
+  }));
+}
+
+function loadState() {
+  var raw = localStorage.getItem(STATE_KEY);
+  if (!raw) return;
+  try {
+    var s = JSON.parse(raw);
+    if (s.fairCode)  document.getElementById('fair-code').value  = s.fairCode;
+    if (s.logoHref)  document.getElementById('logo-href').value  = s.logoHref;
+    if (s.logoTitle) document.getElementById('logo-title').value = s.logoTitle;
+    if (s.sectionOrder)    sectionOrder    = s.sectionOrder;
+    if (s.sectionEnabled)  sectionEnabled  = s.sectionEnabled;
+    if (s.sectionBgColors) sectionBgColors = s.sectionBgColors;
+    if (s.cssColors)       cssColors       = s.cssColors;
+  } catch(e) {}
+}
+
+function resetAll() {
+  if (!confirm('모든 설정을 초기화하시겠습니까?')) return;
+  localStorage.removeItem(STATE_KEY);
+  location.reload();
+}
+
 /* ── 탭 전환 ── */
 function switchTab(name, btn) {
-  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.panel-tab button').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(function(el) { el.classList.remove('active'); });
+  document.querySelectorAll('.panel-tab button').forEach(function(el) { el.classList.remove('active'); });
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
 }
@@ -207,39 +268,37 @@ function switchTab(name, btn) {
 function setDevice(type, btn) {
   var wrap = document.getElementById('preview-frame-wrap');
   wrap.className = type === 'pc' ? '' : type;
-  document.querySelectorAll('.device-btn').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.device-btn').forEach(function(el) { el.classList.remove('active'); });
   btn.classList.add('active');
 }
 
 /* ── 섹션 리스트 렌더링 ── */
-var sectionOrder = [...FAIR_BUILDER_DEFAULT_ORDER];
-var sectionEnabled = {};
-FAIR_BUILDER_DEFAULT_ORDER.forEach(id => {
-  sectionEnabled[id] = FAIR_BUILDER_SCHEMA[id].enabled !== false;
-});
-
 function renderSectionList() {
   var list = document.getElementById('section-list');
   list.innerHTML = '';
   sectionOrder.forEach(function(id) {
-    var schema = FAIR_BUILDER_SCHEMA[id];
+    var schema  = FAIR_BUILDER_SCHEMA[id];
     var isFixed = !!schema.fixed_content;
     var enabled = sectionEnabled[id];
+    var bgColor = sectionBgColors[id] || '';
+    var swatchStyle = bgColor ? 'background:' + bgColor + ';' : '';
     var item = document.createElement('div');
     item.className = 'section-item';
     item.setAttribute('draggable', 'true');
     item.dataset.id = id;
-    item.innerHTML = `
-      <span class="drag-handle">⠿</span>
-      <span class="section-name">${schema.name}</span>
-      ${isFixed ? '<span class="section-badge fixed">고정</span>' : ''}
-      <div class="toggle-wrap">
-        <label class="toggle">
-          <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleSection('${id}', this.checked)">
-          <span class="toggle-slider"></span>
-        </label>
-      </div>
-    `;
+    item.innerHTML =
+      '<span class="drag-handle">⠿</span>' +
+      '<span class="section-name">' + schema.name + '</span>' +
+      (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
+      '<div class="section-bg-swatch' + (bgColor ? ' has-color' : '') + '" style="' + swatchStyle + '" title="섹션 배경 색상">' +
+        '<input type="color" value="' + (bgColor || '#ffffff') + '" data-section="' + id + '" oninput="onSectionBgChange(this)">' +
+      '</div>' +
+      '<div class="toggle-wrap">' +
+        '<label class="toggle">' +
+          '<input type="checkbox" ' + (enabled ? 'checked' : '') + ' onchange="toggleSection(\'' + id + '\', this.checked)">' +
+          '<span class="toggle-slider"></span>' +
+        '</label>' +
+      '</div>';
     list.appendChild(item);
   });
   initDragDrop();
@@ -247,57 +306,70 @@ function renderSectionList() {
 
 function toggleSection(id, val) {
   sectionEnabled[id] = val;
+  saveState();
+  applyToPreview();
+}
+
+function onSectionBgChange(input) {
+  var id  = input.dataset.section;
+  var hex = input.value;
+  sectionBgColors[id] = hex;
+  var swatch = input.parentNode;
+  swatch.classList.add('has-color');
+  swatch.style.background = hex;
+  saveState();
   applyToPreview();
 }
 
 /* ── 드래그 앤 드롭 ── */
 function initDragDrop() {
-  var items = document.querySelectorAll('.section-item');
+  var items   = document.querySelectorAll('.section-item');
   var dragged = null;
   items.forEach(function(item) {
     item.addEventListener('dragstart', function() {
       dragged = this;
-      setTimeout(() => this.classList.add('dragging'), 0);
+      setTimeout(function() { dragged.classList.add('dragging'); }, 0);
     });
     item.addEventListener('dragend', function() {
       this.classList.remove('dragging');
-      document.querySelectorAll('.section-item').forEach(el => el.classList.remove('drag-over'));
+      document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('drag-over'); });
     });
     item.addEventListener('dragover', function(e) {
       e.preventDefault();
-      document.querySelectorAll('.section-item').forEach(el => el.classList.remove('drag-over'));
+      document.querySelectorAll('.section-item').forEach(function(el) { el.classList.remove('drag-over'); });
       if (this !== dragged) this.classList.add('drag-over');
     });
     item.addEventListener('drop', function(e) {
       e.preventDefault();
       if (this !== dragged) {
-        var ids = [...document.querySelectorAll('.section-item')].map(el => el.dataset.id);
+        var ids     = Array.from(document.querySelectorAll('.section-item')).map(function(el) { return el.dataset.id; });
         var fromIdx = ids.indexOf(dragged.dataset.id);
-        var toIdx = ids.indexOf(this.dataset.id);
+        var toIdx   = ids.indexOf(this.dataset.id);
         sectionOrder.splice(fromIdx, 1);
         sectionOrder.splice(toIdx, 0, dragged.dataset.id);
         renderSectionList();
+        saveState();
         applyToPreview();
       }
     });
   });
 }
 
-/* ── 색상 피커 렌더링 ── */
+/* ── CSS 색상 피커 렌더링 ── */
 function renderColorList() {
   var list = document.getElementById('color-list');
   list.innerHTML = '';
-  Object.entries(FAIR_BUILDER_COLORS).forEach(function([varName, cfg]) {
+  Object.keys(FAIR_BUILDER_COLORS).forEach(function(varName) {
+    var cfg = FAIR_BUILDER_COLORS[varName];
+    var val = cssColors[varName] || cfg.default;
     var item = document.createElement('div');
     item.className = 'color-item';
-    item.innerHTML = `
-      <label>${cfg.label}<br><span style="color:#4b5563;font-size:10px;">${varName}</span></label>
-      <div class="color-preview" style="background:${cfg.default};">
-        <input type="color" value="${cfg.default}" data-var="${varName}" oninput="onColorChange(this)">
-      </div>
-      <input class="hex-input" type="text" value="${cfg.default}" data-var="${varName}" maxlength="7"
-        oninput="onHexChange(this)" placeholder="#000000">
-    `;
+    item.innerHTML =
+      '<label>' + cfg.label + '<br><span style="color:#4b5563;font-size:10px;">' + varName + '</span></label>' +
+      '<div class="color-preview" style="background:' + val + ';">' +
+        '<input type="color" value="' + val + '" data-var="' + varName + '" oninput="onColorChange(this)">' +
+      '</div>' +
+      '<input class="hex-input" type="text" value="' + val + '" data-var="' + varName + '" maxlength="7" oninput="onHexChange(this)" placeholder="#000000">';
     list.appendChild(item);
   });
 }
@@ -305,9 +377,11 @@ function renderColorList() {
 function onColorChange(input) {
   var hex = input.value;
   var varName = input.dataset.var;
+  cssColors[varName] = hex;
   var wrap = input.closest('.color-item');
   wrap.querySelector('.color-preview').style.background = hex;
   wrap.querySelector('.hex-input').value = hex;
+  saveState();
   applyColorToPreview(varName, hex);
 }
 
@@ -315,25 +389,35 @@ function onHexChange(input) {
   var hex = input.value;
   if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
   var varName = input.dataset.var;
+  cssColors[varName] = hex;
   var wrap = input.closest('.color-item');
   wrap.querySelector('input[type=color]').value = hex;
   wrap.querySelector('.color-preview').style.background = hex;
+  saveState();
   applyColorToPreview(varName, hex);
 }
 
 function applyColorToPreview(varName, value) {
-  try {
-    var frame = document.getElementById('preview-frame');
-    frame.contentDocument.documentElement.style.setProperty(varName, value);
-  } catch(e) {}
+  try { document.getElementById('preview-frame').contentDocument.documentElement.style.setProperty(varName, value); } catch(e) {}
 }
 
-/* ── Step 3: 미리보기 DOM 반영 ── */
+/* ── iframe 로드 후 처리 ── */
 var previewReady = false;
 
 document.getElementById('preview-frame').addEventListener('load', function() {
   previewReady = true;
+  /* 모든 링크 새 탭으로 */
+  try {
+    var doc = this.contentDocument;
+    doc.querySelectorAll('a[href]').forEach(function(a) {
+      if (!a.target) a.target = '_blank';
+    });
+  } catch(e) {}
   applyToPreview();
+  /* 저장된 CSS 색상 복원 */
+  Object.keys(cssColors).forEach(function(varName) {
+    applyColorToPreview(varName, cssColors[varName]);
+  });
 });
 
 function getPreviewDoc() {
@@ -345,25 +429,24 @@ function applyToPreview() {
   var doc = getPreviewDoc();
   if (!doc) return;
 
-  var container = doc.querySelector('#main') || doc.body;
-
-  /* 1. 섹션 show/hide */
+  /* 1. 섹션 show/hide + 개별 배경색 */
   sectionOrder.forEach(function(id) {
     var el = doc.querySelector('[data-builder-section="' + id + '"]');
     if (!el) return;
     el.style.display = sectionEnabled[id] ? '' : 'none';
+    if (sectionBgColors[id]) {
+      el.style.backgroundColor = sectionBgColors[id];
+    }
   });
 
   /* 2. 섹션 순서 재배치 */
-  var parent = null;
-  var anchors = {}; // id → anchor element (a 태그)
+  var parent  = null;
+  var anchors = {};
 
   sectionOrder.forEach(function(id) {
     var el = doc.querySelector('[data-builder-section="' + id + '"]');
     if (!el) return;
     if (!parent) parent = el.parentNode;
-
-    /* anchor 태그도 함께 이동 (선택적) */
     var prev = el.previousElementSibling;
     if (prev && prev.tagName === 'A' && prev.classList.contains('href-height')) {
       anchors[id] = prev;
@@ -381,14 +464,12 @@ function applyToPreview() {
 }
 
 /* ── 파일 내보내기 (Step 6에서 완성) ── */
-function exportCSS() {
-  alert('Step 6에서 구현 예정입니다.');
-}
-function exportASP() {
-  alert('Step 6에서 구현 예정입니다.');
-}
+function exportCSS()  { alert('Step 6에서 구현 예정입니다.'); }
+function exportASP()  { alert('Step 6에서 구현 예정입니다.'); }
+function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 
 /* ── 초기화 ── */
+loadState();
 renderSectionList();
 renderColorList();
 </script>
