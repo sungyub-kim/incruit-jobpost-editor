@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Fair Page Builder | 인크루트 박람회 빌더</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            panel: { bg: '#1e2433', border: '#2e3a52', header: '#161c2d' },
+            accent: { DEFAULT: '#0066cc', hover: '#0052a3' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    html, body { height: 100%; margin: 0; overflow: hidden; font-family: 'Pretendard', 'Apple SD Gothic Neo', sans-serif; }
+    body { display: flex; flex-direction: column; background: #111827; color: #e5e7eb; }
+
+    /* 상단 바 */
+    #top-bar { height: 52px; min-height: 52px; background: #161c2d; border-bottom: 1px solid #2e3a52; display: flex; align-items: center; padding: 0 16px; gap: 12px; z-index: 10; }
+    #top-bar .brand { font-size: 14px; font-weight: 700; color: #60a5fa; white-space: nowrap; }
+    #top-bar .divider { width: 1px; height: 20px; background: #2e3a52; }
+    #top-bar input[type=text] { background: #1e2433; border: 1px solid #2e3a52; border-radius: 6px; color: #e5e7eb; font-size: 13px; padding: 5px 10px; width: 180px; outline: none; }
+    #top-bar input[type=text]:focus { border-color: #0066cc; }
+    #top-bar .spacer { flex: 1; }
+    #top-bar .btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; transition: background .15s; }
+    #top-bar .btn-outline { background: transparent; border: 1px solid #2e3a52; color: #9ca3af; }
+    #top-bar .btn-outline:hover { border-color: #60a5fa; color: #60a5fa; }
+    #top-bar .btn-primary { background: #0066cc; color: #fff; }
+    #top-bar .btn-primary:hover { background: #0052a3; }
+
+    /* 메인 영역 */
+    #main-area { display: flex; flex: 1; overflow: hidden; }
+
+    /* 좌측 패널 */
+    #left-panel { width: 280px; min-width: 280px; background: #1e2433; border-right: 1px solid #2e3a52; display: flex; flex-direction: column; overflow: hidden; }
+    #left-panel .panel-tab { display: flex; border-bottom: 1px solid #2e3a52; }
+    #left-panel .panel-tab button { flex: 1; padding: 10px 0; font-size: 12px; font-weight: 600; color: #6b7280; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
+    #left-panel .panel-tab button.active { color: #60a5fa; border-bottom-color: #0066cc; }
+    #left-panel .panel-body { flex: 1; overflow-y: auto; padding: 12px; }
+    #left-panel .panel-body::-webkit-scrollbar { width: 4px; }
+    #left-panel .panel-body::-webkit-scrollbar-thumb { background: #2e3a52; border-radius: 4px; }
+
+    /* 섹션 항목 */
+    .section-item { background: #161c2d; border: 1px solid #2e3a52; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: grab; user-select: none; transition: border-color .15s; }
+    .section-item:hover { border-color: #3b4f6e; }
+    .section-item.dragging { opacity: .5; }
+    .section-item.drag-over { border-color: #0066cc; background: #1a2a45; }
+    .section-item .drag-handle { color: #4b5563; font-size: 14px; cursor: grab; }
+    .section-item .section-name { flex: 1; font-size: 13px; color: #d1d5db; }
+    .section-item .section-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #1f3a5f; color: #60a5fa; }
+    .section-item .section-badge.fixed { background: #1f2937; color: #6b7280; }
+
+    /* 토글 스위치 */
+    .toggle-wrap { display: flex; align-items: center; }
+    .toggle { position: relative; width: 34px; height: 18px; }
+    .toggle input { opacity: 0; width: 0; height: 0; }
+    .toggle-slider { position: absolute; inset: 0; background: #374151; border-radius: 18px; cursor: pointer; transition: .2s; }
+    .toggle-slider:before { content: ''; position: absolute; width: 12px; height: 12px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+    .toggle input:checked + .toggle-slider { background: #0066cc; }
+    .toggle input:checked + .toggle-slider:before { transform: translateX(16px); }
+
+    /* 색상 탭 */
+    .color-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid #232f45; }
+    .color-item:last-child { border-bottom: none; }
+    .color-item label { font-size: 12px; color: #9ca3af; flex: 1; }
+    .color-item .color-preview { width: 24px; height: 24px; border-radius: 4px; border: 1px solid #2e3a52; cursor: pointer; position: relative; overflow: hidden; }
+    .color-item .color-preview input[type=color] { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer; }
+    .color-item .hex-input { background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 11px; padding: 3px 6px; width: 72px; outline: none; font-family: monospace; }
+    .color-item .hex-input:focus { border-color: #0066cc; }
+
+    /* 우측 미리보기 */
+    #preview-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    #preview-toolbar { height: 36px; background: #161c2d; border-bottom: 1px solid #2e3a52; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
+    #preview-toolbar span { font-size: 11px; color: #6b7280; }
+    #preview-toolbar .preview-url { font-size: 11px; color: #4b5563; background: #0d1117; padding: 3px 8px; border-radius: 4px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    #preview-toolbar .device-btn { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid #2e3a52; background: none; color: #6b7280; cursor: pointer; }
+    #preview-toolbar .device-btn.active { border-color: #0066cc; color: #60a5fa; }
+    #preview-frame-wrap { flex: 1; overflow: hidden; display: flex; justify-content: center; align-items: flex-start; background: #0d1117; padding: 0; }
+    #preview-frame { width: 100%; height: 100%; border: none; background: #fff; transition: width .3s; }
+    #preview-frame-wrap.tablet #preview-frame { width: 768px; }
+    #preview-frame-wrap.mobile #preview-frame { width: 375px; }
+
+    /* 패널 섹션 헤더 */
+    .p-section-header { font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #2e3a52; }
+
+    /* 로고 설정 */
+    .logo-input-wrap { background: #161c2d; border: 1px solid #2e3a52; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+    .logo-input-wrap label { font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px; }
+    .logo-input-wrap input { width: 100%; background: #1e2433; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 5px 8px; outline: none; }
+    .logo-input-wrap input:focus { border-color: #0066cc; }
+
+    /* 탭 패널 컨텐츠 */
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+  </style>
+</head>
+<body>
+
+<!-- 비밀번호 게이트 -->
+<div id="password-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:#111827;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#1f2937;border-radius:12px;padding:40px;width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <h2 style="color:#f9fafb;font-size:18px;font-weight:700;margin-bottom:6px;">Fair Page Builder</h2>
+    <p style="color:#9ca3af;font-size:13px;margin-bottom:24px;">사내 전용 서비스입니다. 비밀번호를 입력하세요.</p>
+    <input id="pw-input" type="password" placeholder="비밀번호" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid #374151;background:#111827;color:#f9fafb;font-size:14px;margin-bottom:12px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')checkPassword()">
+    <div id="pw-error" style="color:#ef4444;font-size:12px;margin-bottom:10px;display:none;">비밀번호가 올바르지 않습니다.</div>
+    <button onclick="checkPassword()" style="width:100%;padding:11px;background:#0066cc;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">입장하기</button>
+  </div>
+</div>
+<script>
+(function() {
+  var PW = 'incruit2026!';
+  var KEY = 'ije_auth';
+  var gate = document.getElementById('password-gate');
+  if (localStorage.getItem(KEY) === 'ok') { gate.style.display = 'none'; }
+  else { gate.style.display = 'flex'; }
+  window.checkPassword = function() {
+    var val = document.getElementById('pw-input').value;
+    if (val === PW) { localStorage.setItem(KEY, 'ok'); gate.style.display = 'none'; }
+    else { document.getElementById('pw-error').style.display = 'block'; document.getElementById('pw-input').value = ''; document.getElementById('pw-input').focus(); }
+  };
+})();
+</script>
+
+<!-- 상단 바 -->
+<div id="top-bar">
+  <span class="brand">⬡ Fair Builder</span>
+  <div class="divider"></div>
+  <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다">
+  <div class="spacer"></div>
+  <button class="btn btn-outline" onclick="exportCSS()">CSS 다운로드</button>
+  <button class="btn btn-primary" onclick="exportASP()">ASP 다운로드</button>
+</div>
+
+<!-- 메인 영역 -->
+<div id="main-area">
+
+  <!-- 좌측 패널 -->
+  <div id="left-panel">
+    <div class="panel-tab">
+      <button class="active" onclick="switchTab('sections', this)">섹션</button>
+      <button onclick="switchTab('style', this)">스타일</button>
+    </div>
+
+    <!-- 섹션 탭 -->
+    <div class="panel-body">
+      <div id="tab-sections" class="tab-panel active">
+        <div class="p-section-header">헤더 설정</div>
+        <div class="logo-input-wrap">
+          <label>기업 로고 링크 URL</label>
+          <input type="text" id="logo-href" placeholder="https://...">
+        </div>
+        <div class="logo-input-wrap">
+          <label>기업명 (title 속성)</label>
+          <input type="text" id="logo-title" placeholder="기업명 입력">
+        </div>
+
+        <div class="p-section-header" style="margin-top:16px;">섹션 블록 <span style="color:#4b5563;font-weight:400;">(드래그로 순서 변경)</span></div>
+        <div id="section-list">
+          <!-- JS로 렌더링 -->
+        </div>
+      </div>
+
+      <!-- 스타일 탭 -->
+      <div id="tab-style" class="tab-panel">
+        <div class="p-section-header">CSS 색상 토큰</div>
+        <div id="color-list">
+          <!-- JS로 렌더링 -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 우측 미리보기 -->
+  <div id="preview-area">
+    <div id="preview-toolbar">
+      <span>미리보기</span>
+      <div class="preview-url">temp.html</div>
+      <button class="device-btn active" onclick="setDevice('pc', this)">PC</button>
+      <button class="device-btn" onclick="setDevice('tablet', this)">태블릿</button>
+      <button class="device-btn" onclick="setDevice('mobile', this)">모바일</button>
+    </div>
+    <div id="preview-frame-wrap">
+      <iframe id="preview-frame" src="temp.html"></iframe>
+    </div>
+  </div>
+
+</div>
+
+<script src="js/fair-builder-schema.js"></script>
+<script>
+/* ── 탭 전환 ── */
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-panel').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.panel-tab button').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ── 디바이스 미리보기 ── */
+function setDevice(type, btn) {
+  var wrap = document.getElementById('preview-frame-wrap');
+  wrap.className = type === 'pc' ? '' : type;
+  document.querySelectorAll('.device-btn').forEach(el => el.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+/* ── 섹션 리스트 렌더링 ── */
+var sectionOrder = [...FAIR_BUILDER_DEFAULT_ORDER];
+var sectionEnabled = {};
+FAIR_BUILDER_DEFAULT_ORDER.forEach(id => {
+  sectionEnabled[id] = FAIR_BUILDER_SCHEMA[id].enabled !== false;
+});
+
+function renderSectionList() {
+  var list = document.getElementById('section-list');
+  list.innerHTML = '';
+  sectionOrder.forEach(function(id) {
+    var schema = FAIR_BUILDER_SCHEMA[id];
+    var isFixed = !!schema.fixed_content;
+    var enabled = sectionEnabled[id];
+    var item = document.createElement('div');
+    item.className = 'section-item';
+    item.setAttribute('draggable', 'true');
+    item.dataset.id = id;
+    item.innerHTML = `
+      <span class="drag-handle">⠿</span>
+      <span class="section-name">${schema.name}</span>
+      ${isFixed ? '<span class="section-badge fixed">고정</span>' : ''}
+      <div class="toggle-wrap">
+        <label class="toggle">
+          <input type="checkbox" ${enabled ? 'checked' : ''} onchange="toggleSection('${id}', this.checked)">
+          <span class="toggle-slider"></span>
+        </label>
+      </div>
+    `;
+    list.appendChild(item);
+  });
+  initDragDrop();
+}
+
+function toggleSection(id, val) {
+  sectionEnabled[id] = val;
+}
+
+/* ── 드래그 앤 드롭 ── */
+function initDragDrop() {
+  var items = document.querySelectorAll('.section-item');
+  var dragged = null;
+  items.forEach(function(item) {
+    item.addEventListener('dragstart', function() {
+      dragged = this;
+      setTimeout(() => this.classList.add('dragging'), 0);
+    });
+    item.addEventListener('dragend', function() {
+      this.classList.remove('dragging');
+      document.querySelectorAll('.section-item').forEach(el => el.classList.remove('drag-over'));
+    });
+    item.addEventListener('dragover', function(e) {
+      e.preventDefault();
+      document.querySelectorAll('.section-item').forEach(el => el.classList.remove('drag-over'));
+      if (this !== dragged) this.classList.add('drag-over');
+    });
+    item.addEventListener('drop', function(e) {
+      e.preventDefault();
+      if (this !== dragged) {
+        var ids = [...document.querySelectorAll('.section-item')].map(el => el.dataset.id);
+        var fromIdx = ids.indexOf(dragged.dataset.id);
+        var toIdx = ids.indexOf(this.dataset.id);
+        sectionOrder.splice(fromIdx, 1);
+        sectionOrder.splice(toIdx, 0, dragged.dataset.id);
+        renderSectionList();
+      }
+    });
+  });
+}
+
+/* ── 색상 피커 렌더링 ── */
+function renderColorList() {
+  var list = document.getElementById('color-list');
+  list.innerHTML = '';
+  Object.entries(FAIR_BUILDER_COLORS).forEach(function([varName, cfg]) {
+    var item = document.createElement('div');
+    item.className = 'color-item';
+    item.innerHTML = `
+      <label>${cfg.label}<br><span style="color:#4b5563;font-size:10px;">${varName}</span></label>
+      <div class="color-preview" style="background:${cfg.default};">
+        <input type="color" value="${cfg.default}" data-var="${varName}" oninput="onColorChange(this)">
+      </div>
+      <input class="hex-input" type="text" value="${cfg.default}" data-var="${varName}" maxlength="7"
+        oninput="onHexChange(this)" placeholder="#000000">
+    `;
+    list.appendChild(item);
+  });
+}
+
+function onColorChange(input) {
+  var hex = input.value;
+  var varName = input.dataset.var;
+  var wrap = input.closest('.color-item');
+  wrap.querySelector('.color-preview').style.background = hex;
+  wrap.querySelector('.hex-input').value = hex;
+  applyColorToPreview(varName, hex);
+}
+
+function onHexChange(input) {
+  var hex = input.value;
+  if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return;
+  var varName = input.dataset.var;
+  var wrap = input.closest('.color-item');
+  wrap.querySelector('input[type=color]').value = hex;
+  wrap.querySelector('.color-preview').style.background = hex;
+  applyColorToPreview(varName, hex);
+}
+
+function applyColorToPreview(varName, value) {
+  try {
+    var frame = document.getElementById('preview-frame');
+    frame.contentDocument.documentElement.style.setProperty(varName, value);
+  } catch(e) {}
+}
+
+/* ── 파일 내보내기 (Step 6에서 완성) ── */
+function exportCSS() {
+  alert('Step 6에서 구현 예정입니다.');
+}
+function exportASP() {
+  alert('Step 6에서 구현 예정입니다.');
+}
+
+/* ── 초기화 ── */
+renderSectionList();
+renderColorList();
+</script>
+</body>
+</html>
