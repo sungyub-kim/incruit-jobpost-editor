@@ -108,6 +108,35 @@
     /* 탭 패널 컨텐츠 */
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
+
+    /* 패치노트 버튼 */
+    #top-bar .btn-patch { background: transparent; border: 1px solid #2e3a52; color: #6b7280; font-size: 11px; padding: 3px 9px; }
+    #top-bar .btn-patch:hover { border-color: #60a5fa; color: #60a5fa; }
+
+    /* 패치노트 오버레이 */
+    #patch-overlay { display: none; position: fixed; inset: 0; z-index: 9000; background: rgba(0,0,0,.55); align-items: flex-start; justify-content: flex-end; padding: 62px 16px 0 0; }
+    #patch-overlay.open { display: flex; }
+    #patch-modal { width: 360px; max-height: calc(100vh - 80px); background: #1e2433; border: 1px solid #2e3a52; border-radius: 10px; display: flex; flex-direction: column; box-shadow: 0 16px 48px rgba(0,0,0,.6); overflow: hidden; }
+    #patch-modal .pm-head { display: flex; align-items: center; padding: 14px 16px; border-bottom: 1px solid #2e3a52; }
+    #patch-modal .pm-head h3 { flex: 1; font-size: 13px; font-weight: 700; color: #e5e7eb; margin: 0; }
+    #patch-modal .pm-head .pm-close { background: none; border: none; color: #6b7280; font-size: 18px; cursor: pointer; line-height: 1; padding: 0 2px; }
+    #patch-modal .pm-head .pm-close:hover { color: #e5e7eb; }
+    #patch-modal .pm-body { overflow-y: auto; flex: 1; padding: 8px 0; }
+    #patch-modal .pm-body::-webkit-scrollbar { width: 4px; }
+    #patch-modal .pm-body::-webkit-scrollbar-thumb { background: #2e3a52; border-radius: 4px; }
+    .pn-item { border-bottom: 1px solid #232f45; }
+    .pn-item:last-child { border-bottom: none; }
+    .pn-date-btn { width: 100%; background: none; border: none; display: flex; align-items: center; padding: 11px 16px; cursor: pointer; gap: 8px; text-align: left; }
+    .pn-date-btn:hover { background: #232f45; }
+    .pn-date-btn .pn-date { font-size: 13px; font-weight: 600; color: #d1d5db; flex: 1; }
+    .pn-date-btn .pn-arrow { font-size: 10px; color: #4b5563; transition: transform .2s; }
+    .pn-item.open .pn-date-btn .pn-arrow { transform: rotate(90deg); }
+    .pn-item.open .pn-date-btn .pn-date { color: #60a5fa; }
+    .pn-content { display: none; padding: 0 16px 12px 16px; }
+    .pn-item.open .pn-content { display: block; }
+    .pn-content ul { margin: 0; padding: 0 0 0 16px; }
+    .pn-content ul li { font-size: 12px; color: #9ca3af; line-height: 1.7; }
+    .pn-content ul li strong { color: #60a5fa; font-weight: 600; }
   </style>
 </head>
 <body>
@@ -142,7 +171,8 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.3.7</span>
+  <span id="ver-badge" title="배포 버전">v0.3.8</span>
+  <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
   <div class="divider"></div>
@@ -491,10 +521,64 @@ function exportCSS()  { alert('Step 6에서 구현 예정입니다.'); }
 function exportASP()  { alert('Step 6에서 구현 예정입니다.'); }
 function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 
+/* ── 패치노트 ── */
+var PATCH_NOTES = [
+  {
+    date: '2026.04.22',
+    items: [
+      '<strong>[v0.3.8]</strong> 패치노트 뷰어 추가 — 상단 바 버튼 클릭 시 날짜별 패치 내역 확인',
+      '<strong>[v0.3.7]</strong> 버튼 배너 섹션(section_gradient) 좌측 패널 미표시 버그 수정 — loadState 병합 처리 적용',
+      '<strong>[v0.3.7]</strong> CSS 색상 토큰 기본값·라벨 수정 — 템플릿 실제 :root 값 기준으로 변경 (메인/서브/뱃지/버튼1·2 컬러)',
+      '<strong>[v0.3.7]</strong> CSS 색상 신규 토큰 추가 시 기본값 자동 보완 처리 (cssColors 병합)',
+      '<strong>[v0.3.6]</strong> 버전 뱃지 추가 — 상단 바 박람회 코드 입력 옆 배포 버전 표시',
+    ]
+  }
+];
+
+function renderPatchNotes() {
+  var body = document.getElementById('patch-body');
+  body.innerHTML = '';
+  PATCH_NOTES.forEach(function(entry, idx) {
+    var item = document.createElement('div');
+    item.className = 'pn-item' + (idx === 0 ? ' open' : '');
+    item.innerHTML =
+      '<button class="pn-date-btn" onclick="togglePatchItem(this.parentNode)">' +
+        '<span class="pn-date">' + entry.date + '</span>' +
+        '<span class="pn-arrow">▶</span>' +
+      '</button>' +
+      '<div class="pn-content"><ul>' +
+        entry.items.map(function(t) { return '<li>' + t + '</li>'; }).join('') +
+      '</ul></div>';
+    body.appendChild(item);
+  });
+}
+
+function togglePatchItem(item) {
+  item.classList.toggle('open');
+}
+
+function togglePatchNotes() {
+  var overlay = document.getElementById('patch-overlay');
+  overlay.classList.toggle('open');
+}
+
 /* ── 초기화 ── */
 loadState();
 renderSectionList();
 renderColorList();
 </script>
+
+<!-- 패치노트 오버레이 -->
+<div id="patch-overlay" onclick="if(event.target===this)togglePatchNotes()">
+  <div id="patch-modal">
+    <div class="pm-head">
+      <h3>📋 패치노트</h3>
+      <button class="pm-close" onclick="togglePatchNotes()">✕</button>
+    </div>
+    <div class="pm-body" id="patch-body"></div>
+  </div>
+</div>
+<script>renderPatchNotes();</script>
+
 </body>
 </html>
