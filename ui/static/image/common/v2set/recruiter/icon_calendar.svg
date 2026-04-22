@@ -1,0 +1,15 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Frame 1707480479">
+<rect id="Rectangle 1335" x="3.5" y="5.5" width="17" height="15" rx="0.5" fill="white" stroke="#ACACAC"/>
+<rect id="Rectangle 1336" x="7" y="12" width="2" height="2" fill="#ACACAC"/>
+<rect id="Rectangle 1338" x="11" y="12" width="2" height="2" fill="#ACACAC"/>
+<rect id="Rectangle 1342" x="15" y="12" width="2" height="2" fill="#ACACAC"/>
+<rect id="Rectangle 1343" x="7" y="16" width="2" height="2" fill="#ACACAC"/>
+<rect id="Rectangle 1344" x="11" y="16" width="2" height="2" fill="#ACACAC"/>
+<rect id="Rectangle 1345" x="15" y="16" width="2" height="2" fill="#ACACAC"/>
+<line id="Line 4" x1="4" y1="9.5" x2="20" y2="9.5" stroke="#ACACAC"/>
+<path id="Line 5" d="M8 4V7" stroke="#ACACAC" stroke-linecap="round"/>
+<path id="Line 6" d="M12 4V7" stroke="#ACACAC" stroke-linecap="round"/>
+<path id="Line 7" d="M16 4V7" stroke="#ACACAC" stroke-linecap="round"/>
+</g>
+</svg>
