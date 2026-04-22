@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML 코딩 변환기</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app">
+        <main class="content">
+            <div class="viewer-container">
+                <section class="preview-container">
+                    <header>
+                        <h2>실시간 뷰어 (Viewer)</h2>
+                    </header>
+                    <iframe id="preview-frame" class="preview-box"></iframe>
+                </section>
+                <section class="code-container">
+                    <header>
+                        <h2>최종 완성 코드</h2>
+                        <button id="copy-btn" class="btn-primary">코드 복사</button>
+                    </header>
+                    <pre><code id="code-display"></code></pre>
+                </section>
+            </div>
+        </main>
+        <aside class="sidebar">
+            <header>
+                <div class="sidebar-header">
+                    <h1>디자인 설정</h1>
+                    <button id="reset-btn" class="btn-reset" title="설정 초기화">↺ 초기화</button>
+                </div>
+            </header>
+            <div class="controls">
+                <!-- JS will inject form items here -->
+            </div>
+        </aside>
+    </div>
+    <script src="main.js"></script>
+</body>
+</html>

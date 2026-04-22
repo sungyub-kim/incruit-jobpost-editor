@@ -1,0 +1,7 @@
+flask
+python-docx
+openpyxl
+pdfplumber
+anthropic>=0.40.0
+pdf2image
+Pillow

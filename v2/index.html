@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>AI Studio — v2 파이프라인 테스트</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Pretendard', system-ui, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; background: #0f172a; color: #e2e8f0; padding: 24px; }
+    h1 { font-size: 28px; margin-bottom: 8px; }
+    .sub { color: #94a3b8; margin-bottom: 32px; font-size: 15px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 32px; max-width: 480px; width: 100%; text-align: center; }
+    .status { font-size: 14px; color: #64748b; margin-bottom: 24px; padding: 10px; background: #0f172a; border-radius: 6px; }
+    .status.active { color: #4ade80; border: 1px solid #166534; }
+    .status.inactive { color: #94a3b8; border: 1px solid #334155; }
+    .btn { display: block; width: 100%; padding: 14px; font-size: 15px; font-weight: 600; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 10px; transition: opacity 0.2s; }
+    .btn:hover { opacity: 0.85; }
+    .btn-v2 { background: #4f46e5; color: white; }
+    .btn-v1 { background: #374151; color: #d1d5db; }
+    .info { margin-top: 24px; font-size: 13px; color: #475569; line-height: 1.6; text-align: left; }
+    .info li { margin-bottom: 4px; }
+  </style>
+</head>
+<body>
+  <h1>v2 파이프라인 테스트</h1>
+  <p class="sub">구조/텍스트 분리 아키텍처 프로토타입 (Step 15)</p>
+
+  <div class="card">
+    <div class="status" id="status"></div>
+
+    <button class="btn btn-v2" onclick="activate()">v2 활성화 후 AI Studio 열기</button>
+    <button class="btn btn-v1" onclick="deactivate()">v1으로 복귀</button>
+
+    <div class="info">
+      <ul>
+        <li><strong>v2 활성화</strong> — AI는 헤딩 분류만, 텍스트는 원문 그대로 복사</li>
+        <li><strong>v1 복귀</strong> — 기존 파이프라인 (AI가 HTML 전체 생성)</li>
+        <li>기존 <code>/</code> 사용자에게는 아무 영향 없음</li>
+        <li>테스트 후 반드시 <strong>v1으로 복귀</strong>해주세요</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    function updateStatus() {
+      const el = document.getElementById('status');
+      const current = localStorage.getItem('pipeline_version');
+      if (current === 'v2') {
+        el.textContent = '현재 파이프라인: v2 (활성)';
+        el.className = 'status active';
+      } else {
+        el.textContent = '현재 파이프라인: v1 (기본)';
+        el.className = 'status inactive';
+      }
+    }
+
+    function activate() {
+      localStorage.setItem('pipeline_version', 'v2');
+      window.location.href = '/';
+    }
+
+    function deactivate() {
+      localStorage.removeItem('pipeline_version');
+      window.location.href = '/';
+    }
+
+    updateStatus();
+  </script>
+</body>
+</html>

@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html><head><meta charset="UTF-8"><title>KDI 변환 테스트</title>
+<style>
+  body { font: 14px/1.6 sans-serif; background: #111; color: #ddd; padding: 20px; }
+  .panel { display: flex; gap: 20px; }
+  .col { flex: 1; min-width: 0; }
+  h2 { color: #60a5fa; font-size: 16px; }
+  .box { background: #1a1a2e; border: 1px solid #333; border-radius: 8px; padding: 16px; margin-bottom: 16px; overflow: auto; max-height: 600px; }
+  .code { font-family: monospace; font-size: 12px; white-space: pre-wrap; word-break: break-all; }
+  .preview { background: #fff; color: #333; padding: 20px; border-radius: 8px; }
+  .preview h1 { font-size: 22px; color: #111; border-bottom: 2px solid #0066cc; padding-bottom: 8px; }
+  .preview h2 { font-size: 18px; color: #0066cc; border-bottom: 1px solid #ddd; padding-bottom: 4px; }
+  .preview table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+  .preview td, .preview th { border: 1px solid #ccc; padding: 6px 10px; font-size: 13px; }
+  .preview th { background: #f5f5f5; }
+  .meta { background: #16213e; padding: 12px; border-radius: 6px; margin-bottom: 16px; font-size: 13px; }
+  .meta span { color: #60a5fa; font-weight: bold; }
+  [data-hr-property] { border-left: 3px solid #0066cc; padding-left: 12px; margin: 12px 0; }
+</style>
+</head><body>
+<h1>KDI국제정책대학원 채용공고 — 빠른 변환 테스트</h1>
+<div id="meta" class="meta"></div>
+<div class="panel">
+  <div class="col">
+    <h2>변환 결과 HTML (코드)</h2>
+    <div id="code" class="box code"></div>
+  </div>
+  <div class="col">
+    <h2>미리보기 (렌더링)</h2>
+    <div id="preview" class="box preview"></div>
+  </div>
+</div>
+
+<script type="module">
+import { convertByRules } from './js/services/ruleConverter.js';
+
+// KDI PDF에서 추출된 텍스트를 시뮬레이션 (PDF 추출은 보통 plain text)
+const pdfText = `KDI국제정책대학원 2026년 제2차 위촉직원 채용
+
+KDI국제정책대학원(KDI School)은 개발경험을 체계적으로 교육·연구하고 공공부문 역량강화를 선도하는 세계 수준의 개발 및 공공정책 전문대학원으로서 아래와 같이 유능한 인재를 모집합니다.
+
+1. 모집분야 및 기간
+
+구분 | 모집분야(인원) | 업무내용 | 기간
+위촉전문원(계약직) | 연구행정(1명) | · 국제협력 및 국제연수사업 기획 및 운영 · 공기업 공공기관 등 대상 국내연수사업 기획 및 운영 | 2026.4.1 ~ 2027.3.31
+위촉공무직(계약직) | 보안관리(1명) | · 청사 보안 및 출입자 통제 관리 · 각종 위해 예방 및 안전 활동 수행 등 | 2026.4.1 ~2026.12.31
+
+※ 상기 사항은 대학원의 사정으로 조정될 수 있음
+※ 해당 공고 내 모집분야 간 중복지원 불가
+
+2. 응시자격
+
+가. 「국가공무원법」 제33조 각 호에 해당하지 아니한 자
+나. 법률에 의하여 공민권이 정지 또는 박탈되지 아니한 자
+다. 「병역법」 제76조(병역의무 불이행자에 대한 제재)에서 정한 병역의무 불이행 사실이 없는자
+라. 「부패방지 및 국민권익위원회의 설치와 운영에 관한 법률」 제82조 제1항 각 호에 해당하지 아니한 자
+마. 최근 5년 이내 공공기관에서 부정한 방법으로 채용되어 채용이 취소된 사실이 없는 자
+바. 해외여행에 결격사유가 없는 자
+사. 임용일부터 전일제 근무 가능하며 정년(만 60세) 미만인 자
+
+3. 우대조건 및 가점사항
+
+가. 우대조건
+◦(공통) 관련 업무 유경험자, 영어 능통자
+◦직무별 우대조건은 직무기술서 확인 요망
+나. 가점사항
+◦ 「국가유공자 등 예우 및 지원에 관한 법률」등 보훈관계법률에 따른 취업지원 대상자: 전형단계별 만점의 10% 또는 5% 가점 부여
+* 단, 모집분야별 채용예정인원이 3명 이하일 경우, 원점수로 합격자를 결정하며 가점은 동점자 발생 시 합격 순위에만 영향
+다만, 지원자의 수가 채용예정인원과 같거나 적은 경우에는 가점 적용한 점수로 평가
+◦ 「장애인고용촉진 및 직업재활법」에 따른 장애인: 전형단계별 만점의 5% 가점 부여
+◦ 비수도권 및 이전지역 인재, KDI국제정책대학원에서 3개월 이상 근무한 인턴 (현장실습생 제외): 서류전형시 만점의 3% 가점 부여
+※ 가점사항 중복 시 전형단계별 상위점수 1개만 부여
+
+4. 근무조건
+
+가. 구 분: 위촉전문원(비정규 기간제 근로자)
+나. 계약기간: 공고문 1. 모집분야 및 기간 참고
+다. 보 수: 내부규정에 따름
+라. 복리후생: 4대 보험(산재, 고용, 건강, 국민연금) 가입
+마. 근 무 지: KDI국제정책대학원
+바. 근무시간: 주 5일(월~금요일), 1일 8시간(09:00~18:00)
+
+5. 전형절차
+
+구분 | 일정 | 비고
+원서접수 | 2026.2.10.(화) ~ 2026.2.25(수) | 오전 11시 접수마감
+서류전형 | 2026.2.26.(목) ~ 2026.3.5.(목) | 모집인원의 10배수 선발
+필기전형(인적성검사) | 2026.3.6.(금) ~ 2026.3.13.(금) | 합불 없음(공무직 인성검사만 실시)
+면접전형 | 2026.3.16.(월) ~ 2026.3.20.(금) | 상세일정 개별안내
+임용(예정) | 2026.4.1.(수) |
+* 상기일정은 상황 및 여건에 따라 변경 가능
+
+6. 지원서 접수
+
+가. 접수내용: 이력서, 자기소개서 등
+나. 접수기간: 2026.2.25(수) 11:00까지
+다. 접수방법: 본교 채용 사이트(https://kdischool.recruiter.co.kr)를 통한 온라인 지원
+라. 지원서 제출은 온라인 지원 필수(※ 우편, E-mail, 직접 서류제출 불가)
+마. 전형단계별 제출서류
+
+제출시기 | 제출서류 | 제출방법 | 비고
+응시원서 접수 시 | [공통] · 입사지원서 | 채용사이트로 제출 |
+필기전형 대상자 | [공통] · 반명함판 사진 · 졸업 및 성적증명서 · 통장사본 · 주민등록등본 [해당 시] · 경력증명서 · 어학성적증명서 · 자격증 사본 · 취업지원대상자 증명서 · 가점사항 증빙자료 | 필기전형 응시 전 채용사이트로 제출 | 별도안내
+입사 시 | · 전형단계별 제출서류 원본 일체 | 임용일자에 서면으로 원본 제출 | 해당자 별도안내
+
+- 졸업/성적/어학/경력증명서 및 자격증 등 모든 제출서류는 진위확인 및 자격검증을 위해서 활용되며, 취합한 서류를 심사위원에게 제공하지 않습니다.
+- 어학성적 및 자격증의 경우 유효기간 이내에 해당하는 사항만 기재해주시기 바랍니다.
+- 취업지원대상자증명서는 제출처를 'KDI국제정책대학원'으로 하여 제출하십시오.
+- 통장사본은 면접비 지급을 위한 용도로 접수합니다.
+- 주민등록등본은 면접비 지급 대상자의 주거지 확인을 위한 용도로 접수합니다.
+- 「채용절차의 공정화에 관한 법률」 제11조에 따라 전자우편으로 제출하는 채용서류에 관해서는 보관·반환의무가 없음을 고지합니다.
+- 최종합격이 되지 않은 지원자의 채용서류는 14일간 보관 후 「개인정보보호법」에 따라 지체 없이 파기됩니다.
+
+7. 기타사항
+
+가. 입사지원서 제출 시 본인 확인과 관계없는 출신지역, 가족관계, 학교명 등 블라인드 채용 의도에 반하는 내용 기재 시 불이익을 받을 수 있습니다.
+나. 허위기재 또는 기재착오, 증빙서류 미제출 등에 따른 불이익은 응시자 본인의 책임이며, 기재내용이 사실과 다를 경우 합격을 취소할 수 있습니다.
+다. 채용비리 입사자(부정청탁으로 입사한 자 포함), 신원조사 결과 결격사유가 확인된 자는 그 사실이 확인된 즉시 합격 취소 또는 입사 이후에도 징계해고 또는 직권면직 처리합니다.
+라. 적격자가 없는 경우 선발하지 않을 수 있습니다.
+마. 최종 합격자의 임용포기, 임용 결격사유 발생, 임용 후 1개월 이내 조기 퇴직 등의 사유로 결원 발생 시 예비합격 석차 순으로 추가합격자를 선정하여 임용할 수 있습니다.
+바. 문의사항: 본교 채용 사이트 Q&A 게시판`;
+
+const result = convertByRules(pdfText, {});
+
+// 메타 정보
+const detectedSections = result.sections.filter(s => s.sectionDef).map(s => s.sectionDef.id);
+document.getElementById('meta').innerHTML = `
+  <span>입력형식:</span> ${result.inputType} ·
+  <span>섹션:</span> ${detectedSections.length}개 [${detectedSections.join(', ')}] ·
+  <span>신뢰도:</span> ${result.confidence}% ·
+  <span>입력:</span> ${pdfText.length.toLocaleString()}자 ·
+  <span>출력:</span> ${result.html.length.toLocaleString()}자
+`;
+
+// 코드 뷰
+document.getElementById('code').textContent = result.html;
+
+// 미리보기
+document.getElementById('preview').innerHTML = result.html;
+</script>
+</body></html>

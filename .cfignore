@@ -1,0 +1,13 @@
+# Cloudflare Pages 배포 제외 (서버 전용 파일)
+cors-proxy.py
+convert-server.py
+docs/
+.claude/
+.git/
+.github/
+.bkit/
+CLAUDE.md
+start.bat
+scripts/
+tools/
+test-*.html

@@ -1,0 +1,52 @@
+@charset "utf-8";
+/* CSS Document */
+	P, TD, BODY, TEXTAREA, INPUT, BUTTON, SELECT {font-size:15px;}
+	a {text-decoration: none;}
+	#templwrap_v3 * {box-sizing: border-box; margin:0; padding:0; line-height:1.7; font-family: -apple-system,BlinkMacSystemFont,"맑은 고딕","Helvetica Neue","Apple SD Gothic Neo",Arial,sans-serif,Tahoma,Geneva,sans-serif; text-size-adjust:none; letter-spacing: -0.0625em;}
+	#templwrap_v3.result_rasp {width:830px; margin:0 auto;}
+	#templwrap_v3.result_rasp table {width:100%; border-spacing: 0; border-collapse: collapse; margin-bottom:3px;}
+	#templwrap_v3.result_rasp .result_table_wrap td{padding:20px; vertical-align: middle;}
+	#templwrap_v3.result_rasp .result_table_wrap .sub_table_wrap td{padding:5px; }
+	#templwrap_v3.result_rasp .head_cont > td:first-child {width:80%; height:250px;}
+	#templwrap_v3.result_rasp .head_cont .result_title {font-weight:bold; font-size:1.44em;}
+	#templwrap_v3.result_rasp .head_cont.full_cont > td:first-child{width:100%;}
+	#templwrap_v3.result_rasp .body_cont h3 {margin-bottom:5px;}
+	#templwrap_v3.result_rasp button{cursor: pointer; margin:3px; font-weight:bold;}
+	#templwrap_v3.result_rasp .mini_btn {padding:0px 5px;}
+	#templwrap_v3.result_rasp .basic_btn {padding:10px 15px; min-width:200px;}
+	#templwrap_v3.result_rasp.fail_rasp .foot_cont td{padding:20px 20px 60px;}
+	
+
+/*1*/
+	#templwrap_v3.result_rasp.rasp_s_1 .head_cont{background:url("https://c.incru.it/HR/jobtemp/2024/img/rasp_bg_1.png") no-repeat center; background-size:100%}
+	#templwrap_v3.result_rasp.rasp_s_1 .foot_cont{background:#f6f6f8;}
+	#templwrap_v3.result_rasp.rasp_s_1 button{background:#238ef1; color:#ffffff; border:none; border-radius:3px;}
+	#templwrap_v3.result_rasp.rasp_s_1 button:hover{ background:#147ad8;}
+
+/*2*/
+	#templwrap_v3.result_rasp.rasp_s_2 .head_cont{background:url("https://c.incru.it/HR/jobtemp/2024/img/rasp_bg_2.png") no-repeat center; background-size:100%}
+	#templwrap_v3.result_rasp.rasp_s_2 .foot_cont{background:#fff7de;}
+	#templwrap_v3.result_rasp.rasp_s_2 button{background:#9cc931; color:#ffffff; border:none; border-radius:3px;}
+	#templwrap_v3.result_rasp.rasp_s_2 button:hover{ background:#fdc007;}
+
+/*3*/
+	#templwrap_v3.result_rasp.rasp_s_3 .head_cont{background:url("https://c.incru.it/HR/jobtemp/2024/img/rasp_bg_3.png") no-repeat center; background-size:100%}
+	#templwrap_v3.result_rasp.rasp_s_3 .foot_cont{background:#eceaf7;}
+	#templwrap_v3.result_rasp.rasp_s_3 button{background:#1947b0; color:#ffffff; border:none; border-radius:3px;}
+	#templwrap_v3.result_rasp.rasp_s_3 button:hover{ background:#0e3181;}
+
+/*4*/
+	#templwrap_v3.result_rasp.rasp_s_4 .head_cont{background:url("https://c.incru.it/HR/jobtemp/2024/img/rasp_bg_4.png") no-repeat center; background-size:100%}
+	#templwrap_v3.result_rasp.rasp_s_4 .foot_cont{background:#f7f2f4;}
+	#templwrap_v3.result_rasp.rasp_s_4 button{background:#ed6474; color:#ffffff; border:none; border-radius:3px;}
+	#templwrap_v3.result_rasp.rasp_s_4 button:hover{ background:#d13055;}
+
+/*fail1*/
+	#templwrap_v3.result_rasp.rasp_f_1{background:url("https://c.incru.it/HR/jobtemp/2024/img/rasp_f_bg_1.png") repeat-y top; background-size:100%}
+	#templwrap_v3.result_rasp.rasp_f_1 button{background:#2255a9; color:#ffffff; border:none; border-radius:3px;}
+	#templwrap_v3.result_rasp.rasp_f_1 button:hover{ background:#284575;}
+
+/*fail2*/
+	#templwrap_v3.result_rasp.rasp_f_2{background:url("https://c.incru.it/HR/jobtemp/2024/img/rasp_f_bg_2.png") no-repeat top #c2e1fe; background-size:100%}
+	#templwrap_v3.result_rasp.rasp_f_2 button{background:#2255a9; color:#ffffff; border:none; border-radius:3px;}
+	#templwrap_v3.result_rasp.rasp_f_2 button:hover{ background:#284575;}

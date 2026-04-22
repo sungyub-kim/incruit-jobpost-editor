@@ -1,0 +1,2460 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Incruit Jobpost Editor.</title>
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'incruit': {
+              'primary': '#0066cc',
+              'secondary': '#333333',
+              'accent': '#ff6600'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- Incruit Template CSS (bul_ icon sprites for picker thumbnails) -->
+  <link rel="stylesheet" href="https://c.incru.it/HR/jobtemp/2022/css/job_post_v3_list_minify.css">
+
+  <!-- KV 폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Black+Han+Sans&family=Nanum+Pen+Script&display=swap">
+  <style>
+    /* ── 인크루트 커스텀 폰트 (same-origin embed) ── */
+    /* Paperozi */
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-1Thin.woff2') format('woff2'); font-weight:100; font-display:swap; }
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-2ExtraLight.woff2') format('woff2'); font-weight:200; font-display:swap; }
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-3Light.woff2') format('woff2'); font-weight:300; font-display:swap; }
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-4Regular.woff2') format('woff2'); font-weight:400; font-display:swap; }
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-5Medium.woff2') format('woff2'); font-weight:500; font-display:swap; }
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-6SemiBold.woff2') format('woff2'); font-weight:600; font-display:swap; }
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-7Bold.woff2') format('woff2'); font-weight:700; font-display:swap; }
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-8ExtraBold.woff2') format('woff2'); font-weight:800; font-display:swap; }
+    @font-face { font-family:'Paperozi'; src:url('https://i.incru.it/ui/static/font/builder/paperlogy/Paperlogy-9Black.woff2') format('woff2'); font-weight:900; font-display:swap; }
+    /* 여기어때 잘난체 */
+    @font-face { font-family:'YeogiOttaeJalnan'; src:url('https://i.incru.it/ui/static/font/builder/JalnanOTF00.woff') format('woff'); font-weight:normal; font-display:swap; }
+    /* 어그로체 */
+    @font-face { font-family:'Aggravo'; src:url('https://i.incru.it/ui/static/font/builder/SBAggroL.woff') format('woff'); font-weight:300; font-display:swap; }
+    @font-face { font-family:'Aggravo'; src:url('https://i.incru.it/ui/static/font/builder/SBAggroM.woff') format('woff'); font-weight:500; font-display:swap; }
+    @font-face { font-family:'Aggravo'; src:url('https://i.incru.it/ui/static/font/builder/SBAggroB.woff') format('woff'); font-weight:700; font-display:swap; }
+    /* 학교안심 알림장 */
+    @font-face { font-family:'SchoolSafetyNotification'; src:url('https://i.incru.it/ui/static/font/builder/HakgyoansimAllimjangTTF-R.woff2') format('woff2'); font-weight:400; font-display:swap; }
+    @font-face { font-family:'SchoolSafetyNotification'; src:url('https://i.incru.it/ui/static/font/builder/HakgyoansimAllimjangTTF-B.woff2') format('woff2'); font-weight:700; font-display:swap; }
+    /* 여기어때 잘난체 고딕 */
+    @font-face { font-family:'YeogiOttaeJalnanGothic'; src:url('https://i.incru.it/ui/static/font/builder/JalnanGothic.woff') format('woff'); font-weight:normal; font-display:swap; }
+    /* 강원교육튼튼체 */
+    @font-face { font-family:'GangwonEducationTteontteon'; src:url('https://i.incru.it/ui/static/font/builder/GangwonEduPowerExtraBoldA.woff') format('woff'); font-weight:normal; font-display:swap; }
+    /* KOTRA Bold */
+    @font-face { font-family:'KotraBold'; src:url('https://i.incru.it/ui/static/font/builder/KOTRA_BOLD-Bold.woff') format('woff'); font-weight:normal; font-display:swap; }
+    /* Gmarket Sans (i.incru.it CDN) */
+    @font-face { font-family:'GMarketSans'; src:url('https://i.incru.it/ui/static/font/builder/GmarketSansLight.woff') format('woff'); font-weight:300; font-display:swap; }
+    @font-face { font-family:'GMarketSans'; src:url('https://i.incru.it/ui/static/font/builder/GmarketSansMedium.woff') format('woff'); font-weight:500; font-display:swap; }
+    @font-face { font-family:'GMarketSans'; src:url('https://i.incru.it/ui/static/font/builder/GmarketSansBold.woff') format('woff'); font-weight:700; font-display:swap; }
+  </style>
+
+  <!-- Custom Styles -->
+  <link rel="stylesheet" href="css/styles.css?v=13">
+
+
+  <!-- DOMPurify for HTML sanitization -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
+
+  <!-- CodeMirror 5 - VS Code 스타일 코드 에디터 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/theme/material-darker.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/mode/xml/xml.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/mode/css/css.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/mode/htmlmixed/htmlmixed.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/addon/edit/closetag.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/addon/fold/foldcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/addon/fold/foldgutter.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/addon/fold/xml-fold.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.19/addon/fold/foldgutter.min.css">
+
+  <!-- html2canvas: PNG 캡처 (onclone으로 gradient/pseudo 복제본에서만 수정) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <!-- Lucide Icons - 1,400+ 일관된 아이콘 세트 -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <!-- Document extraction libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+  <script>
+    if (typeof pdfjsLib !== 'undefined') {
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    }
+  </script>
+
+  <!-- ES Module Import Map -->
+  <script type="importmap">
+  {
+    "imports": {
+      "marked": "https://esm.sh/marked@12.0.1"
+    }
+  }
+  </script>
+</head>
+<body class="bg-gray-900 text-gray-200 overflow-hidden">
+  <!-- App Container -->
+  <div id="app" class="app-container">
+    <!-- Panel 1: Settings -->
+    <aside id="settings-panel" class="panel border-l border-gray-700">
+
+      <!-- 공용 AI 어시스턴트 (Claude 스타일) -->
+      <div class="ai-assistant-section" id="ai-assistant-section">
+        <!-- 헤더 (토글) -->
+        <div class="ai-assistant-header" id="ai-assistant-toggle">
+          <div class="flex items-center gap-2">
+            <span class="ai-logo">✸</span>
+            <span class="ai-assistant-title">AI 어시스턴트</span>
+            <span id="ai-status-dot" class="kv-ai-status-dot" title="API 키 필요"></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <!-- 워크스페이스 드롭다운 -->
+            <div id="ws-dropdown" class="ws-dropdown">
+              <button id="ws-dropdown-btn" class="ws-dropdown-btn" title="워크스페이스 전환">
+                <span id="ws-dropdown-label">작업 1</span>
+                <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 5l3 3 3-3"/></svg>
+              </button>
+              <div id="ws-dropdown-menu" class="ws-dropdown-menu hidden"></div>
+            </div>
+            <button id="btn-ai-settings" class="ai-gear-btn" title="AI 설정">
+              <span data-icon="settings" data-icon-size="14"></span>
+            </button>
+            <span class="kv-chevron ai-chevron">&#9654;</span>
+          </div>
+        </div>
+
+        <!-- 바디 (접이식) -->
+        <div class="ai-assistant-body" id="ai-assistant-body">
+          <!-- 메시지 영역 -->
+          <div class="ai-messages-container" id="ai-messages">
+            <div class="ai-welcome">
+              <div class="ai-welcome-logo">✸</div>
+              <p>안녕하세요! 채용공고 키비주얼을 만들어드릴게요.<br>기업명과 채용 정보를 알려주세요.</p>
+            </div>
+          </div>
+
+          <!-- 입력 영역 (Claude 스타일 통합 박스) -->
+          <div class="ai-input-wrapper">
+            <!-- 빠른 액션 (채팅창 위) -->
+            <div class="ai-quick-actions">
+              <button class="ai-quick-btn" data-action="url-analyze" style="display:none">자료 분석</button>
+              <button class="ai-quick-btn" data-action="convert">채용공고 변환</button>
+              <button class="ai-quick-btn" data-action="verify">검증하기</button>
+              <button class="ai-quick-btn" data-action="add-keyvisual" style="display:none">키비주얼 추가</button>
+              <button class="ai-quick-btn" data-action="summarize" style="display:none">공고 요약</button>
+              <button class="ai-quick-btn" data-action="competencies" style="display:none">핵심 역량</button>
+            </div>
+            <div class="ai-input-box">
+              <!-- 파일 첨부 칩 -->
+              <div class="ai-file-chip hidden" id="ai-file-chip">
+                <span class="ai-file-chip-text" id="ai-file-chip-text"></span>
+                <button class="ai-file-chip-remove" id="ai-file-chip-remove" title="첨부 해제">×</button>
+              </div>
+              <!-- 입력 행: textarea + 버튼 -->
+              <div class="ai-input-row">
+                <textarea id="ai-chat-input" placeholder="예: 인크루트 고객만족팀 고객만족담당자 채용공고 만들어줘&#10;(Shift+Enter: 줄바꿈, Enter: 전송)" rows="3" style="min-height: 80px;"></textarea>
+                <div class="ai-input-actions">
+                  <label class="ai-attach-btn" id="ai-file-label" title="파일 첨부">
+                    <span data-icon="paperclip" data-icon-size="16"></span>
+                    <input type="file" id="ai-file-input" accept=".pdf,.hwp,.hwpx,.doc,.docx,.xls,.xlsx,.txt,.html,.htm,.csv,.rtf" class="hidden" multiple>
+                  </label>
+                  <button id="btn-html-code-input" class="ai-attach-btn" title="HTML 코드 붙여넣기">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"/></svg>
+                  </button>
+                  <button id="ai-chat-send" class="ai-send-btn" title="전송">
+                    <span data-icon="send" data-icon-size="16"></span>
+                  </button>
+                </div>
+              </div>
+            </div>
+            <!-- 기존 파일 첨부 상태 (숨김 처리, 호환용) -->
+            <div class="ai-attached-file hidden" id="ai-file-drop" style="display:none!important;">
+              <span id="ai-file-name"></span>
+              <button class="ai-file-remove" id="ai-file-remove" title="첨부 해제">✕</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 업무 단계 탭 -->
+      <header class="panel-header">
+        <div class="flex gap-1 items-center">
+          <button class="settings-tab active" data-settings-tab="jobpost">채용공고</button>
+          <button class="settings-tab" data-settings-tab="keyvisual">키비주얼</button>
+          <!-- KV 토글 스위치 (왼쪽 패널) -->
+          <label class="kv-toggle-switch ml-auto" title="키비주얼 표시/숨김">
+            <input type="checkbox" id="kv-toggle">
+            <span class="kv-toggle-slider"></span>
+            <span class="kv-toggle-label">KV</span>
+          </label>
+        </div>
+      </header>
+
+      <!-- 채용공고 탭: 통합 패널 -->
+      <div id="tab-jobpost" class="panel-content flex flex-col" style="padding:0; overflow-y:auto;">
+
+          <!-- 템플릿 선택 -->
+          <div class="p-4 space-y-4">
+            <h3 class="text-sm font-semibold text-gray-300">템플릿 선택</h3>
+            <div id="wf-template-grid" class="wf-template-grid">
+              <div class="wf-template-card active" data-template="standard">
+                <div class="wf-template-preview wf-tpl-standard"></div>
+                <span class="wf-template-name">Standard</span>
+                <span class="wf-template-desc">기본형</span>
+              </div>
+              <div class="wf-template-card" data-template="standard_border">
+                <div class="wf-template-preview wf-tpl-standard-border"></div>
+                <span class="wf-template-name">Standard 이미지 보더형</span>
+                <span class="wf-template-desc">이미지 보더형</span>
+              </div>
+              <div class="wf-template-card" data-template="pass_fail">
+                <div class="wf-template-preview wf-tpl-pass-fail"></div>
+                <span class="wf-template-name">합불페이지</span>
+                <span class="wf-template-desc">합격/불합격</span>
+              </div>
+              <div class="wf-template-card" data-template="incruit" style="display:none;">
+                <div class="wf-template-preview wf-tpl-incruit"></div>
+                <span class="wf-template-name">Incruit</span>
+                <span class="wf-template-desc">인크루트</span>
+              </div>
+              <div class="wf-template-card" data-template="modern" style="display:none;">
+                <div class="wf-template-preview wf-tpl-modern"></div>
+                <span class="wf-template-name">Modern</span>
+                <span class="wf-template-desc">모던형</span>
+              </div>
+              <div class="wf-template-card" data-template="corporate" style="display:none;">
+                <div class="wf-template-preview wf-tpl-corporate"></div>
+                <span class="wf-template-name">Corporate</span>
+                <span class="wf-template-desc">기업형</span>
+              </div>
+              <div class="wf-template-card" data-template="creative" style="display:none;">
+                <div class="wf-template-preview wf-tpl-creative"></div>
+                <span class="wf-template-name">Creative</span>
+                <span class="wf-template-desc">크리에이티브</span>
+              </div>
+              <div class="wf-template-card" data-template="compact" style="display:none;">
+                <div class="wf-template-preview wf-tpl-compact"></div>
+                <span class="wf-template-name">Compact</span>
+                <span class="wf-template-desc">간결형</span>
+              </div>
+              <div class="wf-template-card" data-template="incruit_it" style="display:none;">
+                <div class="wf-template-preview wf-tpl-incruit-it"></div>
+                <span class="wf-template-name">IT 산업</span>
+                <span class="wf-template-desc">Teal</span>
+              </div>
+              <div class="wf-template-card" data-template="incruit_startup" style="display:none;">
+                <div class="wf-template-preview wf-tpl-incruit-startup"></div>
+                <span class="wf-template-name">스타트업</span>
+                <span class="wf-template-desc">Blue</span>
+              </div>
+              <div class="wf-template-card" data-template="incruit_mint" style="display:none;">
+                <div class="wf-template-preview wf-tpl-incruit-mint"></div>
+                <span class="wf-template-name">스타트업</span>
+                <span class="wf-template-desc">Mint</span>
+              </div>
+              <div class="wf-template-card" data-template="incruit_biz" style="display:none;">
+                <div class="wf-template-preview wf-tpl-incruit-biz"></div>
+                <span class="wf-template-name">비즈니스</span>
+                <span class="wf-template-desc">Brown</span>
+              </div>
+              <div class="wf-template-card" data-template="incruit_classic" style="display:none;">
+                <div class="wf-template-preview wf-tpl-incruit-classic"></div>
+                <span class="wf-template-name">클래식</span>
+                <span class="wf-template-desc">Orange</span>
+              </div>
+              <div class="wf-template-card" data-template="incruit_news" style="display:none;">
+                <div class="wf-template-preview wf-tpl-incruit-news"></div>
+                <span class="wf-template-name">뉴스</span>
+                <span class="wf-template-desc">Orange BG</span>
+              </div>
+            </div>
+            <!-- 숨겨진 기존 셀렉트 (호환용) -->
+            <select id="template-select" class="hidden">
+              <option value="standard">Standard (기본형)</option>
+              <option value="standard_border">Standard 이미지 보더형</option>
+              <option value="incruit">Incruit Official (인크루트)</option>
+              <option value="modern">Modern (모던형)</option>
+              <option value="corporate">Corporate (기업형)</option>
+              <option value="creative">Creative (크리에이티브)</option>
+              <option value="compact">Compact (간결형)</option>
+              <option value="incruit_it">IT 산업 (Teal)</option>
+              <option value="incruit_startup">스타트업 (Blue)</option>
+              <option value="incruit_mint">스타트업 (Mint)</option>
+              <option value="incruit_biz">비즈니스 (Brown)</option>
+              <option value="incruit_classic">클래식 (Orange)</option>
+              <option value="incruit_news">뉴스 (Orange BG)</option>
+            </select>
+          </div>
+
+          <!-- 디자인 설정 -->
+          <div class="p-4 space-y-5 border-t border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-300">디자인 설정</h3>
+
+            <!-- 채용공고 번호 -->
+            <div class="setting-group" id="non-kv-job-number-group">
+              <div class="flex items-center justify-between">
+                <label class="setting-label">채용공고 번호</label>
+                <button class="job-num-settings-toggle text-xs text-blue-400">설정 ▼</button>
+              </div>
+              <input type="text" id="job-number" placeholder="예: 12345678" class="setting-input">
+              <div class="job-num-settings hidden mt-2">
+                <div class="kv-field-settings-body">
+                  <div class="kv-control-row">
+                    <label>폰트 크기</label>
+                    <input type="range" min="8" max="40" value="14" class="kv-slider" data-jn-prop="fontSize">
+                    <input type="number" min="8" max="40" value="14" class="kv-value-input" data-jn-prop="fontSize"><span class="kv-unit">px</span>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>색상</label>
+                    <div class="kv-color-group">
+                      <input type="color" value="#333333" data-jn-prop="color">
+                      <input type="text" value="#333333" maxlength="7" class="kv-hex-input" data-jn-prop="color">
+                    </div>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>굵기</label>
+                    <label class="kv-checkbox-label"><input type="checkbox" data-jn-prop="bold"> 굵게</label>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>정렬</label>
+                    <div class="kv-btn-group kv-btn-group-3">
+                      <button class="job-num-align-btn kv-option-btn active" data-align="left">좌측</button>
+                      <button class="job-num-align-btn kv-option-btn" data-align="center">중앙</button>
+                      <button class="job-num-align-btn kv-option-btn" data-align="right">우측</button>
+                    </div>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>상단 위치 (%)</label>
+                    <input type="range" min="0" max="100" value="10" class="kv-slider" data-jn-prop="top">
+                    <input type="number" min="0" max="100" value="10" class="kv-value-input" data-jn-prop="top"><span class="kv-unit">%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 기업명 -->
+            <div class="setting-group" id="non-kv-company-group">
+              <div class="flex items-center justify-between">
+                <label class="setting-label">기업명</label>
+                <button class="company-name-settings-toggle text-xs text-blue-400">설정 ▼</button>
+              </div>
+              <input type="text" id="header-company-name" placeholder="예: (주)인크루트" class="setting-input">
+              <div class="company-name-settings hidden mt-2">
+                <div class="kv-field-settings-body">
+                  <div class="kv-control-row">
+                    <label>폰트 크기</label>
+                    <input type="range" min="8" max="40" value="14" class="kv-slider" data-cn-prop="fontSize">
+                    <input type="number" min="8" max="40" value="14" class="kv-value-input" data-cn-prop="fontSize"><span class="kv-unit">px</span>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>색상</label>
+                    <div class="kv-color-group">
+                      <input type="color" value="#333333" data-cn-prop="color">
+                      <input type="text" value="#333333" maxlength="7" class="kv-hex-input" data-cn-prop="color">
+                    </div>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>굵기</label>
+                    <label class="kv-checkbox-label"><input type="checkbox" data-cn-prop="bold"> 굵게</label>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>정렬</label>
+                    <div class="kv-btn-group kv-btn-group-3">
+                      <button class="company-name-align-btn kv-option-btn active" data-align="left">좌측</button>
+                      <button class="company-name-align-btn kv-option-btn" data-align="center">중앙</button>
+                      <button class="company-name-align-btn kv-option-btn" data-align="right">우측</button>
+                    </div>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>상단 위치 (%)</label>
+                    <input type="range" min="0" max="100" value="5" class="kv-slider" data-cn-prop="top">
+                    <input type="number" min="0" max="100" value="5" class="kv-value-input" data-cn-prop="top"><span class="kv-unit">%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 날짜 -->
+            <div class="setting-group" id="non-kv-date-group">
+              <div class="flex items-center justify-between">
+                <label class="setting-label">날짜</label>
+                <button class="header-date-settings-toggle text-xs text-blue-400">설정 ▼</button>
+              </div>
+              <input type="text" id="header-date" placeholder="예: 2026년 3월 15일" class="setting-input">
+              <div class="header-date-settings hidden mt-2">
+                <div class="kv-field-settings-body">
+                  <div class="kv-control-row">
+                    <label>폰트 크기</label>
+                    <input type="range" min="8" max="40" value="12" class="kv-slider" data-dt-prop="fontSize">
+                    <input type="number" min="8" max="40" value="12" class="kv-value-input" data-dt-prop="fontSize"><span class="kv-unit">px</span>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>색상</label>
+                    <div class="kv-color-group">
+                      <input type="color" value="#333333" data-dt-prop="color">
+                      <input type="text" value="#333333" maxlength="7" class="kv-hex-input" data-dt-prop="color">
+                    </div>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>굵기</label>
+                    <label class="kv-checkbox-label"><input type="checkbox" data-dt-prop="bold"> 굵게</label>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>정렬</label>
+                    <div class="kv-btn-group kv-btn-group-3">
+                      <button class="header-date-align-btn kv-option-btn active" data-align="left">좌측</button>
+                      <button class="header-date-align-btn kv-option-btn" data-align="center">중앙</button>
+                      <button class="header-date-align-btn kv-option-btn" data-align="right">우측</button>
+                    </div>
+                  </div>
+                  <div class="kv-control-row">
+                    <label>상단 위치 (%)</label>
+                    <input type="range" min="0" max="100" value="5" class="kv-slider" data-dt-prop="top">
+                    <input type="number" min="0" max="100" value="5" class="kv-value-input" data-dt-prop="top"><span class="kv-unit">%</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 키비주얼 -->
+            <div class="setting-group">
+              <label class="setting-label">키비주얼</label>
+              <input type="url" id="key-visual-url" placeholder="이미지 URL 입력" class="setting-input">
+              <div id="key-visual-preview" class="mt-2 hidden">
+                <img src="" alt="Key Visual" class="w-full h-24 object-cover rounded">
+              </div>
+            </div>
+
+            <!-- 보더 이미지 (standard_border 템플릿 전용) -->
+            <div id="border-images-group" class="setting-group" style="display:none">
+              <label class="setting-label">보더 이미지</label>
+              <input type="url" id="border-repeat-img-url" placeholder="https://c.incru.it/newjobpost/2026/04_win-win/win-win_02.png" class="setting-input mb-2">
+              <label class="setting-label">하단 이미지</label>
+              <input type="url" id="border-bottom-img-url" placeholder="https://c.incru.it/newjobpost/2026/04_win-win/win-win_03.png" class="setting-input mb-2">
+              <label class="setting-label">좌우 여백 (px)</label>
+              <div class="flex items-center gap-2">
+                <input type="range" id="border-padding-range" min="40" max="60" value="40" class="flex-1">
+                <input type="number" id="border-padding-value" min="40" max="60" value="40" class="w-16 text-center setting-input" style="padding:4px;">
+              </div>
+            </div>
+
+            <!-- 컬러 팔레트 -->
+            <div class="setting-group" style="display:none">
+              <label class="setting-label">컬러 팔레트</label>
+              <div class="grid grid-cols-3 gap-2">
+                <div>
+                  <label class="text-xs text-gray-400">Primary</label>
+                  <div class="color-pair">
+                    <input type="color" id="color-primary" value="#0066cc" class="color-swatch">
+                    <input type="text" id="color-primary-hex" value="#0066cc" class="color-hex" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400">Secondary</label>
+                  <div class="color-pair">
+                    <input type="color" id="color-secondary" value="#333333" class="color-swatch">
+                    <input type="text" id="color-secondary-hex" value="#333333" class="color-hex" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400">Accent</label>
+                  <div class="color-pair">
+                    <input type="color" id="color-accent" value="#ff6600" class="color-swatch">
+                    <input type="text" id="color-accent-hex" value="#ff6600" class="color-hex" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 불릿 스타일 (섹션 제목) -->
+            <div class="setting-group setting-group-row" style="display:none;">
+              <label class="setting-label">제목 불릿</label>
+              <div class="flex gap-2 flex-wrap">
+                <button class="bullet-btn bullet-btn-chevron active" data-bullet="chevron" title="인크루트 셰브론">❯</button>
+                <button class="bullet-btn" data-bullet="check">✓</button>
+                <button class="bullet-btn" data-bullet="circle">●</button>
+                <button class="bullet-btn" data-bullet="arrow">▶</button>
+                <button class="bullet-btn" data-bullet="star">★</button>
+                <button class="bullet-btn" data-bullet="dash">—</button>
+                <button class="bullet-btn" data-bullet="square">■</button>
+                <button class="bullet-btn" data-bullet="ssquare">▪</button>
+                <button class="bullet-btn" data-bullet="number" title="숫자" style="font-size:13px;font-weight:700;">1.</button>
+                <button class="bullet-btn" data-bullet="hangul" title="한글 번호" style="font-size:12px;font-weight:700;">하나</button>
+              </div>
+            </div>
+
+            <!-- 타이틀 스타일 (인크루트 최종 출력용) -->
+            <div class="setting-group">
+              <label class="setting-label">타이틀 스타일</label>
+              <select id="title-style" class="setting-input">
+                <option value="iconNumber">아이콘 숫자 (num1~12)</option>
+                <option value="iconBg" selected>아이콘 BG (bul_1~18)</option>
+                <option value="titleSub">숫자 + 타이틀 (c_title_1~8)</option>
+              </select>
+              <!-- 동적 서브옵션 -->
+              <div id="title-style-options" class="mt-3 space-y-2"></div>
+            </div>
+
+            <!-- 테이블 헤더 색상 -->
+            <div class="setting-group">
+              <label class="setting-label">테이블 헤더</label>
+              <div class="grid grid-cols-2 gap-2">
+                <div>
+                  <label class="text-xs text-gray-400">배경색</label>
+                  <div class="color-pair">
+                    <input type="color" id="th-color" value="#f1f5f9" class="color-swatch">
+                    <input type="text" id="th-color-hex" value="#f1f5f9" class="color-hex" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+                <div>
+                  <label class="text-xs text-gray-400">글자색</label>
+                  <div class="color-pair">
+                    <input type="color" id="th-text-color" value="#000000" class="color-swatch">
+                    <input type="text" id="th-text-color-hex" value="#000000" class="color-hex" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 변환 (숨김) -->
+            <div class="space-y-2 pt-4 border-t border-gray-700" style="display:none">
+              <div class="flex gap-2">
+                <button id="btn-rule-convert" class="flex-1 py-2 bg-emerald-600 hover:bg-emerald-500 rounded text-sm font-medium" title="규칙 기반 즉시 변환 (AI 불필요)">⚡ 빠른 변환</button>
+                <button id="btn-convert" class="flex-1 py-2 bg-incruit-primary hover:bg-blue-600 rounded text-sm font-medium" title="AI API를 사용한 정밀 변환">AI 변환</button>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">빠른 변환: 즉시 · AI 변환: 10-30초 (정밀)</p>
+            </div>
+
+            <!-- 공고 타입 -->
+            <div class="space-y-2 pt-4 border-t border-gray-700">
+              <h3 class="text-sm font-semibold text-gray-300">공고 타입</h3>
+              <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                <input type="checkbox" id="chk-works-post" class="w-4 h-4 rounded">
+                <span>웍스용 공고</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                <input type="checkbox" id="chk-rasp" class="w-4 h-4 rounded">
+                <span>구버전 rasp</span>
+              </label>
+              <label class="flex items-center gap-2 text-sm text-gray-300 cursor-pointer">
+                <input type="checkbox" id="chk-external-post" class="w-4 h-4 rounded">
+                <span>외부 채용공고</span>
+              </label>
+            </div>
+          </div>
+
+          <!-- 하단 버튼 -->
+          <div class="p-4 space-y-3 border-t border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-300">하단 버튼</h3>
+            <button id="bottom-btn-add" class="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium">+ 버튼 추가</button>
+            <div id="bottom-btn-list" class="space-y-2"></div>
+          </div>
+
+          <!-- HTML 생성 -->
+          <div class="p-4 space-y-4 border-t border-gray-700">
+            <h3 class="text-sm font-semibold text-gray-300">HTML 생성</h3>
+
+            <!-- 요약 카드 -->
+            <div id="wf-summary-card" class="wf-summary-card">
+              <div class="wf-summary-row">
+                <span class="text-gray-500">템플릿</span>
+                <span id="wf-sum-template" class="text-gray-300">Standard</span>
+              </div>
+              <div class="wf-summary-row">
+                <span class="text-gray-500">상태</span>
+                <span id="wf-sum-status" class="text-yellow-400">준비 중</span>
+              </div>
+            </div>
+
+            <!-- 액션 버튼 -->
+            <div class="space-y-2 pt-3">
+              <button id="btn-copy-html" class="w-full py-2.5 bg-incruit-primary hover:bg-blue-600 rounded text-sm font-medium flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                HTML 복사
+              </button>
+              <button id="btn-download" class="w-full py-2.5 border border-gray-600 hover:bg-gray-800 rounded text-sm flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+                HTML 다운로드
+              </button>
+              <button id="btn-download-external" class="w-full py-2.5 border border-gray-600 hover:bg-gray-800 rounded text-sm flex items-center justify-center gap-2" title="외부 사이트에서도 동일하게 표시되도록 인크루트 CSS를 인라인으로 포함">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0zM3.6 9h16.8M3.6 15h16.8M12 3a14.4 14.4 0 010 18M12 3a14.4 14.4 0 000 18"/></svg>
+                외부용 HTML 다운로드
+              </button>
+              <div class="relative flex" id="image-save-group">
+                <button id="btn-download-png" class="flex-1 py-2.5 border border-gray-600 hover:bg-gray-800 rounded-l text-sm flex items-center justify-center gap-2" title="선택된 포맷으로 저장">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span>이미지 저장</span>
+                  <span id="image-save-format-label" class="opacity-70 text-xs">(PNG)</span>
+                </button>
+                <button id="btn-image-save-format-toggle" class="px-2 py-2.5 border border-l-0 border-gray-600 hover:bg-gray-800 rounded-r text-sm" title="포맷 선택">▾</button>
+                <div id="image-save-format-menu" class="hidden absolute right-0 top-full mt-1 w-full bg-gray-800 border border-gray-600 rounded shadow-lg z-20">
+                  <button data-format="png" class="w-full px-3 py-2 text-sm hover:bg-gray-700 text-left">PNG</button>
+                  <button data-format="jpg" class="w-full px-3 py-2 text-sm hover:bg-gray-700 text-left">JPG</button>
+                  <button data-format="pdf" class="w-full px-3 py-2 text-sm hover:bg-gray-700 text-left">PDF</button>
+                </div>
+              </div>
+              <button id="btn-preview-og-crop" class="w-full py-2.5 border border-gray-600 hover:bg-gray-800 rounded text-sm flex items-center justify-center gap-2" title="프리뷰 임의 영역을 600×315로 크롭 (SNS OG 이미지용)">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7V4a1 1 0 011-1h3M16 3h3a1 1 0 011 1v3M20 17v3a1 1 0 01-1 1h-3M8 21H5a1 1 0 01-1-1v-3"/></svg>
+                OG 크롭 (600×315)
+              </button>
+              <div id="preview-crop-actions" class="hidden" style="display:none; gap:6px;">
+                <button id="btn-preview-crop-confirm" class="flex-1 py-2 text-sm rounded bg-blue-600 hover:bg-blue-700 text-white">저장 (_600315.png)</button>
+                <button id="btn-preview-crop-cancel" class="flex-1 py-2 text-sm rounded border border-gray-600 hover:bg-gray-800">취소</button>
+              </div>
+              <button id="btn-import-html" class="w-full py-2.5 border border-gray-600 hover:bg-gray-800 rounded text-sm flex items-center justify-center gap-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+                HTML 가져오기
+              </button>
+            </div>
+          </div>
+
+      </div>
+
+      <!-- 키비주얼 탭 -->
+      <div id="tab-keyvisual" class="panel-content p-4 space-y-5 hidden">
+        <!-- KV 상태 정보 -->
+        <div class="text-xs text-gray-400" id="kv-preview-info">오버레이 | 좌측 정렬 | 그라데이션 | 고정 높이</div>
+
+        <!-- 템플릿 프리셋 -->
+        <div class="kv-preset-section">
+          <h3 class="setting-label text-xs uppercase tracking-wider text-gray-500">템플릿 프리셋</h3>
+          <div class="kv-preset-scroll">
+            <button class="kv-preset-card active" data-preset="photoAnnounce01"><div class="kv-preset-preview kv-preset-photo-announce"></div><span class="kv-preset-name">실사공고01</span></button>
+            <button class="kv-preset-card" data-preset="photoAnnounce02"><div class="kv-preset-preview kv-preset-photo-announce02"></div><span class="kv-preset-name">실사공고02</span></button>
+            <button class="kv-preset-card" data-preset="photoAnnounce03"><div class="kv-preset-preview kv-preset-photo-announce03"></div><span class="kv-preset-name">실사공고03</span></button>
+            <button class="kv-preset-card" data-preset="photoAnnounce04"><div class="kv-preset-preview kv-preset-photo-announce04"></div><span class="kv-preset-name">실사공고04</span></button>
+            <button class="kv-preset-card" data-preset="photoAnnounce05"><div class="kv-preset-preview kv-preset-photo-announce05"></div><span class="kv-preset-name">실사공고05</span></button>
+            <button class="kv-preset-card" data-preset="passFailNotice"><div class="kv-preset-preview kv-preset-pass-fail"></div><span class="kv-preset-name">합불 안내</span></button>
+            <button class="kv-preset-card" data-preset="cleanCorporate"><div class="kv-preset-preview kv-preset-clean"></div><span class="kv-preset-name">기업형</span></button>
+            <button class="kv-preset-card" data-preset="startupVibe"><div class="kv-preset-preview kv-preset-startup"></div><span class="kv-preset-name">스타트업</span></button>
+            <button class="kv-preset-card" data-preset="government" style="display:none;"><div class="kv-preset-preview kv-preset-gov"></div><span class="kv-preset-name">공공기관</span></button>
+            <button class="kv-preset-card" data-preset="creative"><div class="kv-preset-preview kv-preset-creative"></div><span class="kv-preset-name">크리에이티브</span></button>
+            <button class="kv-preset-card" data-preset="minimal" style="display:none;"><div class="kv-preset-preview kv-preset-minimal"></div><span class="kv-preset-name">미니멀</span></button>
+          </div>
+        </div>
+
+        <!-- 텍스트 입력 (접이식) -->
+        <div class="kv-collapsible">
+          <button class="kv-collapsible-header" id="kv-text-inputs-toggle">
+            <span>텍스트 입력</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body" id="kv-text-inputs-body">
+
+        <div class="setting-group">
+          <div class="flex items-center justify-between">
+            <label class="setting-label">공고번호</label>
+            <button class="kv-field-toggle text-xs text-blue-400" data-kv-field="jobCode">설정 ▼</button>
+          </div>
+          <input type="text" id="kv-job-code" placeholder="공고 제2026-0호" class="setting-input" value="공고 제2026-0호">
+          <!-- 공고번호 설정 패널 -->
+          <div class="kv-field-settings hidden" id="kv-settings-jobCode">
+            <div class="kv-field-settings-body">
+              <div class="kv-control-row" id="kv-jobCode-fontSize-row">
+                <label>폰트 크기</label>
+                <input type="range" min="8" max="40" value="14" class="kv-slider" data-field="jobCode" data-prop="fontSize">
+                <input type="number" min="8" max="40" value="14" class="kv-value-input" data-field="jobCode" data-prop="fontSize"><span class="kv-unit">px</span>
+              </div>
+              <div class="kv-control-row">
+                <label>색상</label>
+                <div class="kv-color-group">
+                  <input type="color" value="#FFFFFF" data-field="jobCode" data-prop="color">
+                  <input type="text" value="#FFFFFF" maxlength="7" class="kv-hex-input" data-field="jobCode" data-prop="color">
+                </div>
+              </div>
+              <div class="kv-control-row" id="kv-jobCode-weight-row">
+                <label>굵기</label>
+                <select class="kv-weight-select setting-input" data-field="jobCode" style="padding:2px 4px;height:28px;">
+                  <option value="100">100 Thin</option>
+                  <option value="200">200 ExtraLight</option>
+                  <option value="300">300 Light</option>
+                  <option value="400" selected>400 Regular</option>
+                  <option value="500">500 Medium</option>
+                  <option value="600">600 SemiBold</option>
+                  <option value="700">700 Bold</option>
+                  <option value="800">800 ExtraBold</option>
+                  <option value="900">900 Black</option>
+                </select>
+                <label class="kv-checkbox-label" style="margin-left:6px;"><input type="checkbox" data-field="jobCode" data-prop="bold"> 굵게</label>
+              </div>
+              <div class="kv-control-row" id="kv-jobCode-font-row">
+                <label>폰트</label>
+                <select class="kv-font-select setting-input" data-field="jobCode" style="padding:2px 4px;height:28px;">
+                  <option value="Pretendard Variable">Pretendard (기본)</option>
+                  <option value="Noto Sans KR">Noto Sans KR</option>
+                  <option value="Nanum Gothic">나눔고딕</option>
+                  <option value="Nanum Myeongjo">나눔명조</option>
+                  <option value="Black Han Sans">검정고딕</option>
+                  <option value="GMarketSans">Gmarket Sans</option>
+                  <option value="Paperozi">Paperozi</option>
+                  <option value="YeogiOttaeJalnan">여기어때 잘난체</option>
+                  <option value="YeogiOttaeJalnanGothic">여기어때 잘난체 고딕</option>
+                  <option value="Aggravo">어그로체</option>
+                  <option value="SchoolSafetyNotification">학교안심 알림장</option>
+                  <option value="GangwonEducationTteontteon">강원교육튼튼체</option>
+                  <option value="KotraBold">KOTRA Bold</option>
+                </select>
+              </div>
+              <div class="kv-control-row">
+                <label>정렬</label>
+                <div class="kv-btn-group kv-btn-group-3">
+                  <button class="kv-field-align-btn kv-option-btn active" data-field="jobCode" data-align="left">좌측</button>
+                  <button class="kv-field-align-btn kv-option-btn" data-field="jobCode" data-align="center">중앙</button>
+                  <button class="kv-field-align-btn kv-option-btn" data-field="jobCode" data-align="right">우측</button>
+                </div>
+              </div>
+              <!-- 공고번호 상단 위치 (실사공고01 전용) -->
+              <div class="kv-control-row hidden" id="kv-job-code-top-group">
+                <label>상단 위치</label>
+                <input type="range" min="0" max="30" value="5" step="1" class="kv-slider" id="kv-job-code-top-slider">
+                <span class="kv-unit" id="kv-job-code-top-value" style="min-width:28px">5%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="kv-org-name-section" class="setting-group">
+          <div class="flex items-center justify-between">
+            <label class="setting-label">기업명</label>
+            <button class="kv-field-toggle text-xs text-blue-400" data-kv-field="orgName">설정 ▼</button>
+          </div>
+          <div id="kv-org-name" contenteditable="true" role="textbox" aria-multiline="true" class="setting-input kv-rich-editor" data-placeholder="기업명이 들어갑니다." spellcheck="false">기업명이 들어갑니다.</div>
+          <div id="kv-org-name-color-toolbar" class="kv-color-toolbar hidden">
+            <!-- 그라데이션 프리셋 -->
+            <div class="kv-toolbar-row kv-grad-preset-row">
+              <span class="kv-color-toolbar-label">프리셋:</span>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#650404,#D63E45)" title="1" data-grad="linear-gradient(90deg,#650404 0%,#D63E45 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#0092D0,#A9992F)" title="2" data-grad="linear-gradient(90deg,#0092D0 0%,#A9992F 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(121deg,#001C67,#8D54AD)" title="3" data-grad="linear-gradient(121deg,#001C67 0%,#8D54AD 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#0E4194,#5DB53F 50%,#F59C00 75%,#E61F2B)" title="4" data-grad="linear-gradient(90deg,#0E4194 0%,#5DB53F 50%,#F59C00 75%,#E61F2B 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(180deg,#0092D4,#0055A2)" title="5" data-grad="linear-gradient(180deg,#0092D4 0%,#0055A2 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#EB6100,#B94700)" title="6" data-grad="linear-gradient(90deg,#EB6100 0%,#B94700 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#C53178,#3516A2)" title="7" data-grad="linear-gradient(90deg,#C53178 0%,#3516A2 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#99E4FA,#7DFFAF)" title="8" data-grad="linear-gradient(90deg,#99E4FA 0%,#7DFFAF 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#00C6D2,#A2BF1A)" title="9" data-grad="linear-gradient(90deg,#00C6D2 0%,#A2BF1A 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(180deg,#34437A,#6C1E7C)" title="10" data-grad="linear-gradient(180deg,#34437A 51.53%,#6C1E7C 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(180deg,#71FAEC,#00B8FF)" title="11" data-grad="linear-gradient(180deg,#71FAEC 0%,#00B8FF 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#0052A5,#009342)" title="12" data-grad="linear-gradient(90deg,#0052A5 0%,#009342 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(270deg,#419A51,#349DD2)" title="13" data-grad="linear-gradient(270deg,#419A51 0%,#349DD2 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#1D307C,#0F3D92)" title="14" data-grad="linear-gradient(90deg,#1D307C 0%,#0F3D92 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(180deg,#8CFFC0,#00EEFF)" title="15" data-grad="linear-gradient(180deg,#8CFFC0 0%,#00EEFF 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#14AE67,#111D68)" title="16" data-grad="linear-gradient(90deg,#14AE67 0%,#111D68 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#FF9501,#FF753A)" title="17" data-grad="linear-gradient(90deg,#FF9501 0%,#FF753A 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#83BE26,#27A468)" title="18" data-grad="linear-gradient(90deg,#83BE26 0%,#27A468 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#228ADE,#7CC719)" title="19" data-grad="linear-gradient(90deg,#228ADE 0%,#7CC719 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#009F41,#004398)" title="20" data-grad="linear-gradient(90deg,#009F41 0%,#004398 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(270deg,#30406B,#1F2840)" title="21" data-grad="linear-gradient(270deg,#30406B 0%,#1F2840 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#F8B62D,#AACE2B 50%,#1BA0CF)" title="22" data-grad="linear-gradient(90deg,#F8B62D 0%,#AACE2B 50%,#1BA0CF 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#0C2F6F,#0C7EC4 50%,#FCBA03)" title="23" data-grad="linear-gradient(90deg,#0C2F6F 0%,#0C7EC4 50%,#FCBA03 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#3D8FFF,#81FFC6)" title="24" data-grad="linear-gradient(90deg,#3D8FFF 0%,#81FFC6 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#00837D,#9BD64A)" title="25" data-grad="linear-gradient(90deg,#00837D 0%,#9BD64A 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,rgba(71,155,133,0.93),#3B86E9)" title="26" data-grad="linear-gradient(90deg,rgba(71,155,133,0.93) 0%,#3B86E9 100%)"></button>
+            </div>
+            <div class="kv-toolbar-row">
+              <span class="kv-color-toolbar-label">단색:</span>
+              <button class="kv-color-swatch" data-color="#CC1111" style="background:#CC1111" title="빨간색" type="button"></button>
+              <button class="kv-color-swatch" data-color="#FF6600" style="background:#FF6600" title="주황" type="button"></button>
+              <button class="kv-color-swatch" data-color="#0066CC" style="background:#0066CC" title="파란색" type="button"></button>
+              <button class="kv-color-swatch" data-color="#111111" style="background:#111111" title="검정" type="button"></button>
+              <button class="kv-color-swatch" data-color="#ffffff" style="background:#ffffff;border:1px solid #555" title="흰색" type="button"></button>
+              <input type="color" class="kv-color-picker-input kv-rich-color-picker" value="#CC1111" title="직접 선택">
+              <div class="kv-toolbar-divider"></div>
+              <button class="kv-color-clear-btn kv-rich-color-clear" type="button">✕ 제거</button>
+            </div>
+            <div class="kv-toolbar-row">
+              <span class="kv-color-toolbar-label">그라데이션:</span>
+              <input type="color" class="kv-color-picker-input kv-rich-grad-start" value="#CC1111" title="시작색">
+              <span class="kv-grad-arrow">→</span>
+              <input type="color" class="kv-color-picker-input kv-rich-grad-end" value="#FF6600" title="끝색">
+              <select class="kv-grad-direction-select kv-rich-grad-direction" title="방향">
+                <option value="90deg">→ 좌→우</option>
+                <option value="270deg">← 우→좌</option>
+                <option value="180deg">↓ 상→하</option>
+                <option value="0deg">↑ 하→상</option>
+                <option value="135deg">↘ 대각↘</option>
+                <option value="45deg">↗ 대각↗</option>
+              </select>
+              <button class="kv-grad-apply-btn kv-rich-grad-apply" type="button">적용</button>
+            </div>
+          </div>
+          <!-- 기업명 설정 패널 -->
+          <div class="kv-field-settings hidden" id="kv-settings-orgName">
+            <div class="kv-field-settings-body">
+              <div class="kv-control-row" id="kv-orgName-marginTop-row">
+                <label>위쪽 여백</label>
+                <input type="range" min="0" max="40" value="9" step="1" class="kv-slider" id="kv-orgName-marginTop">
+                <input type="number" min="0" max="40" value="9" class="kv-value-input" id="kv-orgName-marginTop-num"><span class="kv-unit">%</span>
+              </div>
+              <div class="kv-control-row">
+                <label>폰트 크기</label>
+                <input type="range" min="14" max="80" value="42" class="kv-slider" data-field="orgName" data-prop="fontSize">
+                <input type="number" min="14" max="80" value="42" class="kv-value-input" data-field="orgName" data-prop="fontSize"><span class="kv-unit">px</span>
+              </div>
+              <div class="kv-control-row">
+                <label>색상</label>
+                <div class="kv-color-group">
+                  <input type="color" value="#111111" data-field="orgName" data-prop="color">
+                  <input type="text" value="#111111" maxlength="7" class="kv-hex-input" data-field="orgName" data-prop="color">
+                </div>
+              </div>
+              <div class="kv-control-row">
+                <label>굵기</label>
+                <select class="kv-weight-select setting-input" data-field="orgName" style="padding:2px 4px;height:28px;">
+                  <option value="100">100 Thin</option>
+                  <option value="200">200 ExtraLight</option>
+                  <option value="300">300 Light</option>
+                  <option value="400">400 Regular</option>
+                  <option value="500">500 Medium</option>
+                  <option value="600">600 SemiBold</option>
+                  <option value="700" selected>700 Bold</option>
+                  <option value="800">800 ExtraBold</option>
+                  <option value="900">900 Black</option>
+                </select>
+                <label class="kv-checkbox-label" style="margin-left:6px;"><input type="checkbox" checked data-field="orgName" data-prop="bold"> 굵게</label>
+              </div>
+              <div class="kv-control-row">
+                <label>폰트</label>
+                <select class="kv-font-select setting-input" data-field="orgName" style="padding:2px 4px;height:28px;">
+                  <option value="Pretendard Variable">Pretendard (기본)</option>
+                  <option value="Noto Sans KR">Noto Sans KR</option>
+                  <option value="Nanum Gothic">나눔고딕</option>
+                  <option value="Nanum Myeongjo">나눔명조</option>
+                  <option value="Black Han Sans">검정고딕</option>
+                  <option value="GMarketSans">Gmarket Sans</option>
+                  <option value="Paperozi">Paperozi</option>
+                  <option value="YeogiOttaeJalnan">여기어때 잘난체</option>
+                  <option value="YeogiOttaeJalnanGothic">여기어때 잘난체 고딕</option>
+                  <option value="Aggravo">어그로체</option>
+                  <option value="SchoolSafetyNotification">학교안심 알림장</option>
+                  <option value="GangwonEducationTteontteon">강원교육튼튼체</option>
+                  <option value="KotraBold">KOTRA Bold</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <div class="flex items-center justify-between">
+            <label class="setting-label" id="kv-title-label">기업명 + 공고명 (최대 3줄)</label>
+            <button class="kv-field-toggle text-xs text-blue-400" data-kv-field="title">설정 ▼</button>
+          </div>
+          <div id="kv-title" contenteditable="true" role="textbox" aria-multiline="true" class="setting-input kv-rich-editor" data-placeholder="공고제목이 들어갑니다." spellcheck="false">공고제목이 들어갑니다.</div>
+          <div id="kv-title-color-toolbar" class="kv-color-toolbar hidden">
+            <!-- 단색 행 -->
+            <div class="kv-toolbar-row">
+              <span class="kv-color-toolbar-label">단색:</span>
+              <button class="kv-color-swatch" data-color="#CC1111" style="background:#CC1111" title="빨간색" type="button"></button>
+              <button class="kv-color-swatch" data-color="#FF6600" style="background:#FF6600" title="주황" type="button"></button>
+              <button class="kv-color-swatch" data-color="#0066CC" style="background:#0066CC" title="파란색" type="button"></button>
+              <button class="kv-color-swatch" data-color="#111111" style="background:#111111" title="검정" type="button"></button>
+              <button class="kv-color-swatch" data-color="#ffffff" style="background:#ffffff;border:1px solid #555" title="흰색" type="button"></button>
+              <input type="color" id="kv-title-color-picker" value="#CC1111" class="kv-color-picker-input" title="직접 선택">
+              <div class="kv-toolbar-divider"></div>
+              <button id="kv-title-color-clear" class="kv-color-clear-btn" type="button">✕ 제거</button>
+            </div>
+            <!-- 그라데이션 프리셋 -->
+            <div class="kv-toolbar-row kv-grad-preset-row">
+              <span class="kv-color-toolbar-label">프리셋:</span>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#650404,#D63E45)" title="1" data-grad="linear-gradient(90deg,#650404 0%,#D63E45 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#0092D0,#A9992F)" title="2" data-grad="linear-gradient(90deg,#0092D0 0%,#A9992F 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(121deg,#001C67,#8D54AD)" title="3" data-grad="linear-gradient(121deg,#001C67 0%,#8D54AD 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#0E4194,#5DB53F 50%,#F59C00 75%,#E61F2B)" title="4" data-grad="linear-gradient(90deg,#0E4194 0%,#5DB53F 50%,#F59C00 75%,#E61F2B 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(180deg,#0092D4,#0055A2)" title="5" data-grad="linear-gradient(180deg,#0092D4 0%,#0055A2 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#EB6100,#B94700)" title="6" data-grad="linear-gradient(90deg,#EB6100 0%,#B94700 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#C53178,#3516A2)" title="7" data-grad="linear-gradient(90deg,#C53178 0%,#3516A2 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#99E4FA,#7DFFAF)" title="8" data-grad="linear-gradient(90deg,#99E4FA 0%,#7DFFAF 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#00C6D2,#A2BF1A)" title="9" data-grad="linear-gradient(90deg,#00C6D2 0%,#A2BF1A 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(180deg,#34437A,#6C1E7C)" title="10" data-grad="linear-gradient(180deg,#34437A 51.53%,#6C1E7C 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(180deg,#71FAEC,#00B8FF)" title="11" data-grad="linear-gradient(180deg,#71FAEC 0%,#00B8FF 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#0052A5,#009342)" title="12" data-grad="linear-gradient(90deg,#0052A5 0%,#009342 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(270deg,#419A51,#349DD2)" title="13" data-grad="linear-gradient(270deg,#419A51 0%,#349DD2 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#1D307C,#0F3D92)" title="14" data-grad="linear-gradient(90deg,#1D307C 0%,#0F3D92 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(180deg,#8CFFC0,#00EEFF)" title="15" data-grad="linear-gradient(180deg,#8CFFC0 0%,#00EEFF 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#14AE67,#111D68)" title="16" data-grad="linear-gradient(90deg,#14AE67 0%,#111D68 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#FF9501,#FF753A)" title="17" data-grad="linear-gradient(90deg,#FF9501 0%,#FF753A 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#83BE26,#27A468)" title="18" data-grad="linear-gradient(90deg,#83BE26 0%,#27A468 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#228ADE,#7CC719)" title="19" data-grad="linear-gradient(90deg,#228ADE 0%,#7CC719 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#009F41,#004398)" title="20" data-grad="linear-gradient(90deg,#009F41 0%,#004398 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(270deg,#30406B,#1F2840)" title="21" data-grad="linear-gradient(270deg,#30406B 0%,#1F2840 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#F8B62D,#AACE2B 50%,#1BA0CF)" title="22" data-grad="linear-gradient(90deg,#F8B62D 0%,#AACE2B 50%,#1BA0CF 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#0C2F6F,#0C7EC4 50%,#FCBA03)" title="23" data-grad="linear-gradient(90deg,#0C2F6F 0%,#0C7EC4 50%,#FCBA03 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#3D8FFF,#81FFC6)" title="24" data-grad="linear-gradient(90deg,#3D8FFF 0%,#81FFC6 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,#00837D,#9BD64A)" title="25" data-grad="linear-gradient(90deg,#00837D 0%,#9BD64A 100%)"></button>
+              <button class="kv-grad-swatch" style="background:linear-gradient(90deg,rgba(71,155,133,0.93),#3B86E9)" title="26" data-grad="linear-gradient(90deg,rgba(71,155,133,0.93) 0%,#3B86E9 100%)"></button>
+            </div>
+            <!-- 그라데이션 행 -->
+            <div class="kv-toolbar-row">
+              <span class="kv-color-toolbar-label">그라데이션:</span>
+              <input type="color" id="kv-grad-start" value="#CC1111" class="kv-color-picker-input" title="시작색">
+              <span class="kv-grad-arrow">→</span>
+              <input type="color" id="kv-grad-end" value="#FF6600" class="kv-color-picker-input" title="끝색">
+              <select id="kv-grad-direction" class="kv-grad-direction-select" title="방향">
+                <option value="90deg">→ 좌→우</option>
+                <option value="270deg">← 우→좌</option>
+                <option value="180deg">↓ 상→하</option>
+                <option value="0deg">↑ 하→상</option>
+                <option value="135deg">↘ 대각↘</option>
+                <option value="45deg">↗ 대각↗</option>
+              </select>
+              <button id="kv-grad-apply" class="kv-grad-apply-btn" type="button">적용</button>
+            </div>
+          </div>
+          <!-- 제목 설정 패널 -->
+          <div class="kv-field-settings hidden" id="kv-settings-title">
+            <div class="kv-field-settings-body">
+              <div class="kv-control-row">
+                <label>폰트 크기</label>
+                <input type="range" min="14" max="80" value="50" class="kv-slider" data-field="title" data-prop="fontSize">
+                <input type="number" min="14" max="80" value="50" class="kv-value-input" data-field="title" data-prop="fontSize"><span class="kv-unit">px</span>
+              </div>
+              <div class="kv-control-row">
+                <label>색상</label>
+                <div class="kv-color-group">
+                  <input type="color" value="#FFFFFF" data-field="title" data-prop="color">
+                  <input type="text" value="#FFFFFF" maxlength="7" class="kv-hex-input" data-field="title" data-prop="color">
+                </div>
+              </div>
+              <div class="kv-control-row">
+                <label>굵기</label>
+                <select class="kv-weight-select setting-input" data-field="title" style="padding:2px 4px;height:28px;">
+                  <option value="100">100 Thin</option>
+                  <option value="200">200 ExtraLight</option>
+                  <option value="300">300 Light</option>
+                  <option value="400">400 Regular</option>
+                  <option value="500">500 Medium</option>
+                  <option value="600">600 SemiBold</option>
+                  <option value="700" selected>700 Bold</option>
+                  <option value="800">800 ExtraBold</option>
+                  <option value="900">900 Black</option>
+                </select>
+                <label class="kv-checkbox-label" style="margin-left:6px;"><input type="checkbox" checked data-field="title" data-prop="bold"> 굵게</label>
+              </div>
+              <div class="kv-control-row">
+                <label>폰트</label>
+                <select class="kv-font-select setting-input" data-field="title" style="padding:2px 4px;height:28px;">
+                  <option value="Pretendard Variable">Pretendard (기본)</option>
+                  <option value="Noto Sans KR">Noto Sans KR</option>
+                  <option value="Nanum Gothic">나눔고딕</option>
+                  <option value="Nanum Myeongjo">나눔명조</option>
+                  <option value="Black Han Sans">검정고딕</option>
+                  <option value="GMarketSans">Gmarket Sans</option>
+                  <option value="Paperozi">Paperozi</option>
+                  <option value="YeogiOttaeJalnan">여기어때 잘난체</option>
+                  <option value="YeogiOttaeJalnanGothic">여기어때 잘난체 고딕</option>
+                  <option value="Aggravo">어그로체</option>
+                  <option value="SchoolSafetyNotification">학교안심 알림장</option>
+                  <option value="GangwonEducationTteontteon">강원교육튼튼체</option>
+                  <option value="KotraBold">KOTRA Bold</option>
+                </select>
+              </div>
+              <div class="kv-control-row">
+                <label>자동 조절</label>
+                <label class="kv-checkbox-label"><input type="checkbox" checked id="kv-title-autofit"> 넘칠 때 자동 축소</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-group" id="kv-description-section">
+          <div class="flex items-center justify-between">
+            <label class="setting-label" id="kv-description-label">회사 소개 (최대 3줄)</label>
+            <button class="kv-field-toggle text-xs text-blue-400" data-kv-field="description">설정 ▼</button>
+          </div>
+          <textarea id="kv-description" rows="3" class="setting-input resize-none" placeholder="회사에 대한 소개가 들어갑니다.&#10;최대 3줄까지 가능합니다.">회사에 대한 소개가 들어갑니다.
+회사에 대한 소개가 들어갑니다.
+최대 3줄까지 가능합니다.</textarea>
+          <!-- 설명 설정 패널 -->
+          <div class="kv-field-settings hidden" id="kv-settings-description">
+            <div class="kv-field-settings-body">
+              <div class="kv-control-row" id="kv-description-fontSize-row">
+                <label>폰트 크기</label>
+                <input type="range" min="8" max="40" value="13" class="kv-slider" data-field="description" data-prop="fontSize">
+                <input type="number" min="8" max="40" value="13" class="kv-value-input" data-field="description" data-prop="fontSize"><span class="kv-unit">px</span>
+              </div>
+              <div class="kv-control-row">
+                <label>색상</label>
+                <div class="kv-color-group">
+                  <input type="color" value="#FFFFFF" data-field="description" data-prop="color">
+                  <input type="text" value="#FFFFFF" maxlength="7" class="kv-hex-input" data-field="description" data-prop="color">
+                </div>
+              </div>
+              <div class="kv-control-row">
+                <label>굵기</label>
+                <select class="kv-weight-select setting-input" data-field="description" style="padding:2px 4px;height:28px;">
+                  <option value="100">100 Thin</option>
+                  <option value="200">200 ExtraLight</option>
+                  <option value="300">300 Light</option>
+                  <option value="400" selected>400 Regular</option>
+                  <option value="500">500 Medium</option>
+                  <option value="600">600 SemiBold</option>
+                  <option value="700">700 Bold</option>
+                  <option value="800">800 ExtraBold</option>
+                  <option value="900">900 Black</option>
+                </select>
+                <label class="kv-checkbox-label" style="margin-left:6px;"><input type="checkbox" data-field="description" data-prop="bold"> 굵게</label>
+              </div>
+              <div class="kv-control-row" id="kv-description-font-row">
+                <label>폰트</label>
+                <select class="kv-font-select setting-input" data-field="description" style="padding:2px 4px;height:28px;">
+                  <option value="Pretendard Variable">Pretendard (기본)</option>
+                  <option value="Noto Sans KR">Noto Sans KR</option>
+                  <option value="Nanum Gothic">나눔고딕</option>
+                  <option value="Nanum Myeongjo">나눔명조</option>
+                  <option value="Black Han Sans">검정고딕</option>
+                  <option value="GMarketSans">Gmarket Sans</option>
+                  <option value="Paperozi">Paperozi</option>
+                  <option value="YeogiOttaeJalnan">여기어때 잘난체</option>
+                  <option value="YeogiOttaeJalnanGothic">여기어때 잘난체 고딕</option>
+                  <option value="Aggravo">어그로체</option>
+                  <option value="SchoolSafetyNotification">학교안심 알림장</option>
+                  <option value="GangwonEducationTteontteon">강원교육튼튼체</option>
+                  <option value="KotraBold">KOTRA Bold</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 실사공고04 전용: 회사 소개 2번째 -->
+        <div class="setting-group" id="kv-description2-section" style="display:none;">
+          <div class="flex items-center justify-between">
+            <label class="setting-label">회사 소개 2번째</label>
+            <button class="kv-field-toggle text-xs text-blue-400" data-kv-field="description2">설정 ▼</button>
+          </div>
+          <textarea id="kv-description2" rows="2" class="setting-input resize-none" placeholder="회사에 대한 소개가 들어갑니다.&#10;두번째 줄 소개입니다."></textarea>
+          <div class="kv-field-settings hidden" id="kv-settings-description2">
+            <div class="kv-field-settings-body">
+              <div class="kv-control-row">
+                <label>폰트 크기</label>
+                <input type="range" min="8" max="40" value="15" class="kv-slider" data-field="description2" data-prop="fontSize">
+                <input type="number" min="8" max="40" value="15" class="kv-value-input" data-field="description2" data-prop="fontSize"><span class="kv-unit">px</span>
+              </div>
+              <div class="kv-control-row">
+                <label>색상</label>
+                <div class="kv-color-group">
+                  <input type="color" value="#e0e0e0" data-field="description2" data-prop="color">
+                  <input type="text" value="#e0e0e0" maxlength="7" class="kv-hex-input" data-field="description2" data-prop="color">
+                </div>
+              </div>
+              <div class="kv-control-row">
+                <label>굵기</label>
+                <select class="kv-weight-select setting-input" data-field="description2" style="padding:2px 4px;height:28px;">
+                  <option value="100">100 Thin</option>
+                  <option value="200">200 ExtraLight</option>
+                  <option value="300">300 Light</option>
+                  <option value="400">400 Regular</option>
+                  <option value="500">500 Medium</option>
+                  <option value="600" selected>600 SemiBold</option>
+                  <option value="700">700 Bold</option>
+                  <option value="800">800 ExtraBold</option>
+                  <option value="900">900 Black</option>
+                </select>
+                <label class="kv-checkbox-label" style="margin-left:6px;"><input type="checkbox" data-field="description2" data-prop="bold"> 굵게</label>
+              </div>
+              <div class="kv-control-row">
+                <label>폰트</label>
+                <select class="kv-font-select setting-input" data-field="description2" style="padding:2px 4px;height:28px;">
+                  <option value="Pretendard Variable" selected>Pretendard (기본)</option>
+                  <option value="Noto Sans KR">Noto Sans KR</option>
+                  <option value="Nanum Gothic">나눔고딕</option>
+                  <option value="Nanum Myeongjo">나눔명조</option>
+                  <option value="Black Han Sans">검정고딕</option>
+                  <option value="GMarketSans">Gmarket Sans</option>
+                  <option value="Paperozi">Paperozi</option>
+                  <option value="YeogiOttaeJalnan">여기어때 잘난체</option>
+                  <option value="YeogiOttaeJalnanGothic">여기어때 잘난체 고딕</option>
+                  <option value="Aggravo">어그로체</option>
+                  <option value="SchoolSafetyNotification">학교안심 알림장</option>
+                  <option value="GangwonEducationTteontteon">강원교육튼튼체</option>
+                  <option value="KotraBold">KOTRA Bold</option>
+                  <option value="Nanum Pen Script">나눔펜스크립트</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="setting-group" id="kv-date-company-section">
+          <div class="flex items-center justify-between">
+            <label class="setting-label" id="kv-date-company-label">날짜 + 기관장명</label>
+            <button class="kv-field-toggle text-xs text-blue-400" data-kv-field="dateCompany">설정 ▼</button>
+          </div>
+          <textarea id="kv-date-company" rows="2" class="setting-input" style="resize:none; line-height:1.5;" placeholder="2026년 01월 30일&#10;기관장명">2026년 01월 30일
+기업명</textarea>
+          <!-- 날짜+기관장명 설정 패널 -->
+          <div class="kv-field-settings hidden" id="kv-settings-dateCompany">
+            <div class="kv-field-settings-body">
+              <div class="kv-control-row" id="kv-dateCompany-fontSize-row">
+                <label>폰트 크기</label>
+                <input type="range" min="8" max="40" value="12" class="kv-slider" data-field="dateCompany" data-prop="fontSize">
+                <input type="number" min="8" max="40" value="12" class="kv-value-input" data-field="dateCompany" data-prop="fontSize"><span class="kv-unit">px</span>
+              </div>
+              <div class="kv-control-row">
+                <label>색상</label>
+                <div class="kv-color-group">
+                  <input type="color" value="#FFFFFF" data-field="dateCompany" data-prop="color">
+                  <input type="text" value="#FFFFFF" maxlength="7" class="kv-hex-input" data-field="dateCompany" data-prop="color">
+                </div>
+              </div>
+              <div class="kv-control-row" id="kv-dateCompany-weight-row">
+                <label>굵기</label>
+                <select class="kv-weight-select setting-input" data-field="dateCompany" style="padding:2px 4px;height:28px;">
+                  <option value="100">100 Thin</option>
+                  <option value="200">200 ExtraLight</option>
+                  <option value="300">300 Light</option>
+                  <option value="400" selected>400 Regular</option>
+                  <option value="500">500 Medium</option>
+                  <option value="600">600 SemiBold</option>
+                  <option value="700">700 Bold</option>
+                  <option value="800">800 ExtraBold</option>
+                  <option value="900">900 Black</option>
+                </select>
+                <label class="kv-checkbox-label" style="margin-left:6px;"><input type="checkbox" data-field="dateCompany" data-prop="bold"> 굵게</label>
+              </div>
+              <div class="kv-control-row" id="kv-dateCompany-font-row">
+                <label>폰트</label>
+                <select class="kv-font-select setting-input" data-field="dateCompany" style="padding:2px 4px;height:28px;">
+                  <option value="Pretendard Variable">Pretendard (기본)</option>
+                  <option value="Noto Sans KR">Noto Sans KR</option>
+                  <option value="Nanum Gothic">나눔고딕</option>
+                  <option value="Nanum Myeongjo">나눔명조</option>
+                  <option value="Black Han Sans">검정고딕</option>
+                  <option value="GMarketSans">Gmarket Sans</option>
+                  <option value="Paperozi">Paperozi</option>
+                  <option value="YeogiOttaeJalnan">여기어때 잘난체</option>
+                  <option value="YeogiOttaeJalnanGothic">여기어때 잘난체 고딕</option>
+                  <option value="Aggravo">어그로체</option>
+                  <option value="SchoolSafetyNotification">학교안심 알림장</option>
+                  <option value="GangwonEducationTteontteon">강원교육튼튼체</option>
+                  <option value="KotraBold">KOTRA Bold</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+          </div>
+        </div>
+
+        <!-- 템플릿 설정 (접이식) -->
+        <div class="kv-collapsible" id="kv-template-settings-section" style="display:none;">
+          <button class="kv-collapsible-header" id="kv-template-settings-toggle">
+            <span>템플릿 설정</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body hidden" id="kv-template-settings-body">
+
+        <div class="setting-group" id="kv-template-type-group">
+          <label class="setting-label">템플릿 타입</label>
+          <div class="kv-btn-group">
+            <button class="kv-option-btn active" data-kv-type="overlay">오버레이형</button>
+            <button class="kv-option-btn" data-kv-type="split">분리형</button>
+          </div>
+        </div>
+
+        <div class="setting-group" id="kv-split-layout-group" style="display:none;">
+          <label class="setting-label">텍스트 배치</label>
+          <div class="kv-btn-group kv-btn-group-4">
+            <button class="kv-option-btn active" data-kv-split-layout="text-left">텍스트 좌측</button>
+            <button class="kv-option-btn" data-kv-split-layout="text-right">텍스트 우측</button>
+            <button class="kv-option-btn" data-kv-split-layout="text-top">텍스트 상단</button>
+            <button class="kv-option-btn" data-kv-split-layout="text-bottom">이미지 상단</button>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">텍스트 정렬</label>
+          <div class="kv-btn-group kv-btn-group-3">
+            <button class="kv-option-btn active" data-kv-align="left">좌측</button>
+            <button class="kv-option-btn" data-kv-align="center">센터</button>
+            <button class="kv-option-btn" data-kv-align="right">우측</button>
+          </div>
+        </div>
+
+        <div class="setting-group" id="kv-effect-group">
+          <label class="setting-label">효과</label>
+          <div class="kv-btn-group kv-btn-group-4">
+            <button class="kv-option-btn" data-kv-effect="none">없음</button>
+            <button class="kv-option-btn active" data-kv-effect="gradient">그라데이션</button>
+            <button class="kv-option-btn" data-kv-effect="diagonal">사선</button>
+            <button class="kv-option-btn" data-kv-effect="curve">곡선</button>
+          </div>
+        </div>
+
+        <div class="setting-group" id="kv-shadow-group">
+          <label class="setting-label">텍스트 그림자</label>
+          <div class="kv-btn-group kv-btn-group-4">
+            <button class="kv-option-btn" data-kv-shadow="none">없음</button>
+            <button class="kv-option-btn active" data-kv-shadow="light">약하게</button>
+            <button class="kv-option-btn" data-kv-shadow="medium">중간</button>
+            <button class="kv-option-btn" data-kv-shadow="strong">강하게</button>
+          </div>
+        </div>
+
+        <div class="setting-group" id="kv-height-group">
+          <label class="setting-label">높이 모드</label>
+          <div class="kv-btn-group">
+            <button class="kv-option-btn active" data-kv-height="fixed">고정</button>
+            <button class="kv-option-btn" data-kv-height="fluid">유동</button>
+          </div>
+        </div>
+
+          </div>
+        </div>
+
+        <!-- 텍스트 포지션 (고정 높이 모드) -->
+        <div id="kv-text-position-section" class="kv-position-section">
+          <h3 class="setting-label text-xs uppercase tracking-wider text-gray-500 pt-3 border-t border-gray-700">텍스트 포지션</h3>
+
+          <div class="kv-collapsible kv-pos-accordion">
+            <button class="kv-collapsible-header kv-pos-toggle" data-pos-field="jobCode">
+              <span>공고번호</span><span class="kv-chevron">&#9660;</span>
+            </button>
+            <div class="kv-collapsible-body hidden" data-pos-body="jobCode">
+              <div class="kv-pos-row"><label>Left</label><input type="range" min="0" max="100" value="30" class="kv-slider" data-pos="jobCode" data-axis="left"><input type="number" min="0" max="100" value="30" class="kv-value-input" data-pos="jobCode" data-axis="left"><span class="kv-unit">px</span></div>
+              <div class="kv-pos-row"><label>Top</label><input type="range" min="0" max="400" value="20" class="kv-slider" data-pos="jobCode" data-axis="top"><input type="number" min="0" max="400" value="20" class="kv-value-input" data-pos="jobCode" data-axis="top"><span class="kv-unit">px</span></div>
+            </div>
+          </div>
+
+          <div class="kv-collapsible kv-pos-accordion">
+            <button class="kv-collapsible-header kv-pos-toggle" data-pos-field="title">
+              <span>제목</span><span class="kv-chevron">&#9660;</span>
+            </button>
+            <div class="kv-collapsible-body hidden" data-pos-body="title">
+              <div class="kv-pos-row"><label>Left</label><input type="range" min="0" max="100" value="30" class="kv-slider" data-pos="title" data-axis="left"><input type="number" min="0" max="100" value="30" class="kv-value-input" data-pos="title" data-axis="left"><span class="kv-unit">px</span></div>
+              <div class="kv-pos-row"><label>Top</label><input type="range" min="0" max="400" value="65" class="kv-slider" data-pos="title" data-axis="top"><input type="number" min="0" max="400" value="65" class="kv-value-input" data-pos="title" data-axis="top"><span class="kv-unit">px</span></div>
+            </div>
+          </div>
+
+          <div class="kv-collapsible kv-pos-accordion">
+            <button class="kv-collapsible-header kv-pos-toggle" data-pos-field="description">
+              <span>설명</span><span class="kv-chevron">&#9660;</span>
+            </button>
+            <div class="kv-collapsible-body hidden" data-pos-body="description">
+              <div class="kv-pos-row"><label>Left</label><input type="range" min="0" max="100" value="30" class="kv-slider" data-pos="description" data-axis="left"><input type="number" min="0" max="100" value="30" class="kv-value-input" data-pos="description" data-axis="left"><span class="kv-unit">px</span></div>
+              <div class="kv-pos-row"><label>Top</label><input type="range" min="0" max="400" value="180" class="kv-slider" data-pos="description" data-axis="top"><input type="number" min="0" max="400" value="180" class="kv-value-input" data-pos="description" data-axis="top"><span class="kv-unit">px</span></div>
+            </div>
+          </div>
+
+          <div class="kv-collapsible kv-pos-accordion">
+            <button class="kv-collapsible-header kv-pos-toggle" data-pos-field="dateCompany">
+              <span>날짜/기업명</span><span class="kv-chevron">&#9660;</span>
+            </button>
+            <div class="kv-collapsible-body hidden" data-pos-body="dateCompany">
+              <div class="kv-pos-row"><label>Left</label><input type="range" min="0" max="100" value="30" class="kv-slider" data-pos="dateCompany" data-axis="left"><input type="number" min="0" max="100" value="30" class="kv-value-input" data-pos="dateCompany" data-axis="left"><span class="kv-unit">px</span></div>
+              <div class="kv-pos-row"><label>Top</label><input type="range" min="0" max="400" value="260" class="kv-slider" data-pos="dateCompany" data-axis="top"><input type="number" min="0" max="400" value="260" class="kv-value-input" data-pos="dateCompany" data-axis="top"><span class="kv-unit">px</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 컬러 설정 (접이식) -->
+        <div class="kv-collapsible">
+          <button class="kv-collapsible-header" id="kv-color-settings-toggle">
+            <span id="kv-color-settings-label">컬러 설정</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body hidden" id="kv-color-settings-body">
+
+        <div class="setting-group" id="kv-bg-color-group">
+          <label class="setting-label">이미지 배경 컬러</label>
+          <div class="flex gap-2 items-center">
+            <input type="color" id="kv-bg-color" value="#1f46a8" class="color-input w-10 h-8">
+            <input type="text" id="kv-bg-color-text" value="#1f46a8" class="setting-input flex-1">
+          </div>
+        </div>
+
+        <div class="setting-group" id="kv-brand-color-group">
+          <label class="setting-label">브랜드 컬러</label>
+          <div class="flex gap-2 items-center">
+            <input type="color" id="kv-brand-color" value="#16213d" class="color-input w-10 h-8">
+            <input type="text" id="kv-brand-color-text" value="#16213d" class="setting-input flex-1">
+          </div>
+        </div>
+
+        <div class="setting-group hidden" id="kv-photo-content-bg-group">
+          <label class="setting-label">배경 컬러</label>
+          <div class="flex gap-2 items-center">
+            <input type="color" id="kv-photo-content-bg" value="#F6F6F6" class="color-input w-10 h-8">
+            <input type="text" id="kv-photo-content-bg-text" value="#F6F6F6" class="setting-input flex-1">
+          </div>
+        </div>
+
+        <div class="setting-group hidden" id="kv-title-accent-color-group">
+          <label class="setting-label">제목 1번째 줄 컬러</label>
+          <div class="flex gap-2 items-center">
+            <input type="color" id="kv-title-accent-color" value="#CC1111" class="color-input w-10 h-8">
+            <input type="text" id="kv-title-accent-color-text" value="#CC1111" class="setting-input flex-1">
+          </div>
+        </div>
+
+        <!-- 실사공고05 전용: 이미지 배경 조정 -->
+        <div class="setting-group hidden" id="kv-photo-bg-adjust-group">
+          <label class="setting-label">이미지 배경 조정</label>
+          <div style="margin-top:6px;">
+            <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:2px;">확대/축소</label>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <input type="range" min="100" max="300" value="100" id="kv-photo-bg-size" class="kv-slider" style="flex:1;">
+              <span id="kv-photo-bg-size-value" style="min-width:36px; text-align:right; font-size:11px;">100%</span>
+            </div>
+          </div>
+          <div style="margin-top:6px;">
+            <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:2px;">좌우 위치</label>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <input type="range" min="0" max="100" value="50" id="kv-photo-bg-pos-x" class="kv-slider" style="flex:1;">
+              <span id="kv-photo-bg-pos-x-value" style="min-width:36px; text-align:right; font-size:11px;">50%</span>
+            </div>
+          </div>
+          <div style="margin-top:6px;">
+            <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:2px;">상하 위치</label>
+            <div style="display:flex; align-items:center; gap:4px;">
+              <input type="range" min="0" max="100" value="50" id="kv-photo-bg-pos-y" class="kv-slider" style="flex:1;">
+              <span id="kv-photo-bg-pos-y-value" style="min-width:36px; text-align:right; font-size:11px;">50%</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 실사공고02/03/04 전용: 모서리 라운딩 -->
+        <div class="setting-group hidden" id="kv-photo-radius-group">
+          <label class="setting-label" id="kv-photo-radius-label">이미지 모서리 라운딩</label>
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-top:4px;">
+            <div>
+              <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:2px;">상단 좌측</label>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <input type="range" min="0" max="120" value="0" id="kv-radius-tl" class="kv-slider" style="flex:1;">
+                <span id="kv-radius-tl-value" style="min-width:30px; text-align:right; font-size:11px;">0px</span>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:2px;">상단 우측</label>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <input type="range" min="0" max="120" value="0" id="kv-radius-tr" class="kv-slider" style="flex:1;">
+                <span id="kv-radius-tr-value" style="min-width:30px; text-align:right; font-size:11px;">0px</span>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:2px;">하단 좌측</label>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <input type="range" min="0" max="120" value="90" id="kv-radius-bl" class="kv-slider" style="flex:1;">
+                <span id="kv-radius-bl-value" style="min-width:30px; text-align:right; font-size:11px;">90px</span>
+              </div>
+            </div>
+            <div>
+              <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:2px;">하단 우측</label>
+              <div style="display:flex; align-items:center; gap:4px;">
+                <input type="range" min="0" max="120" value="90" id="kv-radius-br" class="kv-slider" style="flex:1;">
+                <span id="kv-radius-br-value" style="min-width:30px; text-align:right; font-size:11px;">90px</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:8px;" id="kv-card-bgcolor-row">
+            <label style="font-size:11px; color:var(--text-secondary); display:block; margin-bottom:2px;">배경색</label>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <input type="color" value="#0a0f1e" id="kv-card-bgcolor" style="width:28px; height:28px; padding:0; border:1px solid var(--border-color); border-radius:4px; cursor:pointer;">
+              <input type="text" value="#0a0f1e" maxlength="7" id="kv-card-bgcolor-text" class="kv-hex-input" style="width:72px; font-size:11px;">
+            </div>
+          </div>
+        </div>
+
+          </div>
+        </div>
+
+        <!-- 로고 설정 (접이식) -->
+        <div class="kv-collapsible">
+          <button class="kv-collapsible-header" id="kv-logo-toggle">
+            <span>로고 설정</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body hidden" id="kv-logo-body">
+            <div class="setting-group">
+              <label class="kv-file-label">
+                <span>+ 로고 이미지 첨부</span>
+                <input type="file" id="kv-logo-file" accept="image/*" class="hidden">
+              </label>
+              <div id="kv-logo-preview" class="mt-2 hidden">
+                <img src="" alt="Logo" class="h-8 object-contain">
+                <button id="kv-logo-remove" class="text-xs text-red-400 mt-1">삭제</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 기업정보 검색 (접이식) -->
+        <div class="kv-collapsible">
+          <button class="kv-collapsible-header" id="kv-company-search-toggle">
+            <span>기업정보 검색</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body hidden" id="kv-company-search-body">
+            <div class="space-y-2">
+              <div class="flex gap-2">
+                <input type="text" id="kv-company-keyword" placeholder="기업명 입력..." class="setting-input flex-1">
+                <button id="btn-kv-company-search" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium text-white">검색</button>
+              </div>
+              <div id="kv-company-results" class="kv-company-results hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 배경 이미지 설정 (접이식) -->
+        <div class="kv-collapsible">
+          <button class="kv-collapsible-header" id="kv-bg-settings-toggle">
+            <span>배경 이미지 설정</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body hidden" id="kv-bg-settings-body">
+
+        <div class="setting-group">
+          <label class="kv-file-label">
+            <span>+ 이미지 직접 첨부</span>
+            <input type="file" id="kv-bg-file" accept="image/*" class="hidden">
+          </label>
+          <div id="kv-bg-preview" class="mt-2 hidden">
+            <img src="" alt="Background" class="w-full h-20 object-cover rounded">
+            <button id="kv-bg-remove" class="text-xs text-red-400 mt-1">삭제</button>
+          </div>
+        </div>
+
+        <div class="setting-group">
+          <label class="setting-label">이미지 URL</label>
+          <input type="url" id="kv-bg-url" placeholder="배경 이미지 URL 입력" class="setting-input" value="https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80">
+        </div>
+
+        <!-- Figma 가져오기 -->
+        <div class="kv-collapsible">
+          <button class="kv-collapsible-header" id="kv-figma-toggle">
+            <span>Figma에서 가져오기</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body hidden" id="kv-figma-body">
+            <div class="space-y-2">
+              <div id="figma-no-token" class="hidden" style="font-size:11px; color:var(--text-secondary); padding:4px 0;">
+                Figma 토큰이 설정되지 않았습니다. <a href="#" id="figma-open-settings" style="color:var(--accent-color); text-decoration:underline;">설정</a>에서 토큰을 입력해주세요.
+              </div>
+              <div class="flex gap-2">
+                <input type="text" id="figma-file-url" placeholder="Figma 파일 URL 붙여넣기" class="setting-input flex-1" style="font-size:12px;">
+                <button id="btn-figma-load" class="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 rounded text-xs font-medium whitespace-nowrap">불러오기</button>
+              </div>
+              <div id="figma-frames" class="figma-frame-list hidden"></div>
+              <div id="figma-import-controls" class="hidden">
+                <button id="btn-figma-import" class="w-full px-3 py-1.5 bg-gray-600 hover:bg-gray-500 rounded text-xs font-medium" style="margin-top:4px;">선택 프레임 DB에 저장</button>
+              </div>
+              <div id="figma-status" class="hidden text-xs text-gray-400 text-center py-1"></div>
+
+              <!-- Figma Variables 템플릿 서브섹션 -->
+              <div class="figma-vars-section">
+                <div class="figma-vars-header">
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h10M4 17h7"/></svg>
+                  <span>Variables 템플릿 연동</span>
+                </div>
+                <p class="figma-vars-desc">Figma 파일의 Variables를 KV 텍스트와 연결하여 자동 업데이트합니다.</p>
+                <button id="btn-figma-vars-load" class="w-full px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 rounded text-xs font-medium">변수 불러오기</button>
+                <div id="figma-vars-status" class="hidden text-xs text-gray-400 py-1"></div>
+                <div id="figma-vars-mapping" class="figma-vars-mapping hidden"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 이미지 검색 -->
+        <div class="kv-collapsible">
+          <button class="kv-collapsible-header" id="kv-img-search-toggle">
+            <span>이미지 검색</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body hidden" id="kv-img-search-body">
+            <div class="space-y-2">
+              <div class="kv-img-sources">
+                <label class="kv-checkbox-label"><input type="checkbox" checked data-img-src="unsplash"> Unsplash</label>
+                <label class="kv-checkbox-label"><input type="checkbox" checked data-img-src="pexels"> Pexels</label>
+                <label class="kv-checkbox-label"><input type="checkbox" checked data-img-src="pixabay"> Pixabay</label>
+                <label class="kv-checkbox-label"><input type="checkbox" checked data-img-src="imagedb"> 내 이미지</label>
+                <label class="kv-checkbox-label"><input type="checkbox" data-img-src="incruit"> incruit 서버 이미지</label>
+              </div>
+              <div id="kv-img-no-keys" class="hidden" style="font-size:11px; color:var(--text-secondary); padding:4px 0;">
+                API 키가 설정되지 않았습니다. <a href="#" id="kv-img-open-settings" style="color:var(--accent-color); text-decoration:underline;">설정</a>에서 API 키를 입력해주세요.
+              </div>
+              <div class="flex gap-2">
+                <input type="text" id="kv-img-keyword" placeholder="검색 키워드 (예: office, technology)" class="setting-input flex-1">
+                <button id="btn-kv-img-search" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 rounded text-xs font-medium whitespace-nowrap">검색</button>
+              </div>
+              <div id="kv-img-results" class="kv-img-results hidden"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 이미지 관리 -->
+        <div class="kv-collapsible hidden">
+          <button class="kv-collapsible-header" id="kv-imgdb-toggle">
+            <span>이미지 관리</span>
+            <span class="kv-chevron">&#9660;</span>
+          </button>
+          <div class="kv-collapsible-body hidden" id="kv-imgdb-body">
+            <div class="space-y-3">
+              <!-- 업로드 영역 -->
+              <div class="imagedb-upload-zone" id="imagedb-drop-zone">
+                <input type="file" id="imagedb-file-input" accept="image/*" multiple class="hidden">
+                <div class="imagedb-upload-content">
+                  <svg class="w-6 h-6 mx-auto mb-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                  <span class="text-xs text-gray-400">이미지를 드래그하거나 클릭하여 업로드</span>
+                </div>
+              </div>
+
+              <!-- 카테고리/태그 입력 (업로드 시 사용) -->
+              <div class="flex gap-2">
+                <select id="imagedb-category" class="setting-input flex-1" style="font-size:12px;">
+                  <option value="business">비즈니스/일반</option>
+                  <option value="it">IT/기술</option>
+                  <option value="startup">스타트업</option>
+                  <option value="creative">크리에이티브</option>
+                  <option value="service">서비스/유통</option>
+                  <option value="manufacturing">제조/생산</option>
+                  <option value="education">교육</option>
+                  <option value="healthcare">의료/헬스케어</option>
+                  <option value="government">공공기관</option>
+                  <option value="finance">금융</option>
+                </select>
+                <input type="text" id="imagedb-tags" placeholder="태그 (쉼표 구분)" class="setting-input flex-1" style="font-size:12px;">
+              </div>
+
+              <!-- 필터 + 이미지 목록 -->
+              <div class="flex gap-2 items-center">
+                <select id="imagedb-filter-category" class="setting-input flex-1" style="font-size:12px;">
+                  <option value="">전체 카테고리</option>
+                  <option value="business">비즈니스/일반</option>
+                  <option value="it">IT/기술</option>
+                  <option value="startup">스타트업</option>
+                  <option value="creative">크리에이티브</option>
+                  <option value="service">서비스/유통</option>
+                  <option value="manufacturing">제조/생산</option>
+                  <option value="education">교육</option>
+                  <option value="healthcare">의료/헬스케어</option>
+                  <option value="government">공공기관</option>
+                  <option value="finance">금융</option>
+                </select>
+                <span id="imagedb-stats" class="text-xs text-gray-500 whitespace-nowrap">0개</span>
+              </div>
+              <div id="imagedb-grid" class="imagedb-grid hidden"></div>
+
+              <!-- 하단 액션 -->
+              <div class="flex gap-2">
+                <button id="btn-imagedb-export" class="px-2 py-1 border border-gray-600 hover:bg-gray-800 rounded text-xs flex-1">내보내기</button>
+                <label class="px-2 py-1 border border-gray-600 hover:bg-gray-800 rounded text-xs flex-1 text-center cursor-pointer">
+                  가져오기
+                  <input type="file" id="imagedb-import-file" accept=".json" class="hidden">
+                </label>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+          </div>
+        </div>
+
+        <!-- 다운로드 버튼 (드롭다운) -->
+        <div class="space-y-2 pt-4 border-t border-gray-700">
+          <div class="kv-download-group">
+            <button id="btn-kv-download" class="kv-download-main-btn">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+              PNG 다운로드
+            </button>
+            <button id="btn-kv-download-toggle" class="kv-download-arrow-btn" title="다운로드 옵션">
+              <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="kv-download-dropdown" class="kv-download-dropdown hidden">
+              <button class="kv-download-option" data-format="png2x">PNG 2x (기본)</button>
+              <button class="kv-download-option" data-format="png4x">PNG 4x (고화질)</button>
+              <button class="kv-download-option" data-format="jpg">JPG (최적화)</button>
+              <button class="kv-download-option" data-format="html">HTML 파일</button>
+              <hr class="kv-download-divider">
+              <button class="kv-download-option kv-download-server" data-format="server-png2x">🖥️ 서버 렌더링 PNG 2x</button>
+              <button class="kv-download-option kv-download-server" data-format="server-png4x">🖥️ 서버 렌더링 PNG 4x</button>
+            </div>
+          </div>
+          <button id="btn-kv-reset" class="w-full py-2 border border-gray-600 hover:bg-gray-800 rounded text-sm">초기화</button>
+
+          <!-- OG 크롭 -->
+          <button id="btn-kv-crop-start" class="w-full py-2 border border-gray-600 hover:bg-gray-800 rounded text-sm">OG 크롭 (600×315)</button>
+          <div id="kv-crop-actions" class="kv-crop-actions hidden">
+            <button id="btn-kv-crop-confirm">저장 (_600315.png)</button>
+            <button id="btn-kv-crop-cancel">취소</button>
+          </div>
+
+          <!-- 추가 액션 버튼 -->
+          <div class="kv-action-group">
+            <button id="btn-kv-copy-image" class="kv-action-btn" title="클립보드에 이미지로 복사">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+              이미지 복사
+            </button>
+            <button id="btn-kv-preview-popup" class="kv-action-btn" title="새 창에서 미리보기">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+              새 창 미리보기
+            </button>
+            <button id="btn-kv-autofill" class="kv-action-btn" title="원문에서 자동 채우기">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+              자동 채우기
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+
+    <!-- Resize Handle 1 -->
+    <div class="resize-handle" data-resize="settings-panel"></div>
+
+    <!-- Panel 2: Editor -->
+    <main id="editor-panel" class="panel flex-1 flex flex-col">
+      <header class="panel-header">
+        <div class="flex gap-2">
+          <button class="tab-btn active" data-view="dual">듀얼</button>
+          <button class="tab-btn" data-view="original">원문</button>
+          <button class="tab-btn" data-view="source">변환문</button>
+          <button class="tab-btn" data-view="preview">미리보기</button>
+          <button class="tab-btn" data-view="split">코드+뷰</button>
+          <button class="tab-btn" data-view="code">HTML코드</button>
+          <button class="tab-btn" data-view="imagemap">이미지맵+인트로</button>
+        </div>
+        <span id="app-version" class="text-xs text-gray-400 ml-auto cursor-pointer select-none" title="버전 정보">인크루트 채용공고 에디터 <span class="text-gray-500">v2.0</span></span>
+      </header>
+      <div class="panel-content flex-1 flex">
+        <!-- 원문 (추출된 원본 문서, 읽기 전용) -->
+        <div id="original-container" class="flex-1 flex flex-col border-r border-gray-700 hidden">
+          <div class="px-3 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span class="text-xs text-gray-400">원문</span>
+              <span id="original-source-label" class="text-xs text-blue-400"></span>
+              <button id="btn-toggle-code-view" class="text-xs text-gray-500 hover:text-gray-300 hidden" title="코드/렌더링 전환">코드 보기</button>
+            </div>
+            <button id="btn-restore-source" class="text-xs text-blue-400 hover:text-blue-300 hidden" title="원문을 변환문 에디터로 복원">변환문에 복원</button>
+          </div>
+          <div id="original-viewer" class="flex-1 p-4 overflow-auto focus:outline-none" contenteditable="true" data-placeholder="원문을 여기에 직접 입력하거나 붙여넣으세요..."></div>
+        </div>
+
+        <!-- 변환문 (편집 가능) -->
+        <div id="source-container" class="flex-1 flex flex-col border-r border-gray-700">
+          <div class="px-3 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
+            <span class="text-xs text-gray-400">변환문</span>
+            <button id="btn-clear-source" class="text-xs text-gray-500 hover:text-gray-300">
+              지우기
+            </button>
+          </div>
+          <div
+            id="source-editor"
+            class="flex-1 p-4 overflow-auto focus:outline-none"
+            contenteditable="true"
+            data-placeholder="원본 문서에서 내용을 복사하여 여기에 붙여넣으세요..."
+          ></div>
+        </div>
+
+        <!-- 통합 미리보기 (KV + 채용공고) -->
+        <div id="preview-container" class="flex-1 flex flex-col">
+          <div class="px-3 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
+            <div class="flex items-center gap-2">
+              <span id="preview-label" class="text-xs text-gray-400">통합 미리보기</span>
+              <!-- 편집 모드 토글 -->
+              <label class="edit-mode-toggle" title="클릭하여 직접 편집">
+                <input type="checkbox" id="edit-mode-toggle">
+                <span class="edit-toggle-slider"></span>
+                <span class="edit-toggle-label">편집</span>
+              </label>
+            </div>
+            <span id="template-name" class="text-xs text-incruit-primary">Standard</span>
+          </div>
+          <div id="template-preview" class="flex-1 overflow-auto bg-white relative">
+            <!-- 플로팅 툴바 (텍스트 선택 시 표시) -->
+            <div id="floating-toolbar" class="floating-toolbar hidden">
+              <button data-cmd="bold" title="굵게 (Ctrl+B)"><b>B</b></button>
+              <button data-cmd="italic" title="기울임 (Ctrl+I)"><i>I</i></button>
+              <button data-cmd="underline" title="밑줄 (Ctrl+U)"><u>U</u></button>
+              <button data-cmd="strikeThrough" title="취소선 (Ctrl+Shift+S)"><s>S</s></button>
+              <button data-cmd="superscript" title="위첨자"><sup>x²</sup></button>
+              <button data-cmd="subscript" title="아랫첨자"><sub>x₂</sub></button>
+              <span class="toolbar-divider"></span>
+              <button data-cmd="h1" title="제목1">H1</button>
+              <button data-cmd="h2" title="제목2">H2</button>
+              <button data-cmd="h3" title="제목3">H3</button>
+              <button data-cmd="p" title="본문">P</button>
+              <span class="toolbar-divider"></span>
+              <button data-cmd="insertUnorderedList" title="글머리 기호">•</button>
+              <button data-cmd="insertOrderedList" title="번호 매기기">1.</button>
+              <button data-cmd="olNumIncrease" title="선택한 리스트 항목 앞에 &lt;i&gt;&lt;/i&gt; 추가 (번호 +1)" style="font-size:11px;">번호+</button>
+              <button data-cmd="olNumDecrease" title="선택한 리스트 항목 앞의 &lt;i&gt;&lt;/i&gt; 제거 (번호 -1)" style="font-size:11px;">번호−</button>
+              <div class="bullet-style-wrap" id="bullet-style-wrap" style="display:none">
+                <button id="bullet-style-btn" data-cmd="bulletStyleToggle" title="불릿 스타일 변경" class="bullet-style-btn">≡</button>
+                <div id="bullet-style-panel" class="bullet-style-panel hidden"></div>
+              </div>
+              <span class="toolbar-divider"></span>
+              <button data-cmd="bulletBold" title="블릿 볼드 (선택한 li에 boldt 클래스 토글)" style="font-size:11px;font-weight:bold;">블릿 볼드</button>
+              <label class="bullet-color-wrap" title="블릿 색상 (선택한 li에 color 적용 — 블릿 기호·텍스트 동시 색상 변경)"
+                     style="display:inline-flex;align-items:center;gap:3px;position:relative;font-size:11px;cursor:pointer;padding:3px 6px;border-radius:3px;">
+                <span style="font-weight:500;">블릿 색상</span>
+                <div id="ft-bulletcolor-bar" style="width:14px;height:3px;border-radius:2px;background:#000000;pointer-events:none;"></div>
+                <input type="color" id="ft-bulletcolor" value="#000000" style="position:absolute;opacity:0;width:100%;height:100%;left:0;top:0;cursor:pointer;">
+              </label>
+              <button data-cmd="bulletColorClear" title="블릿 색상 제거" style="font-size:11px;">색상 제거</button>
+              <button data-cmd="indent" title="들여쓰기 (18px)">⇥</button>
+              <button data-cmd="outdent" title="내어쓰기 (18px)">⇤</button>
+              <button data-cmd="hangingIndent" title="내어쓰기 (줄바꿈 들여쓰기)" style="font-size:11px;letter-spacing:-0.5px;">⇤¶</button>
+              <button data-cmd="spacerInsert" title="커서 위치 기준으로 여백(간격) 추가" style="font-size:11px;">여백</button>
+              <button data-cmd="border" title="테두리 추가/제거" style="font-size:13px;">▣</button>
+              <span class="toolbar-divider"></span>
+              <button data-cmd="justifyLeft" title="왼쪽 정렬">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="2" x2="13" y2="2"/><line x1="1" y1="5.5" x2="9" y2="5.5"/><line x1="1" y1="9" x2="13" y2="9"/><line x1="1" y1="12.5" x2="9" y2="12.5"/></svg>
+              </button>
+              <button data-cmd="justifyCenter" title="가운데 정렬">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="2" x2="13" y2="2"/><line x1="3" y1="5.5" x2="11" y2="5.5"/><line x1="1" y1="9" x2="13" y2="9"/><line x1="3" y1="12.5" x2="11" y2="12.5"/></svg>
+              </button>
+              <button data-cmd="justifyRight" title="오른쪽 정렬">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="1" y1="2" x2="13" y2="2"/><line x1="5" y1="5.5" x2="13" y2="5.5"/><line x1="1" y1="9" x2="13" y2="9"/><line x1="5" y1="12.5" x2="13" y2="12.5"/></svg>
+              </button>
+              <span class="toolbar-divider"></span>
+              <button data-cmd="createLink" title="링크 삽입">🔗</button>
+              <button data-cmd="makeButton" title="버튼 만들기" class="toolbar-btn-highlight">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="10" rx="3"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+              </button>
+              <button data-cmd="removeFormat" title="서식 제거">✕</button>
+              <span class="toolbar-divider"></span>
+              <select id="ft-fontsize" class="toolbar-select" title="글자 크기">
+                <option value="">크기</option>
+                <option value="10">10</option>
+                <option value="11">11</option>
+                <option value="12">12</option>
+                <option value="13">13</option>
+                <option value="14">14</option>
+                <option value="15">15</option>
+                <option value="16">16</option>
+                <option value="18">18</option>
+                <option value="20">20</option>
+                <option value="24">24</option>
+                <option value="28">28</option>
+                <option value="32">32</option>
+                <option value="36">36</option>
+              </select>
+              <label class="toolbar-color-wrap" title="글자 색상">
+                <span class="toolbar-color-label">A</span>
+                <span class="toolbar-color-bar" id="ft-fontcolor-bar" style="background:#333333"></span>
+                <input type="color" id="ft-fontcolor" value="#333333" class="toolbar-color-input">
+              </label>
+              <!-- ★ 최근 글자 색상 -->
+              <div id="ft-fontcolor-recent" class="toolbar-recent-colors"></div>
+
+              <label class="toolbar-color-wrap" title="텍스트 배경색">
+                <span class="toolbar-color-label" style="font-size:10px;">BG</span>
+                <span class="toolbar-color-bar" id="ft-textbgcolor-bar" style="background:#ffff00"></span>
+                <input type="color" id="ft-textbgcolor" value="#ffff00" class="toolbar-color-input">
+              </label>
+              <!-- ★ 최근 배경색 -->
+              <div id="ft-textbgcolor-recent" class="toolbar-recent-colors"></div>
+              <span class="toolbar-divider"></span>
+              <button data-cmd="deleteSection" title="섹션 삭제" class="toolbar-btn-danger">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/></svg>
+              </button>
+              <!-- ★ Star 리스트를 P 태그로 변환 -->
+              <button data-cmd="convertStarListToP" title="Star 리스트를 P 태그로 변환">★→P</button>
+            </div>
+            <!-- 테이블 편집 툴바 (테이블 셀 클릭 시 표시) -->
+            <div id="table-toolbar" class="table-toolbar hidden">
+              <div class="ttb-row">
+              <button data-tbl="createNewTable" title="새 테이블 삽입 (행×열 지정)" style="font-weight:bold;">+ 새 표</button>
+              <button data-tbl="insertNestedTable" title="선택한 셀 안에 하위 표를 삽입합니다 (셀을 먼저 선택하세요)">셀에 표↳</button>
+              <button data-tbl="replaceTable" title="현재 테이블을 새 표로 교체" class="toolbar-btn-danger-sm">표 교체</button>
+              <button data-tbl="deleteTable" title="현재 테이블 전체 삭제" class="toolbar-btn-danger-sm">표 삭제</button>
+              <span class="toolbar-divider"></span>
+              <!-- 표 전체 들여쓰기 / 내어쓰기 (표 래퍼 margin-left 조작) -->
+              <button data-tbl="outdentTable" title="현재 표 전체를 왼쪽으로 내어쓰기">표←</button>
+              <button data-tbl="indentTable" title="현재 표 전체를 오른쪽으로 들여쓰기">표→</button>
+              </div><!-- /ttb-row (행 1) -->
+              <div class="ttb-row">
+              <button data-tbl="mergeCell" title="선택 셀 병합">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="12" y2="12"/></svg>
+                병합
+              </button>
+              <button data-tbl="splitCell" title="병합 해제">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="1"/><line x1="12" y1="3" x2="12" y2="21"/><line x1="3" y1="12" x2="21" y2="12"/></svg>
+                해제
+              </button>
+              <button data-tbl="splitCellByLines" title="같은 행에서 선택한 셀의 여러 줄 텍스트를 아래 행들로 분리합니다">셀 분할↓</button>
+              <span class="toolbar-divider"></span>
+              <button data-tbl="addRowAbove" title="위에 행 추가">↑행+</button>
+              <button data-tbl="addRowBelow" title="아래에 행 추가">↓행+</button>
+              <button data-tbl="moveRowUp" title="현재 행을 위로 이동">행↑</button>
+              <button data-tbl="moveRowDown" title="현재 행을 아래로 이동">행↓</button>
+              <button data-tbl="deleteRow" title="행 삭제" class="toolbar-btn-danger-sm">행−</button>
+              <span class="toolbar-divider"></span>
+              <button data-tbl="addColLeft" title="왼쪽에 열 추가">←열+</button>
+              <button data-tbl="addColRight" title="오른쪽에 열 추가">→열+</button>
+              <button data-tbl="moveColLeft" title="현재 열을 왼쪽으로 이동">열←</button>
+              <button data-tbl="moveColRight" title="현재 열을 오른쪽으로 이동">열→</button>
+              <button data-tbl="deleteCol" title="열 삭제" class="toolbar-btn-danger-sm">열−</button>
+              </div><!-- /ttb-row (행 2) -->
+              <div class="ttb-row">
+              <button data-tbl="headerActivate" title="선택 셀을 헤더(th)로 변환">헤더 활성</button>
+              <button data-tbl="headerDeactivate" title="선택 셀을 일반(td)로 변환">헤더 비활성</button>
+              <span class="toolbar-divider"></span>
+              <button data-tbl="alignLeft" title="왼쪽 정렬">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="15" y2="12"/><line x1="3" y1="18" x2="18" y2="18"/></svg>
+              </button>
+              <button data-tbl="alignCenter" title="가운데 정렬">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="7" y1="12" x2="17" y2="12"/><line x1="5" y1="18" x2="19" y2="18"/></svg>
+              </button>
+              <button data-tbl="alignRight" title="오른쪽 정렬">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="9" y1="12" x2="21" y2="12"/><line x1="6" y1="18" x2="21" y2="18"/></svg>
+              </button>
+              <span class="toolbar-divider"></span>
+              <button data-tbl="valignTop" title="위쪽 수직 정렬">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="3" x2="21" y2="3"/><line x1="9" y1="7" x2="9" y2="21"/><line x1="15" y1="7" x2="15" y2="17"/></svg>
+              </button>
+              <button data-tbl="valignMiddle" title="가운데 수직 정렬">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="9" y1="4" x2="9" y2="20"/><line x1="15" y1="7" x2="15" y2="17"/></svg>
+              </button>
+              <button data-tbl="valignBottom" title="아래쪽 수직 정렬">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="21" x2="21" y2="21"/><line x1="9" y1="3" x2="9" y2="17"/><line x1="15" y1="7" x2="15" y2="17"/></svg>
+              </button>
+              <span class="toolbar-divider"></span>
+              <!-- 배경색 -->
+              <label class="tbl-color-btn" title="셀 배경색 (색상 선택 후 '적용' 클릭)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 3v18"/></svg>
+                <div id="tbl-bgcolor-bar" style="width:14px;height:3px;border-radius:2px;background:#ffffff;margin-top:2px;pointer-events:none;"></div>
+                <input type="color" id="tbl-bgcolor-input" value="#ffffff" style="position:absolute;opacity:0;width:0;height:0;pointer-events:none;">
+              </label>
+              <button id="tbl-bgcolor-apply" title="선택한 셀에 배경색 적용"
+                      style="padding:3px 8px;font-size:11px;background:#2563eb;color:#fff;border:none;border-radius:3px;cursor:pointer;">적용</button>
+              <!-- 테두리 -->
+              <div style="position:relative;display:inline-flex;">
+                <button id="tbl-border-btn" title="셀 테두리 설정">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18"/><line x1="3" y1="12" x2="21" y2="12" stroke-dasharray="2 2"/><line x1="12" y1="3" x2="12" y2="21" stroke-dasharray="2 2"/></svg>
+                  테두리
+                </button>
+                <!-- 테두리 드롭다운 패널 -->
+                <div id="tbl-border-panel" class="tbl-border-panel hidden">
+              <div class="tbl-border-sides">
+                <button class="tbl-border-side active" data-side="all" title="전체">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="12"/><line x1="1" y1="7" x2="13" y2="7"/><line x1="7" y1="1" x2="7" y2="13"/></svg>
+                </button>
+                <button class="tbl-border-side" data-side="top" title="위">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="12" stroke-dasharray="2 2"/><line x1="1" y1="1" x2="13" y2="1" stroke-dasharray="none"/></svg>
+                </button>
+                <button class="tbl-border-side" data-side="right" title="오른쪽">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="12" stroke-dasharray="2 2"/><line x1="13" y1="1" x2="13" y2="13" stroke-dasharray="none"/></svg>
+                </button>
+                <button class="tbl-border-side" data-side="bottom" title="아래">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="12" stroke-dasharray="2 2"/><line x1="1" y1="13" x2="13" y2="13" stroke-dasharray="none"/></svg>
+                </button>
+                <button class="tbl-border-side" data-side="left" title="왼쪽">
+                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="1" y="1" width="12" height="12" stroke-dasharray="2 2"/><line x1="1" y1="1" x2="1" y2="13" stroke-dasharray="none"/></svg>
+                </button>
+              </div>
+              <div class="tbl-border-labels">
+                <span>전체</span><span>위</span><span>우</span><span>아래</span><span>좌</span>
+              </div>
+              <div class="tbl-border-style-row">
+                <button class="tbl-border-style active" data-style="solid" title="실선">
+                  <svg width="36" height="8" viewBox="0 0 36 8"><line x1="0" y1="4" x2="36" y2="4" stroke="currentColor" stroke-width="2"/></svg>
+                </button>
+                <button class="tbl-border-style" data-style="dashed" title="파선">
+                  <svg width="36" height="8" viewBox="0 0 36 8"><line x1="0" y1="4" x2="36" y2="4" stroke="currentColor" stroke-width="2" stroke-dasharray="6 3"/></svg>
+                </button>
+                <button class="tbl-border-style" data-style="dotted" title="점선">
+                  <svg width="36" height="8" viewBox="0 0 36 8"><line x1="0" y1="4" x2="36" y2="4" stroke="currentColor" stroke-width="2" stroke-dasharray="2 3"/></svg>
+                </button>
+                <button class="tbl-border-style" data-style="double" title="이중선">
+                  <svg width="36" height="10" viewBox="0 0 36 10"><line x1="0" y1="2" x2="36" y2="2" stroke="currentColor" stroke-width="1.5"/><line x1="0" y1="8" x2="36" y2="8" stroke="currentColor" stroke-width="1.5"/></svg>
+                </button>
+                <button class="tbl-border-style" data-style="none" title="없음">
+                  <svg width="36" height="8" viewBox="0 0 36 8"><line x1="0" y1="4" x2="36" y2="4" stroke="currentColor" stroke-width="1" stroke-dasharray="1 4" opacity="0.4"/></svg>
+                </button>
+              </div>
+              <div class="tbl-border-controls">
+                <label class="tbl-border-label">굵기</label>
+                <input type="number" id="tbl-border-width" min="0" max="20" value="1" class="tbl-border-width-input"> px
+                <label class="tbl-border-label" style="margin-left:8px;">색상</label>
+                <div class="tbl-border-color-wrap">
+                  <input type="color" id="tbl-border-color" value="#000000" class="tbl-border-color-input">
+                  <div id="tbl-border-color-bar" style="width:18px;height:3px;background:#000000;border-radius:2px;"></div>
+                </div>
+                <button id="tbl-border-apply" class="tbl-border-apply-btn">적용</button>
+              </div>
+                </div><!-- /tbl-border-panel -->
+              </div><!-- /tbl-border-btn wrapper -->
+              <span class="toolbar-divider"></span>
+              <!-- 셀 너비 직접 입력 -->
+              <label style="display:inline-flex;align-items:center;gap:3px;font-size:11px;color:#cbd5e1;">
+                너비
+                <input type="number" id="tbl-col-width" min="0" max="2000" step="0.5" placeholder="0"
+                       style="width:52px;padding:3px 4px;font-size:11px;background:#1e293b;color:#fff;border:1px solid #475569;border-radius:3px;">
+                <select id="tbl-col-width-unit" style="padding:3px 4px;font-size:11px;background:#1e293b;color:#fff;border:1px solid #475569;border-radius:3px;">
+                  <option value="%">%</option>
+                  <option value="px">px</option>
+                </select>
+                <button id="tbl-col-width-apply" title="선택 셀이 속한 열의 너비 적용"
+                        style="padding:3px 8px;font-size:11px;background:#2563eb;color:#fff;border:none;border-radius:3px;cursor:pointer;">적용</button>
+              </label>
+              </div><!-- /ttb-row (행 3) -->
+            </div><!-- /table-toolbar -->
+            <!-- KV / 상단 이미지 공유 헤더 (templ_header 역할) -->
+            <div id="kv-header-area" class="kv-header-area" style="position: relative;">
+              <!-- KV 카드 (KV 토글 ON 시) -->
+              <div id="kv-preview-card" class="kv-card"></div>
+              <!-- OG 크롭 오버레이 -->
+              <div id="kv-crop-overlay" class="kv-crop-overlay hidden">
+                <div id="kv-crop-box" class="kv-crop-box">
+                  <span class="kv-crop-label">600 × 315</span>
+                </div>
+              </div>
+              <!-- 상단 이미지 (KV 토글 OFF, top_img_v2 URL이 있을 때) -->
+              <img id="kv-preview-top-img" class="top_img_v2" style="display:none; width:100%; max-width:900px; margin:0 auto;">
+            </div>
+            <!-- 프리뷰 OG 크롭 오버레이 -->
+            <div id="preview-crop-overlay" class="kv-crop-overlay hidden" style="position:absolute;left:0;top:0;right:0;bottom:0;z-index:50;pointer-events:auto;background:rgba(0,0,0,0.35);">
+              <div id="preview-crop-box" class="kv-crop-box" style="position:absolute;border:2px dashed #fff;box-shadow:0 0 0 9999px rgba(0,0,0,0.35);cursor:move;">
+                <span class="kv-crop-label" style="position:absolute;top:-22px;left:0;background:#000;color:#fff;font-size:11px;padding:2px 6px;border-radius:3px;">600 × 315</span>
+              </div>
+            </div>
+            <!-- 채용공고 컨텐츠 -->
+            <div id="preview-content" class="jobpost-preview">
+              <div class="empty-state">
+                <p>원문을 입력하고 "AI 변환 시작"을 클릭하세요</p>
+              </div>
+              <!-- Incruit Standard CSS -->
+              <link rel="stylesheet" href="https://c.incru.it/HR/jobtemp/2024/css/job_post_v3_basic3_minify.css">
+              <link rel="stylesheet" href="https://c.incru.it/HR/jobtemp/2024/css/job_post_v3_button_minify.css">
+              <link rel="stylesheet" href="https://c.incru.it/HR/jobtemp/2022/css/job_post_v3_list_minify.css">
+              <link rel="stylesheet" href="https://c.incru.it/HR/jobtemp/2024/css/job_post_v3_media_minify.css">
+            </div>
+          </div>
+        </div>
+
+        <!-- 이미지맵+인트로 생성기 (숨김) -->
+        <div id="imagemap-container" class="flex-1 hidden">
+          <iframe
+            id="imagemap-frame"
+            src="tools/imagemap/index.html"
+            style="width:100%; height:100%; border:none; display:block;"
+            title="이미지맵+인트로 생성기"
+          ></iframe>
+        </div>
+
+        <!-- HTML 코드 (숨김) -->
+        <div id="code-container" class="flex-1 hidden flex flex-col">
+          <div class="px-3 py-2 bg-gray-800 border-b border-gray-700 flex items-center justify-between">
+            <span class="text-xs text-gray-400">HTML 코드 (직접 편집 가능)</span>
+            <button id="btn-apply-html" class="text-xs px-2 py-1 bg-blue-600 text-white rounded hover:bg-blue-500 transition-colors hidden">미리보기 반영</button>
+          </div>
+          <div id="html-code-editor-wrap" class="flex-1 min-h-0 overflow-hidden">
+            <textarea id="html-code" style="display:none;"></textarea>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <!-- Resize Handle 2 (hidden - 2-column layout) -->
+    <div class="resize-handle hidden" data-resize="chat-panel"></div>
+
+    <!-- Panel 3: AI Chat (hidden - moved to left panel) -->
+    <aside id="chat-panel" class="panel border-l border-gray-700 hidden">
+      <header class="panel-header">
+        <h2 class="text-sm font-semibold">AI Assistant</h2>
+        <div class="ml-auto flex gap-1">
+          <button id="btn-ai-settings-old" class="icon-btn" title="API Settings">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </button>
+          <button id="btn-clear-chat" class="icon-btn" title="Clear Chat">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+            </svg>
+          </button>
+        </div>
+      </header>
+      <div class="panel-content flex flex-col">
+        <!-- Status Bar -->
+        <div id="ai-status" class="px-3 py-2 bg-gray-800 border-b border-gray-700 text-xs">
+          <span class="text-gray-400">상태:</span>
+          <span id="status-text" class="text-yellow-400">API 키 필요</span>
+        </div>
+
+        <!-- Messages -->
+        <div id="chat-messages" class="flex-1 overflow-auto p-3 space-y-3">
+          <div class="text-center text-gray-500 text-sm py-4">
+            <p>AI가 문서를 분석하고 템플릿을 적용합니다</p>
+            <p class="text-xs mt-1">설정에서 API 키를 입력하세요</p>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="px-3 py-2 border-t border-gray-700 flex gap-2 flex-wrap">
+          <button class="quick-action-btn" data-action="analyze">문서 분석</button>
+          <button class="quick-action-btn" data-action="convert">템플릿 적용</button>
+          <button class="quick-action-btn" data-action="verify">검증하기</button>
+        </div>
+
+        <!-- Input -->
+        <div class="p-3 border-t border-gray-700">
+          <div class="flex gap-2">
+            <textarea
+              id="chat-input"
+              placeholder="AI에게 요청하세요..."
+              class="flex-1 px-3 py-2 text-sm bg-gray-800 border border-gray-600 rounded resize-none focus:outline-none focus:border-blue-500"
+              rows="2"
+            ></textarea>
+            <button
+              id="btn-send"
+              class="px-3 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium disabled:opacity-50"
+            >
+              Send
+            </button>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <!-- AI Settings Modal -->
+  <div id="ai-settings-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 480px;">
+      <h3 class="text-lg font-semibold mb-4">AI 연결 설정</h3>
+
+      <!-- Provider Selection Cards -->
+      <div class="space-y-3 mb-4">
+        <label class="block text-sm text-gray-400 mb-2">AI 서비스 선택</label>
+        <div class="grid grid-cols-3 gap-2">
+          <!-- ChatGPT -->
+          <button type="button" class="ai-provider-card" data-provider="openai">
+            <div class="provider-icon" style="background: #10a37f;">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M22.2819 9.8211a5.9847 5.9847 0 0 0-.5157-4.9108 6.0462 6.0462 0 0 0-6.5098-2.9A6.0651 6.0651 0 0 0 4.9807 4.1818a5.9847 5.9847 0 0 0-3.9977 2.9 6.0462 6.0462 0 0 0 .7427 7.0966 5.98 5.98 0 0 0 .511 4.9107 6.051 6.051 0 0 0 6.5146 2.9001A5.9847 5.9847 0 0 0 13.2599 24a6.0557 6.0557 0 0 0 5.7718-4.2058 5.9894 5.9894 0 0 0 3.9977-2.9001 6.0557 6.0557 0 0 0-.7475-7.0729zm-9.022 12.6081a4.4755 4.4755 0 0 1-2.8764-1.0408l.1419-.0804 4.7783-2.7582a.7948.7948 0 0 0 .3927-.6813v-6.7369l2.02 1.1686a.071.071 0 0 1 .038.052v5.5826a4.504 4.504 0 0 1-4.4945 4.4944zm-9.6607-4.1254a4.4708 4.4708 0 0 1-.5346-3.0137l.142.0852 4.783 2.7582a.7712.7712 0 0 0 .7806 0l5.8428-3.3685v2.3324a.0804.0804 0 0 1-.0332.0615L9.74 19.9502a4.4992 4.4992 0 0 1-6.1408-1.6464zM2.3408 7.8956a4.485 4.485 0 0 1 2.3655-1.9728V11.6a.7664.7664 0 0 0 .3879.6765l5.8144 3.3543-2.0201 1.1685a.0757.0757 0 0 1-.071 0l-4.8303-2.7865A4.504 4.504 0 0 1 2.3408 7.8956zm16.5963 3.8558L13.1038 8.364 15.1192 7.2a.0757.0757 0 0 1 .071 0l4.8303 2.7913a4.4944 4.4944 0 0 1-.6765 8.1042v-5.6772a.79.79 0 0 0-.407-.667zm2.0107-3.0231l-.142-.0852-4.7735-2.7818a.7759.7759 0 0 0-.7854 0L9.409 9.2297V6.8974a.0662.0662 0 0 1 .0284-.0615l4.8303-2.7866a4.4992 4.4992 0 0 1 6.6802 4.66zM8.3065 12.863l-2.02-1.1638a.0804.0804 0 0 1-.038-.0567V6.0742a4.4992 4.4992 0 0 1 7.3757-3.4537l-.142.0805L8.704 5.459a.7948.7948 0 0 0-.3927.6813zm1.0976-2.3654l2.602-1.4998 2.6069 1.4998v2.9994l-2.5974 1.4997-2.6099-1.4997z"/>
+              </svg>
+            </div>
+            <span class="provider-name">ChatGPT</span>
+            <span class="provider-model text-xs text-gray-500">GPT-4o</span>
+          </button>
+
+          <!-- Claude -->
+          <button type="button" class="ai-provider-card" data-provider="claude">
+            <div class="provider-icon" style="background: #d97757;">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <span class="provider-name">Claude</span>
+            <span class="provider-model text-xs text-gray-500">Sonnet 4.5</span>
+          </button>
+
+          <!-- Gemini -->
+          <button type="button" class="ai-provider-card" data-provider="gemini">
+            <div class="provider-icon" style="background: linear-gradient(135deg, #4285f4, #ea4335, #fbbc05, #34a853);">
+              <svg class="w-6 h-6" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+              </svg>
+            </div>
+            <span class="provider-name">Gemini</span>
+            <span class="provider-model text-xs text-gray-500">2.5 Flash</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- API Key Input Section -->
+      <div id="api-key-section" class="space-y-3">
+        <div>
+          <label class="block text-sm mb-1">
+            <span id="api-key-label">API Key</span>
+            <a id="api-key-help-link" href="#" target="_blank" class="text-xs text-blue-400 hover:text-blue-300 ml-2">발급받기 →</a>
+          </label>
+          <div class="flex gap-2">
+            <input
+              type="text"
+              id="ai-api-key"
+              placeholder="API 키를 입력하세요"
+              class="flex-1 px-3 py-2 bg-gray-800 border border-gray-600 rounded focus:outline-none focus:border-blue-500 api-key-masked"
+              autocomplete="off"
+              spellcheck="false"
+            >
+            <button id="btn-toggle-key" type="button" class="px-3 py-2 border border-gray-600 rounded hover:bg-gray-700" title="비밀번호 표시/숨김">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Connection Test -->
+        <div>
+          <button id="btn-test-connection" type="button" class="w-full px-4 py-2 border border-gray-600 rounded hover:bg-gray-700 flex items-center justify-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+            </svg>
+            연결 테스트
+          </button>
+          <div id="connection-status" class="mt-2 text-sm hidden">
+            <!-- Status will be shown here -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Model Selection (hidden by default) -->
+      <div id="model-selection" class="mt-4 hidden">
+        <div class="flex items-center justify-between mb-1">
+          <label class="block text-sm">모델 선택</label>
+          <button id="btn-refresh-models" type="button" class="flex items-center gap-1 text-xs text-blue-400 hover:text-blue-300 transition-colors" title="API에서 최신 모델 목록 가져오기">
+            <svg class="w-3.5 h-3.5 refresh-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span id="refresh-models-text">API에서 가져오기</span>
+          </button>
+        </div>
+        <select id="ai-model" class="w-full px-3 py-2 bg-gray-800 border border-gray-600 rounded text-sm">
+          <!-- Options will be populated based on provider -->
+        </select>
+        <p id="model-fetch-status" class="text-xs text-gray-500 mt-1 hidden"></p>
+      </div>
+
+      <!-- Theme Toggle -->
+      <div class="mt-4 pt-4 border-t border-gray-700">
+        <div class="flex items-center justify-between">
+          <label class="text-sm">테마</label>
+          <div class="flex gap-2">
+            <button type="button" class="theme-btn active" data-theme="dark" title="다크 모드">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
+              다크
+            </button>
+            <button type="button" class="theme-btn" data-theme="light" title="라이트 모드">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+              라이트
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Image Search API Keys -->
+      <div class="mt-4 pt-4 border-t border-gray-700">
+        <label class="block text-sm font-medium mb-3">이미지 검색 API 키</label>
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">
+              Unsplash Access Key
+              <a href="https://unsplash.com/developers" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 ml-1">발급받기 &rarr;</a>
+            </label>
+            <input type="text" id="img-api-key-unsplash"
+              placeholder="Unsplash Access Key 입력"
+              class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500 api-key-masked"
+              autocomplete="off" spellcheck="false">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">
+              Pexels API Key
+              <a href="https://www.pexels.com/api/" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 ml-1">발급받기 &rarr;</a>
+            </label>
+            <input type="text" id="img-api-key-pexels"
+              placeholder="Pexels API Key 입력"
+              class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500 api-key-masked"
+              autocomplete="off" spellcheck="false">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-400 mb-1">
+              Pixabay API Key
+              <a href="https://pixabay.com/api/docs/" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 ml-1">발급받기 &rarr;</a>
+            </label>
+            <input type="text" id="img-api-key-pixabay"
+              placeholder="Pixabay API Key 입력"
+              class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500 api-key-masked"
+              autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+      </div>
+
+      <!-- Figma Token -->
+      <div class="mt-4 pt-4 border-t border-gray-700">
+        <label class="block text-sm font-medium mb-3">Figma 연동</label>
+        <div>
+          <label class="block text-xs text-gray-400 mb-1">
+            Figma Personal Access Token
+            <a href="https://www.figma.com/developers/api#access-tokens" target="_blank" rel="noopener" class="text-blue-400 hover:text-blue-300 ml-1">발급받기 &rarr;</a>
+          </label>
+          <input type="text" id="figma-token"
+            placeholder="Figma Personal Access Token 입력"
+            class="w-full px-3 py-1.5 bg-gray-800 border border-gray-600 rounded text-sm focus:outline-none focus:border-blue-500 api-key-masked"
+            autocomplete="off" spellcheck="false">
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex justify-end gap-2 mt-6 pt-4 border-t border-gray-700">
+        <button id="btn-cancel-ai-settings" class="px-4 py-2 border border-gray-600 rounded hover:bg-gray-800">
+          취소
+        </button>
+        <button id="btn-save-ai-settings" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded disabled:opacity-50 disabled:cursor-not-allowed">
+          저장
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Extract Preview Modal -->
+  <div id="extract-preview-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 720px;">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">추출 결과 미리보기</h3>
+        <div id="extract-confidence" class="flex items-center gap-2">
+          <!-- 신뢰도 배지 동적 삽입 -->
+        </div>
+      </div>
+      <!-- 메타데이터 요약 -->
+      <div id="extract-meta" class="mb-3 p-3 bg-gray-800 rounded text-sm space-y-1 hidden">
+        <!-- 회사명, 공고제목 등 동적 삽입 -->
+      </div>
+      <!-- 추출 경고 -->
+      <div id="extract-warnings" class="mb-3 hidden">
+        <!-- 경고 메시지 동적 삽입 -->
+      </div>
+      <!-- 콘텐츠 미리보기 -->
+      <div id="extract-preview-content" class="overflow-auto bg-white text-gray-900 p-4 rounded border border-gray-600" style="max-height: 400px;"></div>
+      <!-- 여러 URL 결과 탭 (복수 URL 시) -->
+      <div id="extract-tabs" class="mt-3 flex gap-2 flex-wrap hidden">
+        <!-- URL 탭 버튼들 동적 삽입 -->
+      </div>
+      <!-- 진행률 (배치 처리 시) -->
+      <div id="extract-progress" class="mt-3 hidden">
+        <div class="flex items-center justify-between text-xs text-gray-400 mb-1">
+          <span id="extract-progress-label">추출 중...</span>
+          <span id="extract-progress-count">0/0</span>
+        </div>
+        <div class="w-full bg-gray-700 rounded-full h-1.5">
+          <div id="extract-progress-bar" class="bg-blue-500 h-1.5 rounded-full transition-all" style="width: 0%"></div>
+        </div>
+      </div>
+      <!-- 액션 버튼 -->
+      <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-700">
+        <button id="btn-extract-cancel" class="px-4 py-2 border border-gray-600 rounded hover:bg-gray-800">취소</button>
+        <button id="btn-extract-retry" class="px-4 py-2 border border-gray-600 rounded hover:bg-gray-800">다시 추출</button>
+        <button id="btn-extract-apply" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium">이 내용으로 계속</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HTML Code Input Modal -->
+  <div id="html-code-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 680px;">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">HTML 코드 입력</h3>
+        <button id="btn-html-code-close" class="text-gray-400 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+      <p class="text-sm text-gray-400 mb-3">기존 변환 결과, 외부 에디터 작업물, 또는 다른 채용시스템의 HTML 코드를 붙여넣으세요.</p>
+      <textarea id="html-code-textarea" class="w-full p-3 bg-gray-900 text-green-400 font-mono text-sm border border-gray-600 rounded resize-none focus:outline-none focus:border-blue-500" rows="14" placeholder="HTML 코드를 여기에 붙여넣으세요..."></textarea>
+      <div id="html-code-detect" class="mt-2 text-xs text-gray-500 hidden">
+        <!-- 감지 결과 동적 삽입 -->
+      </div>
+      <div class="flex justify-end gap-2 mt-4 pt-4 border-t border-gray-700">
+        <button id="btn-html-code-cancel" class="px-4 py-2 border border-gray-600 rounded hover:bg-gray-800 text-sm">취소</button>
+        <button id="btn-html-as-source" class="px-4 py-2 border border-gray-600 rounded hover:bg-gray-800 text-sm">원문으로 설정</button>
+        <button id="btn-html-to-editor" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded font-medium text-sm">코드 편집기로 열기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- HTML Import Modal -->
+  <div id="html-import-modal" class="modal hidden">
+    <div class="modal-backdrop"></div>
+    <div class="modal-content" style="max-width: 640px;">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold">HTML 코드 가져오기</h3>
+        <button id="btn-import-modal-close" class="text-gray-400 hover:text-white text-xl leading-none">&times;</button>
+      </div>
+
+      <!-- 입력 방식 탭 -->
+      <div class="flex gap-2 mb-4">
+        <button class="import-tab-btn active" data-import-tab="paste">코드 붙여넣기</button>
+        <button class="import-tab-btn" data-import-tab="file">파일 불러오기</button>
+      </div>
+
+      <!-- 코드 붙여넣기 탭 -->
+      <div id="import-tab-paste">
+        <textarea id="import-html-textarea"
+          class="w-full h-64 p-3 bg-gray-900 text-green-400 font-mono text-sm rounded border border-gray-700 resize-none focus:outline-none focus:border-blue-500"
+          placeholder="HTML 코드를 여기에 붙여넣으세요..." spellcheck="false"></textarea>
+      </div>
+
+      <!-- 파일 불러오기 탭 -->
+      <div id="import-tab-file" class="hidden">
+        <div class="border-2 border-dashed border-gray-600 rounded-lg p-8 text-center">
+          <p class="text-gray-400 mb-3">HTML 파일을 드래그하거나 클릭하여 선택</p>
+          <input type="file" id="import-html-file" accept=".html,.htm" class="hidden">
+          <button id="btn-import-file-select" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 rounded text-sm">파일 선택</button>
+        </div>
+      </div>
+
+      <!-- 감지 결과 -->
+      <div id="import-detect-result" class="mt-4 hidden">
+        <div class="p-3 rounded bg-gray-800 border border-gray-700">
+          <div class="flex items-center gap-2 mb-2">
+            <span id="import-detect-icon" class="text-lg"></span>
+            <span id="import-detect-label" class="text-sm font-medium"></span>
+          </div>
+          <div id="import-detect-details" class="text-xs text-gray-400 space-y-1"></div>
+        </div>
+      </div>
+
+      <!-- 가져오기 옵션 -->
+      <div id="import-options" class="mt-4 hidden space-y-3">
+        <label class="text-xs text-gray-500 uppercase tracking-wider font-semibold">가져오기 방식</label>
+        <div class="space-y-2">
+          <label class="flex items-start gap-2 cursor-pointer p-2 rounded hover:bg-gray-800">
+            <input type="radio" name="import-mode" value="direct" checked class="mt-0.5">
+            <div>
+              <span class="text-sm">코드 직접 편집</span>
+              <p class="text-xs text-gray-500 mt-0.5">원본 유지, 코드 탭에서 편집</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-2 cursor-pointer p-2 rounded hover:bg-gray-800">
+            <input type="radio" name="import-mode" value="extract-rewrap" class="mt-0.5">
+            <div>
+              <span class="text-sm">콘텐츠 추출 후 템플릿 적용</span>
+              <p class="text-xs text-gray-500 mt-0.5">래퍼 제거 후 현재 선택된 템플릿으로 재변환</p>
+            </div>
+          </label>
+          <label class="flex items-start gap-2 cursor-pointer p-2 rounded hover:bg-gray-800">
+            <input type="radio" name="import-mode" value="as-source" class="mt-0.5">
+            <div>
+              <span class="text-sm">원문으로 사용</span>
+              <p class="text-xs text-gray-500 mt-0.5">기존 흐름 (AI 변환 또는 빠른 변환)</p>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- 색상 추출 결과 -->
+      <div id="import-color-extract" class="mt-3 hidden">
+        <label class="text-xs text-gray-500">감지된 색상</label>
+        <div class="flex gap-2 mt-1" id="import-detected-colors"></div>
+        <label class="flex items-center gap-2 mt-2 cursor-pointer">
+          <input type="checkbox" id="import-apply-colors" checked>
+          <span class="text-xs text-gray-400">감지된 색상을 팔레트에 적용</span>
+        </label>
+      </div>
+
+      <!-- 액션 버튼 -->
+      <div class="flex gap-2 mt-6">
+        <button id="btn-import-cancel" class="flex-1 py-2 border border-gray-600 hover:bg-gray-800 rounded text-sm">취소</button>
+        <button id="btn-import-confirm" class="flex-1 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium" disabled>가져오기</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Credits Modal (Hidden Easter Egg) -->
+  <div id="credits-modal" class="credits-overlay" hidden>
+    <div class="credits-backdrop"></div>
+    <div class="credits-card">
+      <button class="credits-close" aria-label="닫기">&times;</button>
+      <div class="credits-content">
+        <div class="credits-logo">
+          <img src="https://www.incruit.com/favicon.ico" alt="" width="32" height="32">
+        </div>
+        <h2 class="credits-title">인크루트 채용공고 에디터</h2>
+        <p class="credits-version">v2.0</p>
+        <div class="credits-divider"></div>
+        <div class="credits-section">
+          <h3>제작</h3>
+          <div class="credits-person"><span class="credits-name">유승비</span></div>
+          <div class="credits-person"><span class="credits-name">이상봉</span></div>
+          <div class="credits-person"><span class="credits-name">지정현</span></div>
+          <div class="credits-person"><span class="credits-name">김지인</span></div>
+          <div class="credits-person"><span class="credits-name">이광석</span></div>
+        </div>
+        <div class="credits-section">
+          <h3>AI</h3>
+          <div class="credits-person">
+            <span class="credits-name">Claude Code</span>
+            <span class="credits-role">Anthropic</span>
+          </div>
+        </div>
+        <div class="credits-section">
+          <h3>기술 스택</h3>
+          <div class="credits-tech">
+            <span>Vanilla JS</span><span>Tailwind CSS</span><span>Python</span>
+            <span>Claude API</span><span>Gemini API</span><span>OpenAI API</span>
+          </div>
+        </div>
+        <div class="credits-section credits-stats-section">
+          <h3>이 에디터의 여정</h3>
+          <div class="credits-stats" id="credits-stats"></div>
+        </div>
+        <p class="credits-footer">Designed by Incruit</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- 버튼 만들기 모달 -->
+  <div id="make-button-modal" class="mbtn-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="mbtn-title">
+    <div class="mbtn-dialog">
+      <div class="mbtn-header">
+        <span id="mbtn-title">버튼 만들기</span>
+        <button id="mbtn-close" class="mbtn-close" title="닫기">✕</button>
+      </div>
+      <div class="mbtn-body">
+        <label class="mbtn-label">버튼 텍스트</label>
+        <input type="text" id="mbtn-text" class="mbtn-input" placeholder="버튼에 표시될 텍스트">
+
+        <label class="mbtn-label">링크 URL <span class="mbtn-optional">(선택사항)</span></label>
+        <input type="text" id="mbtn-url" class="mbtn-input" placeholder="https://...">
+
+        <div class="mbtn-row">
+          <div class="mbtn-col">
+            <label class="mbtn-label">배경색</label>
+            <div class="mbtn-color-wrap">
+              <input type="color" id="mbtn-bgcolor" value="#FF460A" class="mbtn-color-input">
+              <input type="text" id="mbtn-bgcolor-hex" value="#FF460A" class="mbtn-hex-input" maxlength="7">
+            </div>
+          </div>
+          <div class="mbtn-col">
+            <label class="mbtn-label">글자색</label>
+            <div class="mbtn-color-wrap">
+              <input type="color" id="mbtn-textcolor" value="#FFFFFF" class="mbtn-color-input">
+              <input type="text" id="mbtn-textcolor-hex" value="#FFFFFF" class="mbtn-hex-input" maxlength="7">
+            </div>
+          </div>
+        </div>
+
+        <div class="mbtn-preview-wrap">
+          <span class="mbtn-label">미리보기</span>
+          <div id="mbtn-live-preview" class="mbtn-live-preview">
+            <a href="#" onclick="return false"><span id="mbtn-preview-span" class="temp_btn btn">버튼</span></a>
+          </div>
+        </div>
+      </div>
+      <div class="mbtn-footer">
+        <button id="mbtn-cancel" class="mbtn-btn mbtn-btn-cancel">취소</button>
+        <button id="mbtn-confirm" class="mbtn-btn mbtn-btn-confirm">버튼 삽입</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Script -->
+  <script type="module" src="js/app.js?v=19"></script>
+</body>
+</html>

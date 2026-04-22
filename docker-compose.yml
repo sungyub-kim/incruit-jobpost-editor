@@ -1,0 +1,36 @@
+version: '3.8'
+
+# AWS EC2 전용 - Python 서버 컨테이너만 관리
+# Nginx는 호스트에서 직접 운영 (기존 구조 유지)
+
+services:
+
+  convert-server:
+    build:
+      context: .
+      dockerfile: docker/convert-server/Dockerfile
+    container_name: incruit-convert
+    ports:
+      - "127.0.0.1:8082:8082"   # 로컬호스트만 바인딩 (Nginx → Docker)
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  cors-proxy:
+    build:
+      context: .
+      dockerfile: docker/cors-proxy/Dockerfile
+    container_name: incruit-cors-proxy
+    ports:
+      - "127.0.0.1:8787:8787"   # 로컬호스트만 바인딩
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8787/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3

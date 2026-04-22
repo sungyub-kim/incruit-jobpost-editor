@@ -1,0 +1,264 @@
+name: Deploy to AWS EC2
+
+on:
+  workflow_dispatch:        # 수동 배포만 유지
+    inputs:
+      reason:
+        description: '배포 사유 (선택)'
+        required: false
+        default: '수동 배포'
+      force_all:
+        description: '전체 강제 배포 (변경 감지 무시)'
+        required: false
+        default: 'false'
+        type: choice
+        options:
+          - 'false'
+          - 'true'
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      # ─────────────────────────────────────────
+      # 변경 감지 — 수동 실행이어도 git diff 기준
+      # force_all=true 일 때만 전체 배포
+      # ─────────────────────────────────────────
+      - name: Detect changed files
+        id: changes
+        run: |
+          # 강제 전체 배포 옵션
+          if [ "${{ github.event.inputs.force_all }}" == "true" ]; then
+            echo "static=true"     >> $GITHUB_OUTPUT
+            echo "nginx_conf=true" >> $GITHUB_OUTPUT
+            echo "convert=true"    >> $GITHUB_OUTPUT
+            echo "proxy=true"      >> $GITHUB_OUTPUT
+            echo "🔄 강제 전체 배포"
+            exit 0
+          fi
+
+          # git diff 로 실제 변경 파일 감지 (수동/자동 동일하게 적용)
+          CHANGED=$(git diff --name-only HEAD~1 HEAD)
+          echo "변경 파일 목록:"
+          echo "$CHANGED"
+
+          echo "$CHANGED" | grep -qE '^(index\.html|css/|js/|assets/|tools/|v2/|vendor/|docs/gemini-gem-prompt)' \
+            && echo "static=true"      >> $GITHUB_OUTPUT \
+            || echo "static=false"     >> $GITHUB_OUTPUT
+
+          echo "$CHANGED" | grep -qE '^nginx/' \
+            && echo "nginx_conf=true"  >> $GITHUB_OUTPUT \
+            || echo "nginx_conf=false" >> $GITHUB_OUTPUT
+
+          echo "$CHANGED" | grep -qE '^(convert-server\.py|requirements\.txt|docker/convert-server/)' \
+            && echo "convert=true"     >> $GITHUB_OUTPUT \
+            || echo "convert=false"    >> $GITHUB_OUTPUT
+
+          echo "$CHANGED" | grep -qE '^(cors-proxy\.py|docker/cors-proxy/)' \
+            && echo "proxy=true"       >> $GITHUB_OUTPUT \
+            || echo "proxy=false"      >> $GITHUB_OUTPUT
+
+      - name: Show deploy plan
+        run: |
+          echo "==============================="
+          echo "📋 배포 대상 확인"
+          echo "==============================="
+          echo "  정적 파일      : ${{ steps.changes.outputs.static }}"
+          echo "  Nginx 설정     : ${{ steps.changes.outputs.nginx_conf }}"
+          echo "  convert-server : ${{ steps.changes.outputs.convert }}"
+          echo "  cors-proxy     : ${{ steps.changes.outputs.proxy }}"
+          echo "==============================="
+
+      # 변경 사항이 아무것도 없으면 이후 스텝 전체 스킵
+      - name: Check if anything to deploy
+        id: check
+        run: |
+          if [ "${{ steps.changes.outputs.static }}"     == "false" ] && \
+             [ "${{ steps.changes.outputs.nginx_conf }}" == "false" ] && \
+             [ "${{ steps.changes.outputs.convert }}"    == "false" ] && \
+             [ "${{ steps.changes.outputs.proxy }}"      == "false" ]; then
+            echo "nothing=true" >> $GITHUB_OUTPUT
+            echo "⏭️  배포할 변경 사항 없음 — 종료"
+          else
+            echo "nothing=false" >> $GITHUB_OUTPUT
+          fi
+
+      # ─────────────────────────────────────────
+      # Docker 이미지 빌드 (변경된 것만)
+      # ─────────────────────────────────────────
+      - name: Set up Docker Buildx
+        if: steps.check.outputs.nothing == 'false'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build convert-server image
+        if: steps.changes.outputs.convert == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/convert-server/Dockerfile
+          push: false
+          tags: incruit-convert:latest
+          no-cache: ${{ github.event.inputs.force_all == 'true' }}
+          cache-from: type=gha,scope=convert-server
+          cache-to:   type=gha,scope=convert-server,mode=max
+          outputs: type=docker,dest=/tmp/incruit-convert.tar
+
+      - name: Build cors-proxy image
+        if: steps.changes.outputs.proxy == 'true'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: docker/cors-proxy/Dockerfile
+          push: false
+          tags: incruit-cors-proxy:latest
+          cache-from: type=gha,scope=cors-proxy
+          cache-to:   type=gha,scope=cors-proxy,mode=max
+          outputs: type=docker,dest=/tmp/incruit-cors-proxy.tar
+
+      # ─────────────────────────────────────────
+      # AWS / SSH 준비
+      # ─────────────────────────────────────────
+      - name: Configure AWS credentials
+        if: steps.check.outputs.nothing == 'false'
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ secrets.AWS_REGION }}
+
+      - name: Get & Add GitHub Actions IP
+        if: steps.check.outputs.nothing == 'false'
+        id: ip
+        uses: haythem/public-ip@v1.2
+
+      - name: Add IP to Security Group
+        if: steps.check.outputs.nothing == 'false'
+        run: |
+          aws ec2 authorize-security-group-ingress \
+            --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+            --protocol tcp --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32 2>&1 || true
+
+      - name: Setup SSH
+        if: steps.check.outputs.nothing == 'false'
+        run: |
+          mkdir -p ~/.ssh && chmod 700 ~/.ssh
+          printf '%s\n' "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+          ssh-keyscan -H -T 10 ${{ secrets.EC2_HOST }} >> ~/.ssh/known_hosts
+
+      # ─────────────────────────────────────────
+      # EC2 배포 (변경된 것만)
+      # ─────────────────────────────────────────
+      - name: Deploy static files
+        if: steps.changes.outputs.static == 'true'
+        run: |
+          rsync -avz --delete \
+            -e "ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no" \
+            --include='index.html' --include='favicon.ico' --include='css/***' \
+            --include='js/***' --include='assets/***' --include='tools/***' \
+            --include='v2/***' --include='vendor/***' \
+            --include='docs/gemini-gem-prompt*.md' \
+            --exclude='*' \
+            ./ ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/var/www/incruit-jobpost-editor/
+          echo "✅ 정적 파일 배포 완료"
+
+      - name: Deploy Nginx configuration
+        if: steps.changes.outputs.nginx_conf == 'true'
+        run: |
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            nginx/incruit-jobpost-editor.conf \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/incruit-jobpost-editor.conf
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            set -e
+            sudo cp /etc/nginx/sites-available/incruit-jobpost-editor \
+              /etc/nginx/sites-available/incruit-jobpost-editor.backup.$(date +%Y%m%d_%H%M%S) 2>/dev/null || true
+            sudo cp /tmp/incruit-jobpost-editor.conf /etc/nginx/sites-available/incruit-jobpost-editor
+            sudo ln -sf /etc/nginx/sites-available/incruit-jobpost-editor \
+                        /etc/nginx/sites-enabled/incruit-jobpost-editor
+            sudo nginx -t && sudo systemctl reload nginx
+            echo "✅ Nginx 설정 적용 완료"
+          EOF
+
+      - name: Deploy convert-server image
+        if: steps.changes.outputs.convert == 'true'
+        run: |
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            /tmp/incruit-convert.tar \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/incruit-convert.tar
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            docker load -i /tmp/incruit-convert.tar
+            docker stop  incruit-convert 2>/dev/null || true
+            docker rm    incruit-convert 2>/dev/null || true
+            docker run -d \
+              --name incruit-convert \
+              --restart unless-stopped \
+              -p 127.0.0.1:8082:8082 \
+              incruit-convert:latest
+            rm -f /tmp/incruit-convert.tar
+            docker image prune -f
+            echo "✅ convert-server 교체 완료"
+          EOF
+
+      - name: Deploy cors-proxy image
+        if: steps.changes.outputs.proxy == 'true'
+        run: |
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            /tmp/incruit-cors-proxy.tar \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }}:/tmp/incruit-cors-proxy.tar
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no \
+            ${{ secrets.EC2_USER }}@${{ secrets.EC2_HOST }} << 'EOF'
+            docker load -i /tmp/incruit-cors-proxy.tar
+            docker stop  incruit-cors-proxy 2>/dev/null || true
+            docker rm    incruit-cors-proxy 2>/dev/null || true
+            docker run -d \
+              --name incruit-cors-proxy \
+              --restart unless-stopped \
+              -p 127.0.0.1:8787:8787 \
+              incruit-cors-proxy:latest
+            rm -f /tmp/incruit-cors-proxy.tar
+            docker image prune -f
+            echo "✅ cors-proxy 교체 완료"
+          EOF
+
+      # ─────────────────────────────────────────
+      # Security Group IP 제거
+      # ─────────────────────────────────────────
+      - name: Remove IP from Security Group
+        if: always() && steps.check.outputs.nothing == 'false'
+        run: |
+          aws ec2 revoke-security-group-ingress \
+            --group-id ${{ secrets.AWS_SECURITY_GROUP_ID }} \
+            --protocol tcp --port 22 \
+            --cidr ${{ steps.ip.outputs.ipv4 }}/32 2>&1 || true
+
+      # ─────────────────────────────────────────
+      # 배포 요약
+      # ─────────────────────────────────────────
+      - name: Deployment summary
+        if: always()
+        run: |
+          echo "════════════════════════════════════════════════"
+          echo "🚀 AWS EC2 배포 결과"
+          echo "════════════════════════════════════════════════"
+          echo "🌐 URL  : https://ai-studio.incru.it"
+          echo "💬 사유 : ${{ github.event.inputs.reason }}"
+          echo "🕐 시간 : $(date -u +"%Y-%m-%d %H:%M:%S UTC")"
+          echo ""
+          echo "배포 항목:"
+          echo "  정적 파일      : ${{ steps.changes.outputs.static      == 'true' && '✅ 배포됨' || '⏭️  스킵' }}"
+          echo "  Nginx 설정     : ${{ steps.changes.outputs.nginx_conf  == 'true' && '✅ 배포됨' || '⏭️  스킵' }}"
+          echo "  convert-server : ${{ steps.changes.outputs.convert     == 'true' && '✅ 이미지 교체' || '⏭️  스킵' }}"
+          echo "  cors-proxy     : ${{ steps.changes.outputs.proxy       == 'true' && '✅ 이미지 교체' || '⏭️  스킵' }}"
+          echo "════════════════════════════════════════════════"

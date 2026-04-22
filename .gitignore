@@ -1,0 +1,9 @@
+.bkit/
+docs/.bkit-memory.json
+docs/.pdca-snapshots/
+docs/.pdca-status.json
+__pycache__/
+*.pyc
+.python-version
+js/app.js.bak
+docs/gemini-gem-prompt-v3.md.bak
