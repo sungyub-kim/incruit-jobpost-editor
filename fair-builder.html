@@ -247,6 +247,7 @@ function renderSectionList() {
 
 function toggleSection(id, val) {
   sectionEnabled[id] = val;
+  applyToPreview();
 }
 
 /* ── 드래그 앤 드롭 ── */
@@ -276,6 +277,7 @@ function initDragDrop() {
         sectionOrder.splice(fromIdx, 1);
         sectionOrder.splice(toIdx, 0, dragged.dataset.id);
         renderSectionList();
+        applyToPreview();
       }
     });
   });
@@ -324,6 +326,58 @@ function applyColorToPreview(varName, value) {
     var frame = document.getElementById('preview-frame');
     frame.contentDocument.documentElement.style.setProperty(varName, value);
   } catch(e) {}
+}
+
+/* ── Step 3: 미리보기 DOM 반영 ── */
+var previewReady = false;
+
+document.getElementById('preview-frame').addEventListener('load', function() {
+  previewReady = true;
+  applyToPreview();
+});
+
+function getPreviewDoc() {
+  try { return document.getElementById('preview-frame').contentDocument; } catch(e) { return null; }
+}
+
+function applyToPreview() {
+  if (!previewReady) return;
+  var doc = getPreviewDoc();
+  if (!doc) return;
+
+  var container = doc.querySelector('#main') || doc.body;
+
+  /* 1. 섹션 show/hide */
+  sectionOrder.forEach(function(id) {
+    var el = doc.querySelector('[data-builder-section="' + id + '"]');
+    if (!el) return;
+    el.style.display = sectionEnabled[id] ? '' : 'none';
+  });
+
+  /* 2. 섹션 순서 재배치 */
+  var parent = null;
+  var anchors = {}; // id → anchor element (a 태그)
+
+  sectionOrder.forEach(function(id) {
+    var el = doc.querySelector('[data-builder-section="' + id + '"]');
+    if (!el) return;
+    if (!parent) parent = el.parentNode;
+
+    /* anchor 태그도 함께 이동 (선택적) */
+    var prev = el.previousElementSibling;
+    if (prev && prev.tagName === 'A' && prev.classList.contains('href-height')) {
+      anchors[id] = prev;
+    }
+  });
+
+  if (!parent) return;
+
+  sectionOrder.forEach(function(id) {
+    var el = doc.querySelector('[data-builder-section="' + id + '"]');
+    if (!el) return;
+    if (anchors[id]) parent.appendChild(anchors[id]);
+    parent.appendChild(el);
+  });
 }
 
 /* ── 파일 내보내기 (Step 6에서 완성) ── */
