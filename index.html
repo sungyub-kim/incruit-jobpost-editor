@@ -114,6 +114,42 @@
   </script>
 </head>
 <body class="bg-gray-900 text-gray-200 overflow-hidden">
+
+<!-- 비밀번호 게이트 -->
+<div id="password-gate" style="display:none;position:fixed;inset:0;z-index:9999;background:#111827;display:flex;align-items:center;justify-content:center;">
+  <div style="background:#1f2937;border-radius:12px;padding:40px;width:360px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,0.5);">
+    <img src="https://i.incru.it/ui/static/image/common/logo_incruit_white.svg" alt="Incruit" style="height:28px;margin:0 auto 24px;display:block;" onerror="this.style.display='none'">
+    <h2 style="color:#f9fafb;font-size:18px;font-weight:700;margin-bottom:6px;">Incruit 공고 에디터</h2>
+    <p style="color:#9ca3af;font-size:13px;margin-bottom:24px;">사내 전용 서비스입니다. 비밀번호를 입력하세요.</p>
+    <input id="pw-input" type="password" placeholder="비밀번호" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid #374151;background:#111827;color:#f9fafb;font-size:14px;margin-bottom:12px;box-sizing:border-box;" onkeydown="if(event.key==='Enter')checkPassword()">
+    <div id="pw-error" style="color:#ef4444;font-size:12px;margin-bottom:10px;display:none;">비밀번호가 올바르지 않습니다.</div>
+    <button onclick="checkPassword()" style="width:100%;padding:11px;background:#0066cc;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;">입장하기</button>
+  </div>
+</div>
+
+<script>
+(function() {
+  var PW = 'incruit2026!';
+  var KEY = 'ije_auth';
+  var gate = document.getElementById('password-gate');
+  if (localStorage.getItem(KEY) === 'ok') {
+    gate.style.display = 'none';
+  } else {
+    gate.style.display = 'flex';
+  }
+  window.checkPassword = function() {
+    var val = document.getElementById('pw-input').value;
+    if (val === PW) {
+      localStorage.setItem(KEY, 'ok');
+      gate.style.display = 'none';
+    } else {
+      document.getElementById('pw-error').style.display = 'block';
+      document.getElementById('pw-input').value = '';
+      document.getElementById('pw-input').focus();
+    }
+  };
+})();
+</script>
   <!-- App Container -->
   <div id="app" class="app-container">
     <!-- Panel 1: Settings -->
