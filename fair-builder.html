@@ -109,6 +109,31 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
+    /* 섹션 편집 버튼 */
+    .ep-edit-btn { font-size: 11px; padding: 2px 7px; border-radius: 4px; border: 1px solid #2e3a52; background: none; color: #6b7280; cursor: pointer; flex-shrink: 0; line-height: 1.4; }
+    .ep-edit-btn:hover { border-color: #60a5fa; color: #60a5fa; }
+    .ep-edit-btn.active { border-color: #0066cc; color: #60a5fa; background: #1a2a45; }
+
+    /* 섹션 편집 패널 */
+    .section-edit-panel { background: #111827; border: 1px solid #2e3a52; border-top: none; border-radius: 0 0 8px 8px; margin-top: -4px; margin-bottom: 8px; padding: 12px; }
+    .ep-title { font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+    .ep-btn-card { background: #1e2433; border: 1px solid #2e3a52; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
+    .ep-btn-card:last-child { margin-bottom: 0; }
+    .ep-btn-header { font-size: 12px; font-weight: 700; color: #60a5fa; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #2e3a52; }
+    .ep-field { margin-bottom: 6px; }
+    .ep-field label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 3px; }
+    .ep-field input[type=text] { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 7px; outline: none; box-sizing: border-box; }
+    .ep-field input[type=text]:focus { border-color: #0066cc; }
+    .ep-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .ep-row > label:first-child { flex: 1; font-size: 11px; color: #6b7280; margin-bottom: 0; }
+    .ep-color-wrap { display: flex; align-items: center; gap: 6px; }
+    .ep-color-preview { width: 22px; height: 22px; border-radius: 3px; border: 1px solid #374151; position: relative; overflow: hidden; cursor: pointer; flex-shrink: 0; }
+    .ep-color-preview input[type=color] { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer; }
+    .ep-hex { background: #161c2d !important; border: 1px solid #2e3a52 !important; border-radius: 4px; color: #e5e7eb !important; font-size: 11px; padding: 2px 6px !important; width: 72px !important; outline: none; font-family: monospace; }
+    .ep-hex:focus { border-color: #0066cc !important; }
+    .ep-hint { font-size: 10px; color: #4b5563; white-space: nowrap; }
+    .ep-hover-sub { padding-left: 10px; border-left: 2px solid #2e3a52; margin-top: 6px; }
+
     /* 패치노트 버튼 */
     #top-bar .btn-patch { background: transparent; border: 1px solid #2e3a52; color: #6b7280; font-size: 11px; padding: 3px 9px; }
     #top-bar .btn-patch:hover { border-color: #60a5fa; color: #60a5fa; }
@@ -171,7 +196,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.3.8</span>
+  <span id="ver-badge" title="배포 버전">v0.3.9</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
@@ -245,6 +270,13 @@ var sectionOrder   = [...FAIR_BUILDER_DEFAULT_ORDER];
 var sectionEnabled = {};
 var sectionBgColors = {};
 var cssColors = {};
+var openEditPanelId = null;
+var buttonStyles = {
+  section_gradient: [
+    { text: '취업특강 사전신청',             href: 'https://naver.me/GT6ePxU3',  width: '39.683%', bgColor: '#f46d80', shadowEnabled: true, shadowColor: '#D94E62', hoverEnabled: true, hoverBgColor: '#f78797', hoverShadowColor: '#bd3d50' },
+    { text: '이력서·자기소개서 첨삭 사전신청', href: 'https://naver.me/Gq9NKkAu', width: '39.683%', bgColor: '#c91be5', shadowEnabled: true, shadowColor: '#A612BE', hoverEnabled: true, hoverBgColor: '#de33fa', hoverShadowColor: '#910ca5' }
+  ]
+};
 
 FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
   sectionEnabled[id]  = FAIR_BUILDER_SCHEMA[id].enabled !== false;
@@ -263,7 +295,8 @@ function saveState() {
     sectionOrder:   sectionOrder,
     sectionEnabled: sectionEnabled,
     sectionBgColors:sectionBgColors,
-    cssColors:      cssColors
+    cssColors:      cssColors,
+    buttonStyles:   buttonStyles
   }));
 }
 
@@ -300,6 +333,7 @@ function loadState() {
         if (cssColors[v] === undefined) cssColors[v] = FAIR_BUILDER_COLORS[v].default;
       });
     }
+    if (s.buttonStyles) buttonStyles = s.buttonStyles;
   } catch(e) {}
 }
 
@@ -343,6 +377,7 @@ function renderSectionList() {
       '<span class="drag-handle">⠿</span>' +
       '<span class="section-name">' + schema.name + '</span>' +
       (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
+      (id === 'section_gradient' ? '<button class="ep-edit-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="버튼 편집">✏</button>' : '') +
       '<div class="section-bg-swatch' + (bgColor ? ' has-color' : '') + '" style="' + swatchStyle + '" title="섹션 배경 색상">' +
         '<input type="color" value="' + (bgColor || '#ffffff') + '" data-section="' + id + '" oninput="onSectionBgChange(this)">' +
       '</div>' +
@@ -355,6 +390,7 @@ function renderSectionList() {
     list.appendChild(item);
   });
   initDragDrop();
+  if (openEditPanelId) toggleSectionEdit(openEditPanelId);
 }
 
 function toggleSection(id, val) {
@@ -406,6 +442,119 @@ function initDragDrop() {
       }
     });
   });
+}
+
+/* ── 버튼 배너 편집 ── */
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
+
+function toggleSectionEdit(id) {
+  var existing = document.getElementById('edit-panel-' + id);
+  var btn = document.querySelector('[data-id="' + id + '"] .ep-edit-btn');
+  if (existing) {
+    existing.remove();
+    if (btn) btn.classList.remove('active');
+    openEditPanelId = null;
+  } else {
+    var item = document.querySelector('[data-id="' + id + '"]');
+    if (!item) return;
+    var panel = document.createElement('div');
+    panel.id = 'edit-panel-' + id;
+    panel.className = 'section-edit-panel';
+    if (id === 'section_gradient') panel.innerHTML = buildGradientPanel();
+    item.insertAdjacentElement('afterend', panel);
+    if (btn) btn.classList.add('active');
+    openEditPanelId = id;
+  }
+}
+
+function colorRow(i, key, val, label) {
+  return '<div class="ep-field"><label>' + label + '</label>' +
+    '<div class="ep-color-wrap">' +
+      '<div class="ep-color-preview" style="background:' + val + '">' +
+        '<input type="color" value="' + val + '" oninput="updateBtn(' + i + ',\'' + key + '\',this.value);this.parentNode.style.background=this.value;syncEpHex(this,' + i + ',\'' + key + '\')">' +
+      '</div>' +
+      '<input type="text" class="ep-hex" id="ep-' + key + '-' + i + '" value="' + val + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateBtn(' + i + ',\'' + key + '\',this.value)}">' +
+    '</div></div>';
+}
+
+function buildGradientPanel() {
+  var btns = buttonStyles['section_gradient'] || [];
+  var h = '<div class="ep-title">버튼 배너 편집</div>';
+  btns.forEach(function(b, i) {
+    h += '<div class="ep-btn-card">';
+    h += '<div class="ep-btn-header">버튼 ' + (i + 1) + '</div>';
+    h += '<div class="ep-field"><label>버튼 텍스트</label><input type="text" value="' + esc(b.text) + '" oninput="updateBtn(' + i + ',\'text\',this.value)"></div>';
+    h += '<div class="ep-field"><label>링크 URL</label><input type="text" value="' + esc(b.href) + '" oninput="updateBtn(' + i + ',\'href\',this.value)"></div>';
+    h += '<div class="ep-field"><label>너비 (% 또는 px)</label><input type="text" value="' + esc(b.width) + '" placeholder="예: 40% 또는 400px" oninput="updateBtn(' + i + ',\'width\',this.value)"></div>';
+    h += colorRow(i, 'bgColor', b.bgColor, '배경색');
+    h += '<div class="ep-row"><label>인셋 쉐도우</label>' +
+      '<label class="toggle"><input type="checkbox" ' + (b.shadowEnabled ? 'checked' : '') + ' onchange="updateBtn(' + i + ',\'shadowEnabled\',this.checked)"><span class="toggle-slider"></span></label>' +
+      '<div class="ep-color-wrap">' +
+        '<div class="ep-color-preview" style="background:' + b.shadowColor + '">' +
+          '<input type="color" value="' + b.shadowColor + '" oninput="updateBtn(' + i + ',\'shadowColor\',this.value);this.parentNode.style.background=this.value;syncEpHex(this,' + i + ',\'shadowColor\')">' +
+        '</div>' +
+        '<input type="text" class="ep-hex" id="ep-shadowColor-' + i + '" value="' + b.shadowColor + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateBtn(' + i + ',\'shadowColor\',this.value)}">' +
+      '</div></div>';
+    h += '<div class="ep-row"><label>호버 효과</label>' +
+      '<label class="toggle"><input type="checkbox" ' + (b.hoverEnabled ? 'checked' : '') + ' onchange="updateBtn(' + i + ',\'hoverEnabled\',this.checked);toggleEpHoverSub(' + i + ',this.checked)"><span class="toggle-slider"></span></label>' +
+      '<span class="ep-hint">PC (≥1025px)</span></div>';
+    h += '<div class="ep-hover-sub" id="ep-hover-sub-' + i + '" style="' + (b.hoverEnabled ? '' : 'display:none') + '">';
+    h += colorRow(i, 'hoverBgColor', b.hoverBgColor, '호버 배경색');
+    h += colorRow(i, 'hoverShadowColor', b.hoverShadowColor, '호버 쉐도우색');
+    h += '</div>';
+    h += '</div>';
+  });
+  return h;
+}
+
+function toggleEpHoverSub(i, show) {
+  var sub = document.getElementById('ep-hover-sub-' + i);
+  if (sub) sub.style.display = show ? '' : 'none';
+}
+
+function syncEpHex(colorInput, i, key) {
+  var hex = document.getElementById('ep-' + key + '-' + i);
+  if (hex) hex.value = colorInput.value;
+}
+
+function updateBtn(i, key, val) {
+  var bs = buttonStyles['section_gradient'];
+  if (!bs || !bs[i]) return;
+  bs[i][key] = val;
+  saveState();
+  applyBtnStylesToPreview();
+}
+
+function applyBtnStylesToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var btns = doc.querySelectorAll('[data-builder-section="section_gradient"] .round-btn');
+  var styles = buttonStyles['section_gradient'] || [];
+
+  btns.forEach(function(el, i) {
+    var s = styles[i];
+    if (!s) return;
+    el.textContent = s.text;
+    el.href = s.href;
+    el.style.width = s.width;
+    el.style.backgroundColor = s.bgColor;
+    el.style.boxShadow = s.shadowEnabled ? ('-5px -5px 4px 0 ' + s.shadowColor + ' inset') : 'none';
+  });
+
+  /* 호버 스타일 주입 */
+  var styleId = 'builder-btn-styles';
+  var tag = doc.getElementById(styleId);
+  if (!tag) { tag = doc.createElement('style'); tag.id = styleId; doc.head.appendChild(tag); }
+  var css = '';
+  styles.forEach(function(s, i) {
+    if (!s.hoverEnabled) return;
+    css += '@media (hover:hover) and (min-width:1025px){' +
+      '[data-builder-section="section_gradient"] .round-btn:nth-child(' + (i + 1) + '):hover{' +
+        'background-color:' + s.hoverBgColor + '!important;' +
+        'box-shadow:-5px -5px 4px 0 ' + s.hoverShadowColor + ' inset!important;' +
+      '}}';
+  });
+  tag.textContent = css;
 }
 
 /* ── CSS 색상 피커 렌더링 ── */
@@ -514,6 +663,8 @@ function applyToPreview() {
     if (anchors[id]) parent.appendChild(anchors[id]);
     parent.appendChild(el);
   });
+
+  applyBtnStylesToPreview();
 }
 
 /* ── 파일 내보내기 (Step 6에서 완성) ── */
@@ -523,6 +674,13 @@ function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.23',
+    items: [
+      '<strong>[v0.3.9]</strong> 버튼 배너 개별 편집 기능 추가 — 섹션 패널 ✏ 버튼 클릭으로 버튼별 텍스트/링크/너비/배경색/인셋쉐도우/호버효과 편집',
+      '<strong>[v0.3.9]</strong> 호버 효과 PC 전용 적용 (≥1025px) — @media(hover:hover) 동적 style 태그 주입 방식',
+    ]
+  },
   {
     date: '2026.04.22',
     items: [
