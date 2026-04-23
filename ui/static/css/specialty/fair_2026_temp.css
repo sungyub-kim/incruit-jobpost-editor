@@ -595,6 +595,11 @@ a:active, a:hover{color:var(--c-color); text-decoration:none;}
 	.greetings-cont strong{letter-spacing:-0.9px;padding-bottom:2px;}
 	.greetings-cont span{font-size:15px;line-height:21px;letter-spacing:-0.75px;}
 }
+@media(max-width:768px){
+	.greetings{padding:20px;}
+	.greetings-photo{width:100%;max-width:200px;}
+	.greetings-photo span img{max-width:100%;}
+}
 
 #main .tabList{margin:0 0 22px 0;border-color:var(--c-color);}
 

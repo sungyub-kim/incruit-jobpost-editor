@@ -263,7 +263,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.7.0</span>
+  <span id="ver-badge" title="배포 버전">v0.7.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
@@ -2030,7 +2030,43 @@ function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
   {
-    date: '2026.04.23 (v0.7.0)',
+    date: '2026.04.23 13:25 (v0.7.4)',
+    items: [
+      '<strong>[v0.7.4]</strong> Phase 3: S1 — 채용공고 탭 이름 편집 패널 추가 (좌측 패널 하단 고정)',
+      '<strong>[v0.7.4]</strong> Phase 3: S2 — 네비게이션 링크 텍스트·URL 편집 패널 추가',
+      '<strong>[v0.7.4]</strong> Phase 3: S3 — 메인 비주얼(section_visual) 섹션 스키마·DOM 연동 추가',
+      '<strong>[v0.7.4]</strong> 패널 토글(toggleFixedPanel), iframe 로드 시 nav·tab 자동 읽기 및 적용',
+    ]
+  },
+  {
+    date: '2026.04.23 13:20 (v0.7.3)',
+    items: [
+      '<strong>[v0.7.3]</strong> Phase 2: E1 — 이미지 클릭 편집: 편집 모드에서 이미지 클릭 시 파일 선택 → base64 미리보기·저장',
+      '<strong>[v0.7.3]</strong> Phase 2: E2 — YouTube URL 편집: iframe 클릭 시 미니 모달로 URL 입력, ytToEmbed() 자동 변환',
+      '<strong>[v0.7.3]</strong> Phase 2: E3 — 섹션 순서 ▲▼ 버튼: 좌측 패널 각 섹션 행에 이동 버튼 추가 (hideFromPanel 섹션 건너뜀)',
+      '<strong>[v0.7.3]</strong> Phase 2: E4 — 섹션명 클릭 시 스크롤: scrollToSection() → iframe 내 해당 섹션으로 부드럽게 이동',
+      '<strong>[v0.7.3]</strong> restoreExtraEdits — _img:, _iframe: 접두사 복원 처리 추가',
+    ]
+  },
+  {
+    date: '2026.04.23 13:15 (v0.7.2)',
+    items: [
+      '<strong>[v0.7.2]</strong> Phase 1: H1 — 링크 탐색 방지: 편집 모드에서 &lt;a&gt; 클릭 시 페이지 이동 차단 (preventEditNavigation)',
+      '<strong>[v0.7.2]</strong> Phase 1: H2 — 화이트 텍스트 보존: 편집 요소 hover/focus 시 color:inherit !important 주입',
+      '<strong>[v0.7.2]</strong> Phase 1: H3 — YouTube 클릭 차단: 편집 모드 iframe에 pointer-events:none 적용',
+      '<strong>[v0.7.2]</strong> Phase 1: H4 — 드래그 핸들 한정: [data-handle-for] 아닌 요소의 dragstart 차단',
+    ]
+  },
+  {
+    date: '2026.04.23 13:10 (v0.7.1)',
+    items: [
+      '<strong>[v0.7.1]</strong> Phase 0: 반응형 감사 — 성공사례 ≤480px 1열 전환 누락 수정 (fair_2026_temp.css 패치)',
+      '<strong>[v0.7.1]</strong> Phase 0: section_joblist, section_notice 좌측 패널에서 숨김 (hideFromPanel 플래그)',
+      '<strong>[v0.7.1]</strong> renderSectionList에서 hideFromPanel 체크 추가 — 숨김 섹션은 패널에서 제외, 미리보기 동작은 유지',
+    ]
+  },
+  {
+    date: '2026.04.23 11:50 (v0.7.0)',
     items: [
       '<strong>[v0.7.0]</strong> Step G — 포스터 레이아웃 가변: 온+오프 2개 / 온라인만 / 오프라인만 선택',
       '<strong>[v0.7.0]</strong> 선택 시 iframe에 &lt;style id=builder-poster-layout&gt; 동적 주입 (display:none + width:100%)',
@@ -2039,7 +2075,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.23 (v0.6.4)',
+    date: '2026.04.23 11:43 (v0.6.4)',
     items: [
       '<strong>[v0.6.4]</strong> Step F — 섹션 드래그 순서 변경: 편집 모드에서 각 섹션 상단에 ⠿ 핸들 자동 주입',
       '<strong>[v0.6.4]</strong> 섹션을 다른 섹션 위로 드래그하면 sectionOrder 즉시 업데이트, 좌측 패널·미리보기 동기화',
@@ -2047,7 +2083,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.23 (v0.6.3)',
+    date: '2026.04.23 11:38 (v0.6.3)',
     items: [
       '<strong>[v0.6.3]</strong> Step E — 요소 삽입: P 단락, ul/li 목록, ol/li 번호목록, &lt;strong&gt;, &lt;em&gt;, &lt;hr&gt; 삽입 버튼 추가',
       '<strong>[v0.6.3]</strong> insertElement(tag): 커서 위치에 블록 요소 삽입 (execCommand insertHTML)',
@@ -2055,7 +2091,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.23 (v0.6.2)',
+    date: '2026.04.23 11:36 (v0.6.2)',
     items: [
       '<strong>[v0.6.2]</strong> Step D — 고급 서식: 폰트 선택, 폰트 크기(px), 텍스트 색상, 배경 색상, 행간 컨트롤 추가',
       '<strong>[v0.6.2]</strong> 선택 범위 보존: 색상/폰트 컨트롤 클릭 시 iframe 선택 영역 저장 후 복원(saveIframeSelection/restoreIframeSelection)',
@@ -2064,7 +2100,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.23 (v0.6.1)',
+    date: '2026.04.23 11:29 (v0.6.1)',
     items: [
       '<strong>[v0.6.1]</strong> Step C — 포맷팅 툴바: 편집 모드에서 미리보기 상단에 고정 툴바 표시',
       '<strong>[v0.6.1]</strong> 굵게(B) / 기울임(I) / 밑줄(U) / 취소선(S): execCommand로 iframe 내 선택 텍스트에 즉시 적용',
@@ -2073,7 +2109,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.23 (v0.6.0)',
+    date: '2026.04.23 11:19 (v0.6.0)',
     items: [
       '<strong>[v0.6.0]</strong> Step B-btn — 버튼 배너 인라인 편집: 편집 모드에서 그라디언트 섹션 내 컨트롤 UI 자동 주입',
       '<strong>[v0.6.0]</strong> 버튼 추가/삭제/드래그 재정렬: ＋ 추가(최대 4개), ✕ 삭제(최소 1개 유지), ⠿ 드래그',
@@ -2083,7 +2119,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.23 (v0.5.2)',
+    date: '2026.04.23 10:52 (v0.5.2)',
     items: [
       '<strong>[v0.5.2]</strong> Step B-fix — 전체 텍스트 편집: SECTION_DOM_MAP 화이트리스트 제거, 섹션 내 모든 텍스트 노드 자동 편집 가능',
       '<strong>[v0.5.2]</strong> 경로 기반 저장: DOM_MAP 미매핑 요소는 _el:경로 키로 sectionData._extra에 저장/복원',
@@ -2091,7 +2127,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.22 (v0.5.1)',
+    date: '2026.04.23 10:33 (v0.5.1)',
     items: [
       '<strong>[v0.5.1]</strong> Step B — blur 즉시 저장: 편집 중 포커스 해제 시 자동 저장 (모드 종료 불필요)',
       '<strong>[v0.5.1]</strong> 섹션 활성 하이라이트: 편집 요소 focus 시 해당 섹션에 파란 테두리 표시',
@@ -2102,7 +2138,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.22 (v0.4.1)',
+    date: '2026.04.23 09:15 (v0.4.1)',
     items: [
       '<strong>[v0.4.1]</strong> 검수 버그 수정 — DOM_MAP 미매핑 필드를 편집 폼에서 자동 제외 (phantom 입력 방지)',
       '<strong>[v0.4.1]</strong> section_event_info 포스터 period(행사일시) 필드 DOM 매핑 추가 — 이제 기간 편집이 미리보기에 반영됨',
@@ -2110,7 +2146,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.23 (v0.4.0)',
+    date: '2026.04.23 09:15 (v0.4.0)',
     items: [
       '<strong>[v0.4.0]</strong> Step 4-B 완료 — 모든 섹션 ✏ 편집 폼 추가 (텍스트/이미지/링크/textarea/리피터 아이템 편집, iframe 실시간 반영)',
       '<strong>[v0.4.0]</strong> SECTION_DOM_MAP 기반 자동 필드 매핑 — 8개 섹션 DOM 커버',
@@ -2119,7 +2155,7 @@ var PATCH_NOTES = [
     ]
   },
   {
-    date: '2026.04.22',
+    date: '2026.04.22 18:03',
     items: [
       '<strong>[v0.3.8]</strong> 패치노트 뷰어 추가 — 상단 바 버튼 클릭 시 날짜별 패치 내역 확인',
       '<strong>[v0.3.7]</strong> 버튼 배너 섹션(section_gradient) 좌측 패널 미표시 버그 수정 — loadState 병합 처리 적용',
