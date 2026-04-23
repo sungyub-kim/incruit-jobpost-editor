@@ -13,6 +13,20 @@
 const FAIR_BUILDER_SCHEMA = {
 
   /* ─────────────────────────────────────
+   * 비주얼 섹션 (메인 배너)
+   * ───────────────────────────────────── */
+  section_visual: {
+    id: 'section_visual',
+    name: '메인 비주얼',
+    sectionClass: 'main-visual',
+    anchorId: '',
+    enabled: true,
+    fields: {
+      sec_title: { type: 'text', label: '배경 설명', default: '메인 비주얼' },
+    }
+  },
+
+  /* ─────────────────────────────────────
    * 헤더 (고정, 로고만 교체)
    * ───────────────────────────────────── */
   header: {
@@ -278,6 +292,7 @@ const FAIR_BUILDER_SCHEMA = {
 
 /* 섹션 기본 순서 */
 const FAIR_BUILDER_DEFAULT_ORDER = [
+  'section_visual',
   'section_event_info',
   'section_gradient',
   'section_greetings',

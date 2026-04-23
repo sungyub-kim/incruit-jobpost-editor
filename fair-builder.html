@@ -296,7 +296,23 @@
           <input type="text" id="logo-title" placeholder="기업명 입력">
         </div>
 
-        <div class="p-section-header" style="margin-top:16px;">섹션 블록 <span style="color:#4b5563;font-weight:400;">(드래그로 순서 변경)</span></div>
+        <!-- S2: 네비게이션 -->
+        <div class="p-section-header" style="margin-top:16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleFixedPanel('nav-panel','nav-arrow')">
+          <span>🔗 네비게이션</span><span id="nav-arrow" style="font-size:10px;">▶</span>
+        </div>
+        <div id="nav-panel" style="display:none;margin-bottom:8px;">
+          <div id="nav-link-list" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+
+        <!-- S1: 채용공고 탭 -->
+        <div class="p-section-header" style="margin-top:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleFixedPanel('tab-panel','tab-arrow')">
+          <span>📋 채용공고 탭</span><span id="tab-arrow" style="font-size:10px;">▶</span>
+        </div>
+        <div id="tab-panel" style="display:none;margin-bottom:8px;">
+          <div id="joblist-tab-list" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+
+        <div class="p-section-header" style="margin-top:4px;">섹션 블록 <span style="color:#4b5563;font-weight:400;">(드래그로 순서 변경)</span></div>
         <div id="section-list">
           <!-- JS로 렌더링 -->
         </div>
@@ -395,9 +411,12 @@ var openEditPanelId = null;
 var sectionData = {};
 var editMode = false;
 var posterConfig = 'both'; /* 'both' | 'online' | 'offline' */
+var navLinks    = [];  /* S2: 네비게이션 링크 [{text,href}] */
+var joblistTabs = [];  /* S1: 채용공고 탭 [{name}] */
 
 /* ── 섹션 DOM 매핑 테이블 ── */
 var SECTION_DOM_MAP = {
+  section_visual: {},  /* 이미지 편집은 E1(이미지 클릭)으로 처리 */
   section_event_info: {
     sec_title: { sel: 'p.sec_tit.basic',       prop: 'textContent' },
     sec_sub:   { sel: 'span.sec_txt.basic',    prop: 'textContent' },
@@ -481,7 +500,9 @@ function saveState() {
     cssColors:      cssColors,
     buttonStyles:   buttonStyles,
     sectionData:    sectionData,
-    posterConfig:   posterConfig
+    posterConfig:   posterConfig,
+    navLinks:       navLinks,
+    joblistTabs:    joblistTabs
   }));
 }
 
@@ -521,7 +542,103 @@ function loadState() {
     if (s.buttonStyles)  buttonStyles  = s.buttonStyles;
     if (s.sectionData)   sectionData   = s.sectionData;
     if (s.posterConfig)  posterConfig  = s.posterConfig;
+    if (s.navLinks)      navLinks      = s.navLinks;
+    if (s.joblistTabs)   joblistTabs   = s.joblistTabs;
   } catch(e) {}
+}
+
+/* ── S2: 네비게이션 편집 ── */
+function readNavFromPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var links = doc.querySelectorAll('.nav > li > a.links');
+  if (!links.length) return;
+  navLinks = [];
+  links.forEach(function(a) {
+    navLinks.push({ text: a.textContent.trim(), href: a.getAttribute('href') || '' });
+  });
+}
+
+function renderNavPanel() {
+  var el = document.getElementById('nav-link-list');
+  if (!el) return;
+  if (!navLinks.length) { el.innerHTML = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>'; return; }
+  el.innerHTML = navLinks.map(function(link, i) {
+    return '<div class="logo-input-wrap" style="padding:6px 8px;">' +
+      '<label>링크 ' + (i+1) + ' — 텍스트</label>' +
+      '<input type="text" value="' + esc(link.text) + '" oninput="updateNavLink(' + i + ',\'text\',this.value)">' +
+      '<label style="margin-top:4px;">href</label>' +
+      '<input type="text" value="' + esc(link.href) + '" oninput="updateNavLink(' + i + ',\'href\',this.value)">' +
+      '</div>';
+  }).join('');
+}
+
+function updateNavLink(i, key, val) {
+  if (!navLinks[i]) return;
+  navLinks[i][key] = val;
+  applyNavToPreview();
+  saveState();
+}
+
+function applyNavToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc || !navLinks.length) return;
+  var pcLinks = doc.querySelectorAll('.nav > li > a.links');
+  var mbLinks = doc.querySelectorAll('#sitemap > ul > li > a.links');
+  navLinks.forEach(function(link, i) {
+    if (pcLinks[i]) { pcLinks[i].textContent = link.text; pcLinks[i].setAttribute('href', link.href); }
+    if (mbLinks[i]) { mbLinks[i].textContent = link.text; mbLinks[i].setAttribute('href', link.href); }
+  });
+}
+
+/* ── S1: 채용공고 탭 편집 ── */
+function readTabsFromPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var labels = doc.querySelectorAll('[data-builder-section="section_joblist"] label.tab_item');
+  if (!labels.length) return;
+  joblistTabs = [];
+  labels.forEach(function(label) {
+    joblistTabs.push({ name: label.textContent.trim() });
+  });
+}
+
+function renderTabPanel() {
+  var el = document.getElementById('joblist-tab-list');
+  if (!el) return;
+  if (!joblistTabs.length) { el.innerHTML = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>'; return; }
+  el.innerHTML = joblistTabs.map(function(tab, i) {
+    return '<div class="logo-input-wrap" style="padding:6px 8px;">' +
+      '<label>탭 ' + (i+1) + '</label>' +
+      '<input type="text" value="' + esc(tab.name) + '" oninput="updateJoblistTab(' + i + ',this.value)">' +
+      '</div>';
+  }).join('');
+}
+
+function updateJoblistTab(i, val) {
+  if (!joblistTabs[i]) return;
+  joblistTabs[i].name = val;
+  applyTabsToPreview();
+  saveState();
+}
+
+function applyTabsToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc || !joblistTabs.length) return;
+  var labels = doc.querySelectorAll('[data-builder-section="section_joblist"] label.tab_item');
+  joblistTabs.forEach(function(tab, i) {
+    if (labels[i]) labels[i].textContent = tab.name;
+  });
+}
+
+/* 공통: 고정 패널 토글 */
+function toggleFixedPanel(panelId, arrowId) {
+  var panel = document.getElementById(panelId);
+  var arrow = document.getElementById(arrowId);
+  if (!panel) return;
+  var isOpen = panel.style.display !== 'none';
+  panel.style.display = isOpen ? 'none' : '';
+  if (arrow) arrow.textContent = isOpen ? '▶' : '▼';
 }
 
 function resetAll() {
@@ -1849,6 +1966,13 @@ document.getElementById('preview-frame').addEventListener('load', function() {
     applyColorToPreview(varName, cssColors[varName]);
   });
   try { applyPosterLayout(this.contentDocument); } catch(e) {}
+  /* S1/S2: 초기 읽기 (저장 상태 없을 때만) */
+  if (!navLinks.length)    readNavFromPreview();
+  if (!joblistTabs.length) readTabsFromPreview();
+  applyNavToPreview();
+  applyTabsToPreview();
+  renderNavPanel();
+  renderTabPanel();
 });
 
 function getPreviewDoc() {
