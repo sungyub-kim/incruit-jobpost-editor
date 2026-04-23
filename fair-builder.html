@@ -187,12 +187,6 @@
     #mini-modal-box .mm-cancel { background: #374151; color: #9ca3af; }
     #mini-modal-box .mm-apply { background: #0066cc; color: #fff; }
 
-    /* 편집모드 이미지 클릭 힌트 */
-    .builder-edit-mode [data-builder-section] img[data-img-edit-bound] { outline: 2px dashed rgba(245,158,11,.5); cursor: pointer; }
-    .builder-edit-mode [data-builder-section] img[data-img-edit-bound]:hover { outline-color: rgba(245,158,11,.9); }
-    /* 편집모드 video 컨테이너 클릭 힌트 */
-    .builder-edit-mode [data-builder-section] [data-yt-edit-bound] { outline: 2px dashed rgba(239,68,68,.5) !important; cursor: pointer; position: relative; }
-    .builder-edit-mode [data-builder-section] [data-yt-edit-bound]:hover { outline-color: rgba(239,68,68,.9) !important; }
 
     /* 패치노트 버튼 */
     #top-bar .btn-patch { background: transparent; border: 1px solid #2e3a52; color: #6b7280; font-size: 11px; padding: 3px 9px; }
@@ -1644,7 +1638,27 @@ function injectEditModeCSS(doc) {
     '.builder-edit-mode [data-builder-section] iframe{pointer-events:none!important;}' +
     /* H4: 네이티브 이미지/링크 드래그 방지 */
     '.builder-edit-mode [data-builder-section] img,' +
-    '.builder-edit-mode [data-builder-section] a{-webkit-user-drag:none;user-drag:none;}';
+    '.builder-edit-mode [data-builder-section] a{-webkit-user-drag:none;user-drag:none;}' +
+    /* E1: 이미지 편집 가능 힌트 */
+    '.builder-edit-mode [data-builder-section] img[data-img-edit-bound]{' +
+      'outline:2px dashed rgba(245,158,11,.55)!important;' +
+      'outline-offset:3px;cursor:pointer!important;' +
+      'transition:outline-color .15s,box-shadow .15s;' +
+    '}' +
+    '.builder-edit-mode [data-builder-section] img[data-img-edit-bound]:hover{' +
+      'outline:2px solid rgba(245,158,11,1)!important;' +
+      'box-shadow:0 0 0 5px rgba(245,158,11,.18)!important;' +
+    '}' +
+    /* E2: YouTube 컨테이너 편집 가능 힌트 */
+    '.builder-edit-mode [data-builder-section] [data-yt-edit-bound]{' +
+      'outline:2px dashed rgba(239,68,68,.55)!important;' +
+      'outline-offset:3px;cursor:pointer!important;position:relative;' +
+      'transition:outline-color .15s,box-shadow .15s;' +
+    '}' +
+    '.builder-edit-mode [data-builder-section] [data-yt-edit-bound]:hover{' +
+      'outline:2px solid rgba(239,68,68,1)!important;' +
+      'box-shadow:0 0 0 5px rgba(239,68,68,.18)!important;' +
+    '}';
   doc.head.appendChild(s);
 }
 
@@ -1717,6 +1731,7 @@ function applyImageEditListeners(doc) {
   doc.querySelectorAll('[data-builder-section] img').forEach(function(img) {
     if (img.dataset.imgEditBound || img.hasAttribute('data-builder-ui')) return;
     img.dataset.imgEditBound = '';
+    img.title = '클릭하여 이미지 교체';
     img.addEventListener('click', function(e) {
       if (!editMode) return;
       e.stopPropagation();
@@ -1761,6 +1776,7 @@ function applyYoutubeEditListeners(doc) {
   doc.querySelectorAll('[data-builder-section="section_videos"] .video').forEach(function(container) {
     if (container.dataset.ytEditBound) return;
     container.dataset.ytEditBound = '';
+    container.title = '클릭하여 YouTube URL 변경';
     container.addEventListener('click', function(e) {
       if (!editMode) return;
       e.stopPropagation();
