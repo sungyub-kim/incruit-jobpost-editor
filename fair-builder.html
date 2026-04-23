@@ -1000,6 +1000,14 @@ function injectSectionDragHandles(doc) {
       });
     });
 
+    /* H4: 핸들 외 영역에서 시작된 dragstart 차단 */
+    sEl.addEventListener('dragstart', function(e) {
+      if (!e.target.closest('[data-handle-for]')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
+
     sEl.addEventListener('dragover', function(e) {
       if (!editMode) return;
       e.preventDefault();
@@ -1429,16 +1437,23 @@ function injectEditModeCSS(doc) {
     '.builder-edit-mode [data-editable]:hover{' +
       'outline-color:rgba(0,102,204,.85)!important;' +
       'background:rgba(0,102,204,.06)!important;' +
+      'color:inherit!important;' +          /* H2: 컬러 버튼 위 흰색 텍스트 보존 */
     '}' +
     '.builder-edit-mode [data-editable]:focus{' +
       'outline:2px solid #0066cc!important;' +
       'outline-offset:2px;' +
       'background:rgba(0,102,204,.09)!important;' +
+      'color:inherit!important;' +          /* H2: 포커스 시 텍스트색 유지 */
     '}' +
     '.builder-section-active{' +
       'outline:3px solid rgba(0,102,204,.28)!important;' +
       'outline-offset:-3px;' +
-    '}';
+    '}' +
+    /* H3: YouTube/영상 iframe 클릭 차단 */
+    '.builder-edit-mode [data-builder-section] iframe{pointer-events:none!important;}' +
+    /* H4: 네이티브 이미지/링크 드래그 방지 */
+    '.builder-edit-mode [data-builder-section] img,' +
+    '.builder-edit-mode [data-builder-section] a{-webkit-user-drag:none;user-drag:none;}';
   doc.head.appendChild(s);
 }
 
@@ -1541,6 +1556,13 @@ function applyEditableAttr(doc) {
       makeEditable(el, sId, fieldKey, prop);
       if (el.tagName === 'A') el.addEventListener('click', preventEditNavigation);
     });
+  });
+  /* H1: 텍스트 없는 <a>(이미지 링크 등)도 탐색 차단 */
+  doc.querySelectorAll('[data-builder-section] a').forEach(function(a) {
+    if (!a.dataset.editNavBlocked) {
+      a.dataset.editNavBlocked = '';
+      a.addEventListener('click', preventEditNavigation);
+    }
   });
 }
 
