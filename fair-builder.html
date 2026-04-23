@@ -312,6 +312,24 @@
           <label>기업명 (title 속성)</label>
           <input type="text" id="logo-title" placeholder="기업명 입력">
         </div>
+        <div class="logo-input-wrap">
+          <label>로고 1 이미지 <span class="ep-hint">(.logo_f)</span></label>
+          <div class="ep-bgimg-row">
+            <input type="text" class="ep-bgimg-input" id="logo-url-logo1" placeholder="URL 또는 파일 업로드" oninput="updateLogoImage('logo1',this.value)">
+            <label class="ep-bgimg-upload" title="파일 업로드">📁<input type="file" accept="image/*" style="display:none" onchange="onLogoImgFile(this,'logo1')"></label>
+            <button class="ep-bgimg-clear" onclick="updateLogoImage('logo1','');document.getElementById('logo-url-logo1').value=''" style="display:none" id="logo-clear-logo1">✕</button>
+          </div>
+          <img id="logo-thumb-logo1" class="ep-bgimg-thumb" style="display:none">
+        </div>
+        <div class="logo-input-wrap">
+          <label>로고 2 이미지 <span class="ep-hint">(.logo_f2)</span></label>
+          <div class="ep-bgimg-row">
+            <input type="text" class="ep-bgimg-input" id="logo-url-logo2" placeholder="URL 또는 파일 업로드" oninput="updateLogoImage('logo2',this.value)">
+            <label class="ep-bgimg-upload" title="파일 업로드">📁<input type="file" accept="image/*" style="display:none" onchange="onLogoImgFile(this,'logo2')"></label>
+            <button class="ep-bgimg-clear" onclick="updateLogoImage('logo2','');document.getElementById('logo-url-logo2').value=''" style="display:none" id="logo-clear-logo2">✕</button>
+          </div>
+          <img id="logo-thumb-logo2" class="ep-bgimg-thumb" style="display:none">
+        </div>
 
         <!-- S2: 네비게이션 -->
         <div class="p-section-header" style="margin-top:16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleFixedPanel('nav-panel','nav-arrow')">
@@ -346,6 +364,10 @@
       <div id="tab-style" class="tab-panel">
         <div class="p-section-header">CSS 색상 토큰</div>
         <div id="color-list">
+          <!-- JS로 렌더링 -->
+        </div>
+        <div class="p-section-header" style="margin-top:16px;">내보내기 설정</div>
+        <div id="export-settings-wrap">
           <!-- JS로 렌더링 -->
         </div>
       </div>
@@ -434,6 +456,8 @@ var sectionBgImages = {};  /* ST2: 섹션 배경 이미지 URL */
 var sectionSpacing = {};   /* ST1: { sId: { pt, pb, mpt, mpb } } */
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
+var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
+var exportSettings = { imgBasePath: '/ui/static/image/specialty/', fairName: '' }; /* X1: 내보내기 설정 */
 var cssColors = {};
 var openEditPanelId = null;
 var sectionData = {};
@@ -531,6 +555,8 @@ function saveState() {
     sectionSpacing: sectionSpacing,
     aosEnabled:          aosEnabled,
     visualRightVisible:  visualRightVisible,
+    logoImages:          logoImages,
+    exportSettings:      exportSettings,
     cssColors:      cssColors,
     buttonStyles:   buttonStyles,
     sectionData:    sectionData,
@@ -592,6 +618,8 @@ function loadState() {
     if (s.joblistTabs)   joblistTabs   = s.joblistTabs;
     if (s.aosEnabled !== undefined)         aosEnabled         = s.aosEnabled;
     if (s.visualRightVisible !== undefined) visualRightVisible = s.visualRightVisible;
+    if (s.logoImages)      { logoImages = Object.assign({ logo1:'', logo2:'' }, s.logoImages); }
+    if (s.exportSettings)  { exportSettings = Object.assign({ imgBasePath:'/ui/static/image/specialty/', fairName:'' }, s.exportSettings); }
   } catch(e) {}
 }
 
@@ -701,6 +729,7 @@ function switchTab(name, btn) {
   document.querySelectorAll('.panel-tab button').forEach(function(el) { el.classList.remove('active'); });
   document.getElementById('tab-' + name).classList.add('active');
   btn.classList.add('active');
+  if (name === 'style') renderExportSettings();
 }
 
 /* ── 디바이스 미리보기 ── */
@@ -1061,6 +1090,59 @@ function updateBtn(i, key, val) {
   bs[i][key] = val;
   saveState();
   applyBtnStylesToPreview();
+}
+
+/* ── X2: 헤더 로고 이미지 교체 ── */
+function applyLogoImagesToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var tag = doc.getElementById('builder-logo-css');
+  if (!tag) { tag = doc.createElement('style'); tag.id = 'builder-logo-css'; doc.head.appendChild(tag); }
+  var css = '';
+  if (logoImages.logo1) css += '.sec-wrap .logo_f{background-image:url("' + logoImages.logo1.replace(/"/g,'\\"') + '")!important;}';
+  if (logoImages.logo2) css += '.sec-wrap .logo_f2{background-image:url("' + logoImages.logo2.replace(/"/g,'\\"') + '")!important;}';
+  tag.textContent = css;
+}
+
+function updateLogoImage(key, url) {
+  logoImages[key] = url;
+  saveState();
+  applyLogoImagesToPreview();
+  var thumb = document.getElementById('logo-thumb-' + key);
+  if (thumb) { thumb.src = url; thumb.style.display = url ? 'block' : 'none'; }
+}
+
+window.onLogoImgFile = function(input, key) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    var inp = document.getElementById('logo-url-' + key);
+    if (inp) inp.value = dataUrl;
+    updateLogoImage(key, dataUrl);
+  };
+  reader.readAsDataURL(file);
+};
+
+/* ── X1: 내보내기 설정 ── */
+function updateExportSetting(key, val) {
+  exportSettings[key] = val;
+  saveState();
+}
+
+function renderExportSettings() {
+  var el = document.getElementById('export-settings-wrap');
+  if (!el) return;
+  el.innerHTML =
+    '<div class="logo-input-wrap">' +
+      '<label>박람회명 <span class="ep-hint">(ASP title에 사용)</span></label>' +
+      '<input type="text" id="es-fairname" value="' + esc(exportSettings.fairName) + '" placeholder="예: 2026 서울 취업박람회" oninput="updateExportSetting(\'fairName\',this.value)">' +
+    '</div>' +
+    '<div class="logo-input-wrap">' +
+      '<label>이미지 경로 prefix <span class="ep-hint">(ASP/CSS 출력 시 이미지 경로)</span></label>' +
+      '<input type="text" id="es-imgpath" value="' + esc(exportSettings.imgBasePath) + '" placeholder="/ui/static/image/specialty/" oninput="updateExportSetting(\'imgBasePath\',this.value)">' +
+    '</div>';
 }
 
 /* ── V1/V2: 메인 비주얼 편집 ── */
@@ -2270,6 +2352,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyBgImagesToPreview();
   applyAosToPreview();
   applyVisualRightToPreview();
+  applyLogoImagesToPreview();
   renderNavPanel();
   renderTabPanel();
 });
@@ -2527,6 +2610,11 @@ function togglePatchNotes() {
 loadState();
 renderSectionList();
 renderColorList();
+/* X1/X2 초기 UI 복원 */
+(function() {
+  if (logoImages.logo1) { var el=document.getElementById('logo-url-logo1'); if(el) el.value=logoImages.logo1; var t=document.getElementById('logo-thumb-logo1'); if(t){t.src=logoImages.logo1;t.style.display='block';} }
+  if (logoImages.logo2) { var el=document.getElementById('logo-url-logo2'); if(el) el.value=logoImages.logo2; var t=document.getElementById('logo-thumb-logo2'); if(t){t.src=logoImages.logo2;t.style.display='block';} }
+})();
 </script>
 
 <!-- E1/E2: 미니 모달 -->
