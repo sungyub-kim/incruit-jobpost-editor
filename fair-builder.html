@@ -206,7 +206,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.5.1</span>
+  <span id="ver-badge" title="배포 버전">v0.5.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
@@ -829,6 +829,7 @@ function enterEditMode() {
   if (!doc) return;
   doc.body.classList.add('builder-edit-mode');
   injectEditModeCSS(doc);
+  restoreExtraEdits(doc);
   applyEditableAttr(doc);
   editMode = true;
   document.getElementById('edit-mode-btn').classList.add('active');
@@ -888,30 +889,104 @@ function injectEditModeCSS(doc) {
   doc.head.appendChild(s);
 }
 
-function applyEditableAttr(doc) {
-  var SKIP = { href: 1, src: 1, alt: 1 };
-  Object.keys(SECTION_DOM_MAP).forEach(function(sId) {
+/* ── 편집 경로 헬퍼 ── */
+function getElPath(el, root) {
+  var parts = [];
+  var cur = el;
+  while (cur && cur !== root) {
+    var tag = cur.tagName.toLowerCase();
+    var siblings = cur.parentNode ? Array.prototype.filter.call(
+      cur.parentNode.children, function(c) { return c.tagName === cur.tagName; }
+    ) : [];
+    parts.unshift(tag + ':' + siblings.indexOf(cur));
+    cur = cur.parentNode;
+  }
+  return parts.join('/');
+}
+
+function findElByPath(path, root) {
+  var parts = path.split('/');
+  var cur = root;
+  for (var i = 0; i < parts.length; i++) {
+    var m = parts[i].match(/^([a-z0-9]+):(\d+)$/);
+    if (!m || !cur) return null;
+    var tag = m[1].toUpperCase();
+    var idx = +m[2];
+    var children = Array.prototype.filter.call(
+      cur.children, function(c) { return c.tagName === tag; }
+    );
+    cur = children[idx] || null;
+  }
+  return cur;
+}
+
+function getDomMapField(sId, el, sEl) {
+  var map = SECTION_DOM_MAP[sId];
+  if (!map) return null;
+  var SKIP_PROP = { href: 1, src: 1, alt: 1 };
+  for (var fk in map) {
+    var m = map[fk];
+    if (m._repeater) {
+      var found = null;
+      sEl.querySelectorAll(m.container).forEach(function(node, i) {
+        if (found) return;
+        for (var sfk in m.fields) {
+          var fm = m.fields[sfk];
+          if (SKIP_PROP[fm.prop]) continue;
+          var target = fm.sel ? node.querySelector(fm.sel) : node;
+          if (target === el) { found = { field: fk + '.' + i + '.' + sfk, prop: fm.prop }; return; }
+        }
+      });
+      if (found) return found;
+    } else {
+      if (SKIP_PROP[m.prop]) continue;
+      if (m.sel && sEl.querySelector(m.sel) === el) return { field: fk, prop: m.prop };
+    }
+  }
+  return null;
+}
+
+function preventEditNavigation(e) {
+  if (editMode) e.preventDefault();
+}
+
+function restoreExtraEdits(doc) {
+  Object.keys(sectionData).forEach(function(sId) {
+    var extra = sectionData[sId] && sectionData[sId]._extra;
+    if (!extra) return;
     var sEl = doc.querySelector('[data-builder-section="' + sId + '"]');
     if (!sEl) return;
-    var map = SECTION_DOM_MAP[sId];
-    Object.keys(map).forEach(function(fk) {
-      var m = map[fk];
-      if (m._repeater) {
-        sEl.querySelectorAll(m.container).forEach(function(node, i) {
-          Object.keys(m.fields).forEach(function(sfk) {
-            var fm = m.fields[sfk];
-            if (SKIP[fm.prop]) return;
-            var el = fm.sel ? node.querySelector(fm.sel) : node;
-            if (!el) return;
-            makeEditable(el, sId, fk + '.' + i + '.' + sfk, fm.prop);
-          });
-        });
-      } else {
-        if (SKIP[m.prop]) return;
-        var el = sEl.querySelector(m.sel);
-        if (!el) return;
-        makeEditable(el, sId, fk, m.prop);
+    Object.keys(extra).forEach(function(field) {
+      if (!field.startsWith('_el:')) return;
+      var el = findElByPath(field.slice(4), sEl);
+      if (el) el.innerHTML = extra[field];
+    });
+  });
+}
+
+function applyEditableAttr(doc) {
+  var SKIP_TAGS = { SCRIPT:1, STYLE:1, IMG:1, INPUT:1, SELECT:1, TEXTAREA:1,
+                    IFRAME:1, SVG:1, CANVAS:1, NOSCRIPT:1, BR:1, HR:1 };
+  var SKIP_PROP = { href: 1, src: 1, alt: 1 };
+  doc.querySelectorAll('[data-builder-section]').forEach(function(sEl) {
+    var sId = sEl.dataset.builderSection;
+    sEl.querySelectorAll('*').forEach(function(el) {
+      if (SKIP_TAGS[el.tagName]) return;
+      if (el.closest('[contenteditable="true"]')) return;
+      if (el.dataset.builderUi) return;
+      var hasText = false;
+      for (var n = 0; n < el.childNodes.length; n++) {
+        if (el.childNodes[n].nodeType === 3 && el.childNodes[n].textContent.trim()) {
+          hasText = true; break;
+        }
       }
+      if (!hasText) return;
+      var mapped = getDomMapField(sId, el, sEl);
+      if (mapped && SKIP_PROP[mapped.prop]) return;
+      var fieldKey = mapped ? mapped.field : '_el:' + getElPath(el, sEl);
+      var prop     = mapped ? mapped.prop  : 'innerHTML';
+      makeEditable(el, sId, fieldKey, prop);
+      if (el.tagName === 'A') el.addEventListener('click', preventEditNavigation);
     });
   });
 }
@@ -945,19 +1020,31 @@ function onEditableBlur(e) {
   var field = el.dataset.builderField;
   var prop  = el.dataset.builderProp;
   if (!sId || !field) return;
-  var val = prop === 'innerHTML' ? el.innerHTML : el.textContent.trim();
-  setFieldDirect(sId, field, val);
+  var val = prop === 'textContent' ? el.textContent.trim() : el.innerHTML;
+  if (field.startsWith('_el:')) {
+    if (!sectionData[sId]) sectionData[sId] = {};
+    if (!sectionData[sId]._extra) sectionData[sId]._extra = {};
+    sectionData[sId]._extra[field] = val;
+  } else {
+    setFieldDirect(sId, field, val);
+  }
   saveState();
 }
 
 function collectEditableValues(doc) {
   doc.querySelectorAll('[data-editable]').forEach(function(el) {
-    var sId = el.dataset.builderSection;
+    var sId   = el.dataset.builderSection;
     var field = el.dataset.builderField;
-    var prop = el.dataset.builderProp;
+    var prop  = el.dataset.builderProp;
     if (!sId || !field) return;
-    var val = prop === 'innerHTML' ? el.innerHTML : el.textContent.trim();
-    setFieldDirect(sId, field, val);
+    var val = prop === 'textContent' ? el.textContent.trim() : el.innerHTML;
+    if (field.startsWith('_el:')) {
+      if (!sectionData[sId]) sectionData[sId] = {};
+      if (!sectionData[sId]._extra) sectionData[sId]._extra = {};
+      sectionData[sId]._extra[field] = val;
+    } else {
+      setFieldDirect(sId, field, val);
+    }
   });
 }
 
@@ -1046,6 +1133,14 @@ function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.23 (v0.5.2)',
+    items: [
+      '<strong>[v0.5.2]</strong> Step B-fix — 전체 텍스트 편집: SECTION_DOM_MAP 화이트리스트 제거, 섹션 내 모든 텍스트 노드 자동 편집 가능',
+      '<strong>[v0.5.2]</strong> 경로 기반 저장: DOM_MAP 미매핑 요소는 _el:경로 키로 sectionData._extra에 저장/복원',
+      '<strong>[v0.5.2]</strong> 링크 클릭 방지: 편집 모드에서 &lt;a&gt; 태그 navigate 차단',
+    ]
+  },
   {
     date: '2026.04.22 (v0.5.1)',
     items: [
