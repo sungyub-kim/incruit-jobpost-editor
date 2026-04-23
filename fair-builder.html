@@ -518,6 +518,7 @@ function renderSectionList() {
   list.innerHTML = '';
   sectionOrder.forEach(function(id) {
     var schema  = FAIR_BUILDER_SCHEMA[id];
+    if (schema.hideFromPanel) return;
     var isFixed = !!schema.fixed_content;
     var enabled = sectionEnabled[id];
     var bgColor = sectionBgColors[id] || '';
