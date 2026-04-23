@@ -201,6 +201,17 @@
     .ep-spacing-item input { width: 100%; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 11px; padding: 3px 5px; }
     .ep-spacing-item input:focus { border-color: #3b82f6; outline: none; }
 
+    /* ST2: 배경 이미지 패널 */
+    .ep-bgimg-group { margin-bottom: 10px; border-bottom: 1px solid #2e3a52; padding-bottom: 10px; }
+    .ep-bgimg-row { display: flex; align-items: center; gap: 4px; margin-top: 4px; }
+    .ep-bgimg-input { flex: 1; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 11px; padding: 4px 6px; min-width: 0; }
+    .ep-bgimg-input:focus { border-color: #3b82f6; outline: none; }
+    .ep-bgimg-upload { display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; background: #2e3a52; border-radius: 4px; cursor: pointer; font-size: 13px; flex-shrink: 0; }
+    .ep-bgimg-upload:hover { background: #3b4f6b; }
+    .ep-bgimg-clear { background: #4b1c1c; border: none; color: #f87171; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 11px; flex-shrink: 0; }
+    .ep-bgimg-clear:hover { background: #7f1d1d; }
+    .ep-bgimg-thumb { width: 100%; max-height: 60px; object-fit: cover; border-radius: 4px; margin-top: 5px; border: 1px solid #2e3a52; }
+
     /* 편집 모드 버튼 & 뱃지 */
     #edit-mode-btn { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 4px; border: 1px solid #2e3a52; background: none; color: #9ca3af; cursor: pointer; transition: all .15s; flex-shrink: 0; }
     #edit-mode-btn:hover { border-color: #f59e0b; color: #f59e0b; }
@@ -409,7 +420,8 @@ var STATE_KEY = 'fair_builder_state_v1';
 var sectionOrder   = [...FAIR_BUILDER_DEFAULT_ORDER];
 var sectionEnabled = {};
 var sectionBgColors = {};
-var sectionSpacing = {};  /* ST1: { sId: { pt, pb, mpt, mpb } } */
+var sectionBgImages = {};  /* ST2: 섹션 배경 이미지 URL */
+var sectionSpacing = {};   /* ST1: { sId: { pt, pb, mpt, mpb } } */
 var cssColors = {};
 var openEditPanelId = null;
 var sectionData = {};
@@ -487,6 +499,7 @@ var buttonStyles = {
 FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
   sectionEnabled[id]  = FAIR_BUILDER_SCHEMA[id].enabled !== false;
   sectionBgColors[id] = '';
+  sectionBgImages[id] = '';
   sectionSpacing[id]  = { pt:'', pb:'', mpt:'', mpb:'' };
 });
 Object.keys(FAIR_BUILDER_COLORS).forEach(function(v) {
@@ -502,6 +515,7 @@ function saveState() {
     sectionOrder:   sectionOrder,
     sectionEnabled: sectionEnabled,
     sectionBgColors:sectionBgColors,
+    sectionBgImages:sectionBgImages,
     sectionSpacing: sectionSpacing,
     cssColors:      cssColors,
     buttonStyles:   buttonStyles,
@@ -537,6 +551,12 @@ function loadState() {
       sectionBgColors = s.sectionBgColors;
       FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
         if (sectionBgColors[id] === undefined) sectionBgColors[id] = '';
+      });
+    }
+    if (s.sectionBgImages) {
+      sectionBgImages = s.sectionBgImages;
+      FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
+        if (sectionBgImages[id] === undefined) sectionBgImages[id] = '';
       });
     }
     if (s.sectionSpacing) {
@@ -842,6 +862,7 @@ function colorRow(i, key, val, label) {
 function buildGradientPanel() {
   var btns = buttonStyles['section_gradient'] || [];
   var h = '<div class="ep-title">버튼 배너 편집</div>';
+  h += buildBgImagePanel('section_gradient');
   btns.forEach(function(b, i) {
     h += '<div class="ep-btn-card">';
     h += '<div class="ep-btn-header">버튼 ' + (i + 1) + '</div>';
@@ -980,6 +1001,7 @@ function buildSectionPanel(sectionId) {
   var data   = sectionData[sectionId] || {};
   var map    = SECTION_DOM_MAP[sectionId] || {};
   var h = '<div class="ep-title">' + schema.name + ' 편집</div>';
+  h += buildBgImagePanel(sectionId);
   if (sectionId === 'section_event_info') h += buildPosterLayoutCtrl();
   Object.keys(schema.fields).forEach(function(fk) {
     var field = schema.fields[fk];
@@ -1022,6 +1044,67 @@ function updateBtn(i, key, val) {
   saveState();
   applyBtnStylesToPreview();
 }
+
+/* ── ST2: 섹션 배경 이미지 ── */
+function applyBgImagesToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var tag = doc.getElementById('builder-bgimage-css');
+  if (!tag) { tag = doc.createElement('style'); tag.id = 'builder-bgimage-css'; doc.head.appendChild(tag); }
+  var css = '';
+  Object.keys(sectionBgImages).forEach(function(sId) {
+    var url = sectionBgImages[sId];
+    if (!url) return;
+    css += '[data-builder-section="' + sId + '"]{' +
+      'background-image:url("' + url.replace(/"/g, '\\"') + '")!important;' +
+      'background-size:cover!important;' +
+      'background-position:center!important;' +
+      'background-repeat:no-repeat!important;' +
+    '}';
+  });
+  tag.textContent = css;
+}
+
+function updateSectionBgImage(sId, url) {
+  sectionBgImages[sId] = url;
+  saveState();
+  applyBgImagesToPreview();
+  /* 패널 미리보기 썸네일 업데이트 */
+  var thumb = document.getElementById('bgimg-thumb-' + sId);
+  if (thumb) { thumb.src = url; thumb.style.display = url ? 'block' : 'none'; }
+  var clearBtn = document.getElementById('bgimg-clear-' + sId);
+  if (clearBtn) clearBtn.style.display = url ? 'inline-block' : 'none';
+}
+
+function buildBgImagePanel(sId) {
+  var url = sectionBgImages[sId] || '';
+  return '<div class="ep-bgimg-group">' +
+    '<div class="ep-spacing-title">배경 이미지 <span class="ep-hint">(설정 시 배경색 위에 덮어씌워짐)</span></div>' +
+    '<div class="ep-bgimg-row">' +
+      '<input type="text" id="bgimg-url-' + sId + '" class="ep-bgimg-input" value="' + esc(url) + '" placeholder="이미지 URL 또는 파일 업로드" ' +
+        'oninput="updateSectionBgImage(\'' + sId + '\',this.value)">' +
+      '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
+        '<input type="file" accept="image/*" style="display:none" onchange="onSectionBgImgFile(this,\'' + sId + '\')">' +
+      '</label>' +
+      '<button class="ep-bgimg-clear" id="bgimg-clear-' + sId + '" style="display:' + (url ? 'inline-block' : 'none') + '" ' +
+        'onclick="updateSectionBgImage(\'' + sId + '\',\'\');document.getElementById(\'bgimg-url-' + sId + '\').value=\'\'">✕</button>' +
+    '</div>' +
+    (url ? '<img id="bgimg-thumb-' + sId + '" class="ep-bgimg-thumb" src="' + esc(url) + '">' : '<img id="bgimg-thumb-' + sId + '" class="ep-bgimg-thumb" style="display:none">') +
+  '</div>';
+}
+
+window.onSectionBgImgFile = function(input, sId) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    var urlInput = document.getElementById('bgimg-url-' + sId);
+    if (urlInput) urlInput.value = dataUrl;
+    updateSectionBgImage(sId, dataUrl);
+  };
+  reader.readAsDataURL(file);
+};
 
 /* ── ST1: 섹션 여백 편집 ── */
 function applySpacingToPreview() {
@@ -2053,6 +2136,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyNavToPreview();
   applyTabsToPreview();
   applySpacingToPreview();
+  applyBgImagesToPreview();
   renderNavPanel();
   renderTabPanel();
 });
