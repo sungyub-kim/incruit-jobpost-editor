@@ -576,13 +576,13 @@ a:active, a:hover{color:var(--c-color); text-decoration:none;}
 }
 /* ��ȸ�� */
 .greetings{display:flex;max-width:1260px; margin:0 auto; padding:clamp(20px, (100vw - 1024.5px) * 1000 + 20px, 60px); border-radius:10px; background-color:#fff;}
-.greetings-photo{width:349px;}
+.greetings-photo{flex:0 0 349px;max-width:349px;}
 .greetings-photo span{display:block;}
 .greetings-photo span img{vertical-align:top;max-width:100%;}
 .greetings-photo ins{display:block; text-decoration:none;margin-top:clamp(20px, (100vw - 1024.5px) * 1000 + 20px, 30px); text-align:center;}
 .greetings-photo ins em{display:inline-block; width:100%; margin-bottom:4px; font-weight:400;font-size:clamp(14px, (100vw - 1024.5px) * 1000 + 14px, 18px);letter-spacing:-0.18px;color:#121212; text-align:center;}
 .greetings-photo ins strong{font-weight:600;font-size:clamp(18px, (100vw - 1024.5px) * 1000 + 18px, 27px);color:#121212;letter-spacing:1.73px;}
-.greetings-cont{width:calc(100% - 349px);padding-left:70px; padding-right:20px;box-sizing:border-box;}
+.greetings-cont{flex:1;min-width:0;padding-left:70px; padding-right:20px;box-sizing:border-box;}
 .greetings-cont strong{display:block;font-weight:600;}
 .greetings-cont p{font-weight:400;font-size:clamp(14px, (100vw - 1024.5px) * 1000 + 14px, 18px);line-height:1.7;letter-spacing:-0.18px;color:#121212;}
 .greetings-cont span em{color:#004EA2;}
