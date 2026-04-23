@@ -229,7 +229,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.6.2</span>
+  <span id="ver-badge" title="배포 버전">v0.6.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
@@ -332,6 +332,14 @@
         onmousedown="saveIframeSelection()"
         onkeydown="if(event.key==='Enter'){event.preventDefault();restoreIframeSelection();execFmtLineHeight(this.value)}"
         onchange="restoreIframeSelection();execFmtLineHeight(this.value)">
+      <div class="fmt-divider"></div>
+      <span class="fmt-label">삽입</span>
+      <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="단락(p) 삽입" onmousedown="event.preventDefault()" onclick="insertElement('p')">P</button>
+      <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="목록(ul/li) 삽입" onmousedown="event.preventDefault()" onclick="execFmt('insertUnorderedList')">• ul</button>
+      <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="번호 목록(ol/li) 삽입" onmousedown="event.preventDefault()" onclick="execFmt('insertOrderedList')">1. ol</button>
+      <button class="fmt-btn" title="굵은 텍스트(&lt;strong&gt;)" onmousedown="event.preventDefault()" onclick="insertInlineEl('strong')"><strong style="font-size:11px;">str</strong></button>
+      <button class="fmt-btn" title="강조 텍스트(&lt;em&gt;)" onmousedown="event.preventDefault()" onclick="insertInlineEl('em')"><em style="font-size:11px;">em</em></button>
+      <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="구분선(&lt;hr&gt;) 삽입" onmousedown="event.preventDefault()" onclick="execFmt('insertHorizontalRule')">hr</button>
     </div>
     <div id="preview-frame-wrap">
       <iframe id="preview-frame" src="temp.html"></iframe>
@@ -912,6 +920,28 @@ function execFmtLineHeight(lh) {
   var BLOCK = { P:1, DIV:1, H1:1, H2:1, H3:1, H4:1, H5:1, H6:1, LI:1, DT:1, DD:1, SECTION:1, ARTICLE:1 };
   while (node && !BLOCK[node.tagName] && !node.dataset.builderSection) node = node.parentElement;
   if (node && !node.dataset.builderSection) node.style.lineHeight = lh;
+}
+
+function insertElement(tag) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var el = doc.createElement(tag);
+  el.innerHTML = '&#8203;'; /* zero-width space for caret positioning */
+  doc.execCommand('insertHTML', false, el.outerHTML);
+}
+
+function insertInlineEl(tag) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sel = doc.getSelection();
+  if (!sel || !sel.rangeCount) return;
+  var range = sel.getRangeAt(0);
+  var text = range.toString();
+  if (text) {
+    doc.execCommand('insertHTML', false, '<' + tag + '>' + text + '</' + tag + '>');
+  } else {
+    doc.execCommand('insertHTML', false, '<' + tag + '>&#8203;</' + tag + '>');
+  }
 }
 
 /* ── 버튼 배너 인라인 편집 (Step B-btn) ── */
@@ -1515,6 +1545,14 @@ function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.23 (v0.6.3)',
+    items: [
+      '<strong>[v0.6.3]</strong> Step E — 요소 삽입: P 단락, ul/li 목록, ol/li 번호목록, &lt;strong&gt;, &lt;em&gt;, &lt;hr&gt; 삽입 버튼 추가',
+      '<strong>[v0.6.3]</strong> insertElement(tag): 커서 위치에 블록 요소 삽입 (execCommand insertHTML)',
+      '<strong>[v0.6.3]</strong> insertInlineEl(tag): 선택 텍스트를 인라인 태그로 래핑, 미선택 시 빈 태그 삽입',
+    ]
+  },
   {
     date: '2026.04.23 (v0.6.2)',
     items: [
