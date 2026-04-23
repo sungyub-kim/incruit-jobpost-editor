@@ -432,7 +432,8 @@ var sectionEnabled = {};
 var sectionBgColors = {};
 var sectionBgImages = {};  /* ST2: 섹션 배경 이미지 URL */
 var sectionSpacing = {};   /* ST1: { sId: { pt, pb, mpt, mpb } } */
-var aosEnabled = true;     /* ST3: AOS 애니메이션 전역 토글 */
+var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
+var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var cssColors = {};
 var openEditPanelId = null;
 var sectionData = {};
@@ -528,7 +529,8 @@ function saveState() {
     sectionBgColors:sectionBgColors,
     sectionBgImages:sectionBgImages,
     sectionSpacing: sectionSpacing,
-    aosEnabled:     aosEnabled,
+    aosEnabled:          aosEnabled,
+    visualRightVisible:  visualRightVisible,
     cssColors:      cssColors,
     buttonStyles:   buttonStyles,
     sectionData:    sectionData,
@@ -588,7 +590,8 @@ function loadState() {
     if (s.posterConfig)  posterConfig  = s.posterConfig;
     if (s.navLinks)      navLinks      = s.navLinks;
     if (s.joblistTabs)   joblistTabs   = s.joblistTabs;
-    if (s.aosEnabled !== undefined) aosEnabled = s.aosEnabled;
+    if (s.aosEnabled !== undefined)         aosEnabled         = s.aosEnabled;
+    if (s.visualRightVisible !== undefined) visualRightVisible = s.visualRightVisible;
   } catch(e) {}
 }
 
@@ -850,6 +853,8 @@ function toggleSectionEdit(id) {
     panel.className = 'section-edit-panel';
     if (id === 'section_gradient') {
       panel.innerHTML = buildGradientPanel();
+    } else if (id === 'section_visual') {
+      panel.innerHTML = buildVisualPanel();
     } else if (SECTION_DOM_MAP[id]) {
       loadFieldsFromPreview(id);
       panel.innerHTML = buildSectionPanel(id);
@@ -1056,6 +1061,90 @@ function updateBtn(i, key, val) {
   bs[i][key] = val;
   saveState();
   applyBtnStylesToPreview();
+}
+
+/* ── V1/V2: 메인 비주얼 편집 ── */
+var VISUAL_IMAGES = [
+  { label: 'PC 제목 이미지',        sel: '.mvisual-text-1 img.d-lg-block' },
+  { label: '모바일 제목 이미지',     sel: '.mvisual-text-1 img.d-lg-none' },
+  { label: '온라인 기간 이미지 (PC)',     sel: '.mvisual-term-online img.d-lg-block' },
+  { label: '온라인 기간 이미지 (모바일)', sel: '.mvisual-term-online img.d-lg-none' },
+  { label: '오프라인 기간 이미지 (PC)',     sel: '.mvisual-term-offline img.d-lg-block' },
+  { label: '오프라인 기간 이미지 (모바일)', sel: '.mvisual-term-offline img.d-lg-none' },
+  { label: '우측 비주얼 이미지',     sel: '.mvisual-img img' },
+];
+
+function buildVisualPanel() {
+  var doc = getPreviewDoc();
+  var sEl = doc ? doc.querySelector('[data-builder-section="section_visual"]') : null;
+  var h = '<div class="ep-title">메인 비주얼 편집</div>';
+  h += buildBgImagePanel('section_visual');
+  /* V2: 우측 패널 토글 */
+  h += '<div class="ep-row" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #2e3a52;">' +
+    '<label style="font-size:11px;">우측 이미지 패널 표시</label>' +
+    '<label class="toggle"><input type="checkbox" id="visual-right-chk" ' + (visualRightVisible ? 'checked' : '') + ' onchange="toggleVisualRight(this.checked)"><span class="toggle-slider"></span></label>' +
+  '</div>';
+  /* V1: 이미지 필드 목록 */
+  h += '<div class="ep-spacing-title">비주얼 이미지 교체</div>';
+  VISUAL_IMAGES.forEach(function(def, idx) {
+    var curSrc = '';
+    if (sEl) { var img = sEl.querySelector(def.sel); if (img) curSrc = img.getAttribute('src') || ''; }
+    h += '<div class="ep-field">' +
+      '<label>' + def.label + '</label>' +
+      '<div class="ep-bgimg-row">' +
+        '<input type="text" class="ep-bgimg-input" id="vi-url-' + idx + '" value="' + esc(curSrc) + '" placeholder="URL" oninput="updateVisualImage(' + idx + ',this.value)">' +
+        '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
+          '<input type="file" accept="image/*" style="display:none" onchange="onVisualImgFile(this,' + idx + ')">' +
+        '</label>' +
+      '</div>' +
+      (curSrc
+        ? '<img id="vi-thumb-' + idx + '" class="ep-bgimg-thumb" src="' + esc(curSrc) + '">'
+        : '<img id="vi-thumb-' + idx + '" class="ep-bgimg-thumb" style="display:none">') +
+    '</div>';
+  });
+  h += buildSpacingPanel('section_visual');
+  return h;
+}
+
+function updateVisualImage(idx, url) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sEl = doc.querySelector('[data-builder-section="section_visual"]');
+  if (!sEl) return;
+  var img = sEl.querySelector(VISUAL_IMAGES[idx].sel);
+  if (!img) return;
+  img.src = url;
+  _saveExtraPath('section_visual', '_img:', img, url);
+  saveState();
+  var thumb = document.getElementById('vi-thumb-' + idx);
+  if (thumb) { thumb.src = url; thumb.style.display = url ? 'block' : 'none'; }
+}
+
+window.onVisualImgFile = function(input, idx) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    var urlInput = document.getElementById('vi-url-' + idx);
+    if (urlInput) urlInput.value = dataUrl;
+    updateVisualImage(idx, dataUrl);
+  };
+  reader.readAsDataURL(file);
+};
+
+function toggleVisualRight(val) {
+  visualRightVisible = val;
+  var doc = getPreviewDoc();
+  if (doc) {
+    var el = doc.querySelector('[data-builder-section="section_visual"] .main-visual-right');
+    if (el) el.style.display = val ? '' : 'none';
+  }
+  saveState();
+}
+
+function applyVisualRightToPreview() {
+  if (!visualRightVisible) toggleVisualRight(false);
 }
 
 /* ── ST3: AOS 애니메이션 토글 ── */
@@ -2180,6 +2269,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applySpacingToPreview();
   applyBgImagesToPreview();
   applyAosToPreview();
+  applyVisualRightToPreview();
   renderNavPanel();
   renderTabPanel();
 });
