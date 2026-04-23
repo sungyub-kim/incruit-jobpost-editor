@@ -49,18 +49,18 @@
     #left-panel .panel-body::-webkit-scrollbar-thumb { background: #2e3a52; border-radius: 4px; }
 
     /* 섹션 항목 */
-    .section-item { background: #161c2d; border: 1px solid #2e3a52; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; display: flex; align-items: center; gap: 8px; cursor: grab; user-select: none; transition: border-color .15s; }
+    .section-item { background: #161c2d; border: 1px solid #2e3a52; border-radius: 8px; padding: 8px 10px; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; cursor: grab; user-select: none; transition: all .15s; }
     .section-item:hover { border-color: #3b4f6e; }
+    .section-item.editing { border-color: #0066cc; background: #1a2a45; }
+    .sec-name-btn { flex: 1; text-align: left; background: none; border: none; color: #e2e8f0; font-size: 12px; font-weight: 500; padding: 4px 6px; border-radius: 4px; cursor: pointer; line-height: 1.4; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; transition: all .15s; }
+    .sec-name-btn:hover { background: rgba(96, 165, 250, .1); color: #60a5fa; }
+    .section-item.editing .sec-name-btn { color: #60a5fa; }
     .section-item.dragging { opacity: .5; }
     .section-item.drag-over { border-color: #0066cc; background: #1a2a45; }
     .section-item .drag-handle { color: #4b5563; font-size: 14px; cursor: grab; }
     .section-item .section-name { flex: 1; font-size: 13px; color: #d1d5db; }
     .section-item .section-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #1f3a5f; color: #60a5fa; }
     .section-item .section-badge.fixed { background: #1f2937; color: #6b7280; }
-    /* 섹션 배경 색상 스와치 */
-    .section-bg-swatch { width: 18px; height: 18px; border-radius: 3px; border: 1px solid #374151; position: relative; overflow: hidden; cursor: pointer; flex-shrink: 0; background: repeating-conic-gradient(#374151 0% 25%, #1e2433 0% 50%) 0 0 / 8px 8px; }
-    .section-bg-swatch.has-color { background: var(--swatch-bg, #fff); }
-    .section-bg-swatch input[type=color] { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer; }
     #top-bar .btn-danger { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
     #top-bar .btn-danger:hover { background: #ef4444; color: #fff; }
     #top-bar .btn-zip { background: #059669; color: #fff; }
@@ -84,8 +84,16 @@
     .color-item .hex-input { background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 11px; padding: 3px 6px; width: 72px; outline: none; font-family: monospace; }
     .color-item .hex-input:focus { border-color: #0066cc; }
 
-    /* 우측 미리보기 */
-    #preview-area { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+    /* 우측 미리보기 + 편집 드로어 */
+    #preview-area { flex: 1; display: flex; flex-direction: row; overflow: hidden; position: relative; }
+    #preview-main { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+    #edit-drawer { width: 0; background: #1a2235; border-left: 1px solid #2e3a52; overflow: hidden; transition: width .25s ease; display: flex; flex-direction: column; flex-shrink: 0; }
+    #edit-drawer.open { width: 400px; }
+    #edit-drawer-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #2e3a52; flex-shrink: 0; background: #141b2b; }
+    #edit-drawer-title { font-size: 13px; font-weight: 600; color: #e2e8f0; margin: 0; white-space: nowrap; }
+    #edit-drawer-close { background: none; border: none; color: #6b7280; font-size: 16px; cursor: pointer; padding: 4px 8px; border-radius: 4px; transition: all .15s; }
+    #edit-drawer-close:hover { color: #f87171; background: rgba(248,113,113,.1); }
+    #edit-drawer-body { flex: 1; overflow-y: auto; padding: 14px 16px; min-width: 400px; }
     #preview-toolbar { height: 36px; background: #161c2d; border-bottom: 1px solid #2e3a52; display: flex; align-items: center; padding: 0 12px; gap: 8px; }
     #preview-toolbar span { font-size: 11px; color: #6b7280; }
     #preview-toolbar .preview-url { font-size: 11px; color: #4b5563; background: #0d1117; padding: 3px 8px; border-radius: 4px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -109,13 +117,6 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    /* 섹션 편집 버튼 */
-    .ep-edit-btn { font-size: 11px; padding: 2px 7px; border-radius: 4px; border: 1px solid #2e3a52; background: none; color: #6b7280; cursor: pointer; flex-shrink: 0; line-height: 1.4; }
-    .ep-edit-btn:hover { border-color: #60a5fa; color: #60a5fa; }
-    .ep-edit-btn.active { border-color: #0066cc; color: #60a5fa; background: #1a2a45; }
-
-    /* 섹션 편집 패널 */
-    .section-edit-panel { background: #111827; border: 1px solid #2e3a52; border-top: none; border-radius: 0 0 8px 8px; margin-top: -4px; margin-bottom: 8px; padding: 12px; }
     .ep-title { font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
     .ep-btn-card { background: #1e2433; border: 1px solid #2e3a52; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
     .ep-btn-card:last-child { margin-bottom: 0; }
@@ -160,11 +161,13 @@
     .fmt-color-label { font-size:10px; font-weight:700; color:#e5e7eb; line-height:1; pointer-events:none; }
     .fmt-color-bar { width:18px; height:3px; border-radius:1px; margin-top:1px; pointer-events:none; }
 
-    /* E3: 섹션 ▲▼ 이동 버튼 */
+    /* E3: 섹션 ▲▼ 이동 버튼 (hover 시에만 표시) */
     .sec-move-btn { background: none; border: 1px solid #2e3a52; border-radius: 3px; color: #4b5563; font-size: 10px; width: 16px; height: 16px; cursor: pointer; line-height: 14px; text-align: center; padding: 0; flex-shrink: 0; }
     .sec-move-btn:hover:not(:disabled) { border-color: #60a5fa; color: #60a5fa; }
     .sec-move-btn:disabled { opacity: .2; cursor: default; }
-    .sec-move-group { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+    .sec-move-group { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity .15s; }
+    .section-item:hover .sec-move-group,
+    .section-item.editing .sec-move-group { opacity: 1; }
 
     /* E4: 섹션 이름 클릭 → 스크롤 */
     .section-name { cursor: pointer; }
@@ -406,6 +409,7 @@
 
   <!-- 우측 미리보기 -->
   <div id="preview-area">
+   <div id="preview-main">
     <div id="preview-toolbar">
       <span>미리보기</span>
       <div class="preview-url">temp.html</div>
@@ -470,6 +474,15 @@
     <div id="preview-frame-wrap">
       <iframe id="preview-frame" src="temp.html"></iframe>
     </div>
+   </div>
+   <!-- 2-1: 편집 드로어 -->
+   <aside id="edit-drawer" aria-hidden="true">
+     <div id="edit-drawer-head">
+       <h3 id="edit-drawer-title">편집</h3>
+       <button id="edit-drawer-close" onclick="closeEditDrawer()" title="닫기 (ESC)">✕</button>
+     </div>
+     <div id="edit-drawer-body"></div>
+   </aside>
   </div>
 
 </div>
@@ -780,28 +793,23 @@ function renderSectionList() {
     if (schema.hideFromPanel) return;
     var isFixed = !!schema.fixed_content;
     var enabled = sectionEnabled[id];
-    var bgColor = sectionBgColors[id] || '';
-    var swatchStyle = bgColor ? 'background:' + bgColor + ';' : '';
     var visIdx  = visibleOrder.indexOf(id);
     var isFirst = visIdx === 0;
     var isLast  = visIdx === visibleOrder.length - 1;
+    var isEditing = openEditPanelId === id;
     var item = document.createElement('div');
-    item.className = 'section-item';
+    item.className = 'section-item' + (isEditing ? ' editing' : '');
     item.setAttribute('draggable', 'true');
     item.dataset.id = id;
     item.innerHTML =
       '<span class="drag-handle">⠿</span>' +
-      /* E3: ▲▼ 이동 버튼 */
+      /* 섹션명 버튼: 클릭 → 편집 드로어 열기 */
+      '<button class="sec-name-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="클릭하여 편집 · Shift+클릭 시 미리보기로 스크롤">' + schema.name + '</button>' +
+      (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
+      /* ▲▼ 이동 버튼 (hover 시 표시) */
       '<div class="sec-move-group">' +
         '<button class="sec-move-btn" title="위로" onclick="event.stopPropagation();moveSectionOrder(\'' + id + '\',-1)" ' + (isFirst ? 'disabled' : '') + '>▲</button>' +
         '<button class="sec-move-btn" title="아래로" onclick="event.stopPropagation();moveSectionOrder(\'' + id + '\',1)" ' + (isLast ? 'disabled' : '') + '>▼</button>' +
-      '</div>' +
-      /* E4: 섹션명 클릭 → 스크롤 */
-      '<span class="section-name" onclick="event.stopPropagation();scrollToSection(\'' + id + '\')" title="클릭 시 해당 섹션으로 이동">' + schema.name + '</span>' +
-      (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
-      (id === 'section_gradient' ? '' : '<button class="ep-edit-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="섹션 편집">✏</button>') +
-      '<div class="section-bg-swatch' + (bgColor ? ' has-color' : '') + '" style="' + swatchStyle + '" title="섹션 배경 색상">' +
-        '<input type="color" value="' + (bgColor || '#ffffff') + '" data-section="' + id + '" oninput="onSectionBgChange(this)">' +
       '</div>' +
       '<div class="toggle-wrap">' +
         '<label class="toggle">' +
@@ -809,10 +817,16 @@ function renderSectionList() {
           '<span class="toggle-slider"></span>' +
         '</label>' +
       '</div>';
+    /* Shift+클릭 시 스크롤 */
+    var nameBtn = item.querySelector('.sec-name-btn');
+    if (nameBtn) {
+      nameBtn.addEventListener('click', function(e) {
+        if (e.shiftKey) { e.stopPropagation(); e.preventDefault(); scrollToSection(id); }
+      }, true);
+    }
     list.appendChild(item);
   });
   initDragDrop();
-  if (openEditPanelId) toggleSectionEdit(openEditPanelId);
 }
 
 /* ── E3: 섹션 ▲▼ 이동 ── */
@@ -897,34 +911,54 @@ function initDragDrop() {
 /* ── 버튼 배너 편집 ── */
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;'); }
 
+/* 2-1: 편집 드로어 열기/닫기 */
 function toggleSectionEdit(id) {
-  var existing = document.getElementById('edit-panel-' + id);
-  var btn = document.querySelector('[data-id="' + id + '"] .ep-edit-btn');
-  if (existing) {
-    existing.remove();
-    if (btn) btn.classList.remove('active');
-    openEditPanelId = null;
-  } else {
-    var item = document.querySelector('[data-id="' + id + '"]');
-    if (!item) return;
-    var panel = document.createElement('div');
-    panel.id = 'edit-panel-' + id;
-    panel.className = 'section-edit-panel';
-    if (id === 'section_gradient') {
-      panel.innerHTML = buildGradientPanel();
-    } else if (id === 'section_visual') {
-      panel.innerHTML = buildVisualPanel();
-    } else if (SECTION_DOM_MAP[id]) {
-      loadFieldsFromPreview(id);
-      panel.innerHTML = buildSectionPanel(id);
-    } else {
-      panel.innerHTML = '<div class="ep-title" style="color:#4b5563;">편집 기능 준비 중</div>';
-    }
-    item.insertAdjacentElement('afterend', panel);
-    if (btn) btn.classList.add('active');
-    openEditPanelId = id;
-  }
+  if (openEditPanelId === id) { closeEditDrawer(); return; }
+  openEditDrawer(id);
 }
+
+function openEditDrawer(id) {
+  var drawer = document.getElementById('edit-drawer');
+  var body   = document.getElementById('edit-drawer-body');
+  var title  = document.getElementById('edit-drawer-title');
+  var schema = FAIR_BUILDER_SCHEMA[id];
+  if (!drawer || !body) return;
+  title.textContent = (schema ? schema.name : id) + ' 편집';
+  if (id === 'section_gradient') {
+    body.innerHTML = buildGradientPanel();
+  } else if (id === 'section_visual') {
+    body.innerHTML = buildVisualPanel();
+  } else if (SECTION_DOM_MAP[id]) {
+    loadFieldsFromPreview(id);
+    body.innerHTML = buildSectionPanel(id);
+  } else {
+    body.innerHTML = '<div class="ep-title" style="color:#4b5563;">편집 기능 준비 중</div>';
+  }
+  drawer.classList.add('open');
+  drawer.setAttribute('aria-hidden', 'false');
+  openEditPanelId = id;
+  /* 섹션 아이템 편집 중 강조 */
+  document.querySelectorAll('.section-item').forEach(function(el) {
+    el.classList.toggle('editing', el.dataset.id === id);
+  });
+  body.scrollTop = 0;
+}
+
+function closeEditDrawer() {
+  var drawer = document.getElementById('edit-drawer');
+  if (!drawer) return;
+  drawer.classList.remove('open');
+  drawer.setAttribute('aria-hidden', 'true');
+  openEditPanelId = null;
+  document.querySelectorAll('.section-item.editing').forEach(function(el) {
+    el.classList.remove('editing');
+  });
+}
+
+/* ESC 키로 드로어 닫기 */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape' && openEditPanelId) closeEditDrawer();
+});
 
 function colorRow(i, key, val, label) {
   return '<div class="ep-field"><label>' + label + '</label>' +
@@ -1920,10 +1954,10 @@ function setPosterConfig(val) {
   var doc = getPreviewDoc();
   if (doc) applyPosterLayout(doc);
   if (openEditPanelId === 'section_event_info') {
-    var panel = document.getElementById('edit-panel-section_event_info');
-    if (panel) {
+    var body = document.getElementById('edit-drawer-body');
+    if (body) {
       loadFieldsFromPreview('section_event_info');
-      panel.innerHTML = buildSectionPanel('section_event_info');
+      body.innerHTML = buildSectionPanel('section_event_info');
     }
   }
 }
