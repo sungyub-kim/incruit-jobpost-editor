@@ -229,7 +229,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.6.3</span>
+  <span id="ver-badge" title="배포 버전">v0.6.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
@@ -944,6 +944,88 @@ function insertInlineEl(tag) {
   }
 }
 
+/* ── 섹션 드래그 순서 변경 (Step F) ── */
+window.sectionDragReorder = function(fromId, toId) {
+  var fromIdx = sectionOrder.indexOf(fromId);
+  var toIdx   = sectionOrder.indexOf(toId);
+  if (fromIdx < 0 || toIdx < 0 || fromIdx === toIdx) return;
+  sectionOrder.splice(fromIdx, 1);
+  sectionOrder.splice(toIdx, 0, fromId);
+  saveState();
+  applyToPreview();
+  renderSectionList();
+};
+
+function injectSectionDragHandles(doc) {
+  sectionOrder.forEach(function(sId) {
+    var sEl = doc.querySelector('[data-builder-section="' + sId + '"]');
+    if (!sEl || doc.getElementById('builder-sec-handle-' + sId)) return;
+    var schema = FAIR_BUILDER_SCHEMA[sId];
+    var name = schema ? schema.name : sId;
+
+    var handle = doc.createElement('div');
+    handle.id = 'builder-sec-handle-' + sId;
+    handle.setAttribute('data-builder-ui', '');
+    handle.draggable = true;
+    handle.dataset.handleFor = sId;
+    handle.style.cssText = 'display:flex;align-items:center;gap:6px;padding:4px 10px;background:rgba(0,0,0,.45);position:relative;z-index:98;cursor:grab;user-select:none;color:rgba(255,255,255,.65);font-size:11px;font-family:sans-serif;';
+
+    var hIcon = doc.createElement('span');
+    hIcon.textContent = '⠿';
+    hIcon.setAttribute('data-builder-ui', '');
+    hIcon.style.cssText = 'font-size:13px;opacity:.55;';
+
+    var hName = doc.createElement('span');
+    hName.textContent = name + ' 섹션';
+    hName.setAttribute('data-builder-ui', '');
+
+    handle.appendChild(hIcon);
+    handle.appendChild(hName);
+
+    handle.addEventListener('dragstart', function(e) {
+      e.dataTransfer.setData('text/plain', sId);
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(function() { handle.style.opacity = '.45'; }, 0);
+    });
+    handle.addEventListener('dragend', function() {
+      handle.style.opacity = '';
+      doc.querySelectorAll('[data-builder-section]').forEach(function(s) {
+        s.style.outline = '';
+        s.style.outlineOffset = '';
+      });
+    });
+
+    sEl.addEventListener('dragover', function(e) {
+      if (!editMode) return;
+      e.preventDefault();
+      sEl.style.outline = '3px dashed rgba(96,165,250,.55)';
+      sEl.style.outlineOffset = '-3px';
+    });
+    sEl.addEventListener('dragleave', function() {
+      sEl.style.outline = '';
+      sEl.style.outlineOffset = '';
+    });
+    sEl.addEventListener('drop', function(e) {
+      if (!editMode) return;
+      e.preventDefault();
+      sEl.style.outline = '';
+      sEl.style.outlineOffset = '';
+      var fromId = e.dataTransfer.getData('text/plain');
+      if (fromId && fromId !== sId) window.parent.sectionDragReorder(fromId, sId);
+    });
+
+    sEl.insertAdjacentElement('afterbegin', handle);
+  });
+}
+
+function removeSectionDragHandles(doc) {
+  doc.querySelectorAll('[data-handle-for]').forEach(function(el) { el.remove(); });
+  doc.querySelectorAll('[data-builder-section]').forEach(function(sEl) {
+    sEl.style.outline = '';
+    sEl.style.outlineOffset = '';
+  });
+}
+
 /* ── 버튼 배너 인라인 편집 (Step B-btn) ── */
 window.builderBtnAction = function(action, idx, extra) {
   var bs = buttonStyles['section_gradient'];
@@ -1238,6 +1320,7 @@ function enterEditMode() {
   injectEditModeCSS(doc);
   restoreExtraEdits(doc);
   applyEditableAttr(doc);
+  injectSectionDragHandles(doc);
   injectBtnEditUI(doc);
   editMode = true;
   document.getElementById('edit-mode-btn').classList.add('active');
@@ -1250,6 +1333,7 @@ function exitEditMode() {
   var doc = getPreviewDoc();
   if (!doc) return;
   removeBtnEditUI(doc);
+  removeSectionDragHandles(doc);
   collectEditableValues(doc);
   doc.querySelectorAll('[data-editable]').forEach(function(el) {
     el.removeEventListener('focus', onEditableFocus);
@@ -1545,6 +1629,14 @@ function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.23 (v0.6.4)',
+    items: [
+      '<strong>[v0.6.4]</strong> Step F — 섹션 드래그 순서 변경: 편집 모드에서 각 섹션 상단에 ⠿ 핸들 자동 주입',
+      '<strong>[v0.6.4]</strong> 섹션을 다른 섹션 위로 드래그하면 sectionOrder 즉시 업데이트, 좌측 패널·미리보기 동기화',
+      '<strong>[v0.6.4]</strong> 드래그 중 대상 섹션 파란 점선 하이라이트, 편집 모드 종료 시 핸들 자동 제거',
+    ]
+  },
   {
     date: '2026.04.23 (v0.6.3)',
     items: [
