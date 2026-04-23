@@ -206,7 +206,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.5.0</span>
+  <span id="ver-badge" title="배포 버전">v0.5.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
@@ -841,11 +841,16 @@ function exitEditMode() {
   if (!doc) return;
   collectEditableValues(doc);
   doc.querySelectorAll('[data-editable]').forEach(function(el) {
+    el.removeEventListener('focus', onEditableFocus);
+    el.removeEventListener('blur',  onEditableBlur);
     el.removeAttribute('contenteditable');
     el.removeAttribute('data-editable');
     el.removeAttribute('data-builder-section');
     el.removeAttribute('data-builder-field');
     el.removeAttribute('data-builder-prop');
+  });
+  doc.querySelectorAll('.builder-section-active').forEach(function(s) {
+    s.classList.remove('builder-section-active');
   });
   doc.body.classList.remove('builder-edit-mode');
   var styleEl = doc.getElementById('builder-edit-css');
@@ -875,6 +880,10 @@ function injectEditModeCSS(doc) {
       'outline:2px solid #0066cc!important;' +
       'outline-offset:2px;' +
       'background:rgba(0,102,204,.09)!important;' +
+    '}' +
+    '.builder-section-active{' +
+      'outline:3px solid rgba(0,102,204,.28)!important;' +
+      'outline-offset:-3px;' +
     '}';
   doc.head.appendChild(s);
 }
@@ -894,25 +903,51 @@ function applyEditableAttr(doc) {
             if (SKIP[fm.prop]) return;
             var el = fm.sel ? node.querySelector(fm.sel) : node;
             if (!el) return;
-            el.contentEditable = 'true';
-            el.dataset.editable = '';
-            el.dataset.builderSection = sId;
-            el.dataset.builderField = fk + '.' + i + '.' + sfk;
-            el.dataset.builderProp = fm.prop;
+            makeEditable(el, sId, fk + '.' + i + '.' + sfk, fm.prop);
           });
         });
       } else {
         if (SKIP[m.prop]) return;
         var el = sEl.querySelector(m.sel);
         if (!el) return;
-        el.contentEditable = 'true';
-        el.dataset.editable = '';
-        el.dataset.builderSection = sId;
-        el.dataset.builderField = fk;
-        el.dataset.builderProp = m.prop;
+        makeEditable(el, sId, fk, m.prop);
       }
     });
   });
+}
+
+function makeEditable(el, sId, field, prop) {
+  el.contentEditable = 'true';
+  el.dataset.editable = '';
+  el.dataset.builderSection = sId;
+  el.dataset.builderField = field;
+  el.dataset.builderProp = prop;
+  el.addEventListener('focus', onEditableFocus);
+  el.addEventListener('blur',  onEditableBlur);
+}
+
+function onEditableFocus(e) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sId = e.target.dataset.builderSection;
+  doc.querySelectorAll('[data-builder-section].builder-section-active').forEach(function(s) {
+    s.classList.remove('builder-section-active');
+  });
+  if (sId) {
+    var sEl = doc.querySelector('[data-builder-section="' + sId + '"]');
+    if (sEl) sEl.classList.add('builder-section-active');
+  }
+}
+
+function onEditableBlur(e) {
+  var el = e.target;
+  var sId   = el.dataset.builderSection;
+  var field = el.dataset.builderField;
+  var prop  = el.dataset.builderProp;
+  if (!sId || !field) return;
+  var val = prop === 'innerHTML' ? el.innerHTML : el.textContent.trim();
+  setFieldDirect(sId, field, val);
+  saveState();
 }
 
 function collectEditableValues(doc) {
@@ -1012,8 +1047,10 @@ function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
   {
-    date: '2026.04.22 (v0.5.0)',
+    date: '2026.04.22 (v0.5.1)',
     items: [
+      '<strong>[v0.5.1]</strong> Step B — blur 즉시 저장: 편집 중 포커스 해제 시 자동 저장 (모드 종료 불필요)',
+      '<strong>[v0.5.1]</strong> 섹션 활성 하이라이트: 편집 요소 focus 시 해당 섹션에 파란 테두리 표시',
       '<strong>[v0.5.0]</strong> Step A — 편집 모드 인프라: 미리보기 툴바 ✏ 편집 모드 버튼 추가',
       '<strong>[v0.5.0]</strong> 편집 모드 ON: SECTION_DOM_MAP 기반 텍스트 요소에 contenteditable 자동 적용, 파란 점선 하이라이트',
       '<strong>[v0.5.0]</strong> 편집 모드 OFF: 모든 contenteditable 제거, 변경값 sectionData 저장',
