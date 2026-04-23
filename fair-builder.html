@@ -133,6 +133,9 @@
     .ep-hex:focus { border-color: #0066cc !important; }
     .ep-hint { font-size: 10px; color: #4b5563; white-space: nowrap; }
     .ep-hover-sub { padding-left: 10px; border-left: 2px solid #2e3a52; margin-top: 6px; }
+    .ep-textarea { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 7px; resize: vertical; outline: none; box-sizing: border-box; min-height: 76px; }
+    .ep-textarea:focus { border-color: #0066cc; }
+    .ep-repeater-label { font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 4px 0; }
 
     /* 패치노트 버튼 */
     #top-bar .btn-patch { background: transparent; border: 1px solid #2e3a52; color: #6b7280; font-size: 11px; padding: 3px 9px; }
@@ -196,7 +199,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.3.9</span>
+  <span id="ver-badge" title="배포 버전">v0.4.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
@@ -271,6 +274,65 @@ var sectionEnabled = {};
 var sectionBgColors = {};
 var cssColors = {};
 var openEditPanelId = null;
+var sectionData = {};
+
+/* ── 섹션 DOM 매핑 테이블 ── */
+var SECTION_DOM_MAP = {
+  section_event_info: {
+    sec_title: { sel: 'p.sec_tit.basic',       prop: 'textContent' },
+    sec_sub:   { sel: 'span.sec_txt.basic',    prop: 'textContent' },
+    posters: { _repeater: true, container: '.poster-box', fields: {
+      title:      { sel: '.poster-box__title',                      prop: 'textContent' },
+      contact:    { sel: 'dl:last-of-type .poster-box__items__dd p', prop: 'textContent' },
+      apply_link: { sel: '.btn-biz-apply',                          prop: 'href' },
+    }}
+  },
+  section_greetings: {
+    sec_title: { sel: 'p.sec_tit.basic',             prop: 'textContent' },
+    photo_src: { sel: '.greetings-photo span img',   prop: 'src' },
+    photo_alt: { sel: '.greetings-photo span img',   prop: 'alt' },
+    position:  { sel: '.greetings-photo ins em',     prop: 'textContent' },
+    name:      { sel: '.greetings-photo ins strong', prop: 'textContent' },
+    body:      { sel: '.greetings-cont p',           prop: 'innerHTML' },
+  },
+  section_intro_links: {
+    sec_title: { sel: 'p.sec_tit.basic', prop: 'textContent' },
+    items: { _repeater: true, container: '.interview-link-view', fields: {
+      number:  { sel: '.link-view-num',      prop: 'textContent' },
+      title:   { sel: '.link-view-t strong', prop: 'innerHTML' },
+      img_src: { sel: '.l-viewImg img',      prop: 'src' },
+      img_alt: { sel: '.l-viewImg img',      prop: 'alt' },
+    }}
+  },
+  section_joblist: {
+    sec_title: { sel: 'p.sec_tit.basic', prop: 'textContent' },
+    tabs: { _repeater: true, container: 'label.tab_item', fields: {
+      name: { sel: null, prop: 'textContent' },
+    }}
+  },
+  section_success: {
+    sec_title: { sel: 'p.sec_tit.basic', prop: 'textContent' },
+    items: { _repeater: true, container: '.success-link-view', fields: {
+      title:   { sel: '.link-view-t strong', prop: 'innerHTML' },
+      sub:     { sel: '.link-view-q',        prop: 'textContent' },
+      img_src: { sel: '.l-viewImg img',      prop: 'src' },
+      href:    { sel: null,                  prop: 'href' },
+    }}
+  },
+  section_organizations: {
+    sec_title: { sel: 'h3.sec_tit.basic', prop: 'textContent' },
+    items: { _repeater: true, container: '.fair-introduce ul li', fields: {
+      href:    { sel: 'a',                prop: 'href' },
+      img_src: { sel: 'img',             prop: 'src' },
+      img_alt: { sel: 'img',             prop: 'alt' },
+      name:    { sel: '.items__title',   prop: 'textContent' },
+      desc:    { sel: '.items__subTitle',prop: 'innerHTML' },
+    }}
+  },
+  section_videos: { sec_title: { sel: 'p.sec_tit.basic', prop: 'textContent' } },
+  section_notice: { sec_title: { sel: 'p.sec_tit.basic', prop: 'textContent' } },
+};
+
 var buttonStyles = {
   section_gradient: [
     { text: '취업특강 사전신청',             href: 'https://naver.me/GT6ePxU3',  width: '39.683%', bgColor: '#f46d80', shadowEnabled: true, shadowColor: '#D94E62', hoverEnabled: true, hoverBgColor: '#f78797', hoverShadowColor: '#bd3d50' },
@@ -296,7 +358,8 @@ function saveState() {
     sectionEnabled: sectionEnabled,
     sectionBgColors:sectionBgColors,
     cssColors:      cssColors,
-    buttonStyles:   buttonStyles
+    buttonStyles:   buttonStyles,
+    sectionData:    sectionData
   }));
 }
 
@@ -334,6 +397,7 @@ function loadState() {
       });
     }
     if (s.buttonStyles) buttonStyles = s.buttonStyles;
+    if (s.sectionData)  sectionData  = s.sectionData;
   } catch(e) {}
 }
 
@@ -377,7 +441,7 @@ function renderSectionList() {
       '<span class="drag-handle">⠿</span>' +
       '<span class="section-name">' + schema.name + '</span>' +
       (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
-      (id === 'section_gradient' ? '<button class="ep-edit-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="버튼 편집">✏</button>' : '') +
+      '<button class="ep-edit-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="섹션 편집">✏</button>' +
       '<div class="section-bg-swatch' + (bgColor ? ' has-color' : '') + '" style="' + swatchStyle + '" title="섹션 배경 색상">' +
         '<input type="color" value="' + (bgColor || '#ffffff') + '" data-section="' + id + '" oninput="onSectionBgChange(this)">' +
       '</div>' +
@@ -460,7 +524,14 @@ function toggleSectionEdit(id) {
     var panel = document.createElement('div');
     panel.id = 'edit-panel-' + id;
     panel.className = 'section-edit-panel';
-    if (id === 'section_gradient') panel.innerHTML = buildGradientPanel();
+    if (id === 'section_gradient') {
+      panel.innerHTML = buildGradientPanel();
+    } else if (SECTION_DOM_MAP[id]) {
+      loadFieldsFromPreview(id);
+      panel.innerHTML = buildSectionPanel(id);
+    } else {
+      panel.innerHTML = '<div class="ep-title" style="color:#4b5563;">편집 기능 준비 중</div>';
+    }
     item.insertAdjacentElement('afterend', panel);
     if (btn) btn.classList.add('active');
     openEditPanelId = id;
@@ -515,6 +586,127 @@ function toggleEpHoverSub(i, show) {
 function syncEpHex(colorInput, i, key) {
   var hex = document.getElementById('ep-' + key + '-' + i);
   if (hex) hex.value = colorInput.value;
+}
+
+/* ── 섹션 데이터 읽기 (iframe → state) ── */
+function loadFieldsFromPreview(sectionId) {
+  if (!previewReady) return;
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var map = SECTION_DOM_MAP[sectionId];
+  if (!map) return;
+  var sEl = doc.querySelector('[data-builder-section="' + sectionId + '"]');
+  if (!sEl) return;
+  var data = {};
+  Object.keys(map).forEach(function(fk) {
+    var m = map[fk];
+    if (m._repeater) {
+      var nodes = sEl.querySelectorAll(m.container);
+      data[fk] = Array.from(nodes).map(function(node) {
+        var item = {};
+        Object.keys(m.fields).forEach(function(sfk) {
+          var fm = m.fields[sfk];
+          var el = fm.sel ? node.querySelector(fm.sel) : node;
+          var v = el ? (el[fm.prop] || '') : '';
+          item[sfk] = typeof v === 'string' ? v.trim() : v;
+        });
+        return item;
+      });
+    } else {
+      var el = sEl.querySelector(m.sel);
+      var v = el ? (el[m.prop] || '') : '';
+      data[fk] = typeof v === 'string' ? v.trim() : v;
+    }
+  });
+  sectionData[sectionId] = data;
+}
+
+/* ── 섹션 데이터 적용 (state → iframe) ── */
+function applyFieldsToPreview(sectionId) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var map = SECTION_DOM_MAP[sectionId];
+  if (!map) return;
+  var sEl = doc.querySelector('[data-builder-section="' + sectionId + '"]');
+  if (!sEl) return;
+  var data = sectionData[sectionId];
+  if (!data) return;
+  Object.keys(map).forEach(function(fk) {
+    var m = map[fk];
+    var val = data[fk];
+    if (val === undefined) return;
+    if (m._repeater) {
+      var nodes = sEl.querySelectorAll(m.container);
+      nodes.forEach(function(node, i) {
+        if (!val[i]) return;
+        Object.keys(m.fields).forEach(function(sfk) {
+          var fm = m.fields[sfk];
+          var el = fm.sel ? node.querySelector(fm.sel) : node;
+          if (el && val[i][sfk] !== undefined) el[fm.prop] = val[i][sfk];
+        });
+      });
+    } else {
+      var el = sEl.querySelector(m.sel);
+      if (el) el[m.prop] = val;
+    }
+  });
+}
+
+function applyAllFieldsToPreview() {
+  Object.keys(sectionData).forEach(function(id) { applyFieldsToPreview(id); });
+}
+
+/* ── 필드 값 업데이트 ── */
+function updateField(sectionId, path, val) {
+  if (!sectionData[sectionId]) sectionData[sectionId] = {};
+  var parts = path.split('.');
+  var obj = sectionData[sectionId];
+  for (var i = 0; i < parts.length - 1; i++) {
+    var k = isNaN(parts[i]) ? parts[i] : +parts[i];
+    if (obj == null || typeof obj !== 'object') return;
+    obj = obj[k];
+  }
+  if (obj == null || typeof obj !== 'object') return;
+  var last = parts[parts.length - 1];
+  obj[isNaN(last) ? last : +last] = val;
+  saveState();
+  applyFieldsToPreview(sectionId);
+}
+
+/* ── 섹션 편집 폼 빌더 ── */
+function buildSectionPanel(sectionId) {
+  var schema = FAIR_BUILDER_SCHEMA[sectionId];
+  var data   = sectionData[sectionId] || {};
+  var h = '<div class="ep-title">' + schema.name + ' 편집</div>';
+  Object.keys(schema.fields).forEach(function(fk) {
+    var field = schema.fields[fk];
+    if (field.type === 'repeater') {
+      var items = data[fk] || [];
+      h += '<div class="ep-repeater-label">' + field.label + '</div>';
+      items.forEach(function(item, i) {
+        h += '<div class="ep-btn-card"><div class="ep-btn-header">' + field.itemLabel + ' ' + (i + 1) + '</div>';
+        Object.keys(field.fields).forEach(function(sfk) {
+          if (field.fields[sfk].type === 'repeater') return;
+          h += buildFieldInput(sectionId, fk + '.' + i + '.' + sfk, field.fields[sfk], item[sfk]);
+        });
+        h += '</div>';
+      });
+    } else {
+      h += buildFieldInput(sectionId, fk, field, data[fk]);
+    }
+  });
+  return h;
+}
+
+function buildFieldInput(sectionId, path, field, val) {
+  val = val !== undefined ? String(val) : (field.default || '');
+  var cb = 'updateField(\'' + sectionId + '\',\'' + path + '\',this.value)';
+  var hint = (field.type === 'image') ? ' <span class="ep-hint">(경로)</span>' : (field.type === 'link') ? ' <span class="ep-hint">(URL)</span>' : '';
+  var label = '<label>' + field.label + hint + '</label>';
+  if (field.type === 'textarea') {
+    return '<div class="ep-field">' + label + '<textarea class="ep-textarea" oninput="' + cb + '">' + esc(val) + '</textarea></div>';
+  }
+  return '<div class="ep-field">' + label + '<input type="text" value="' + esc(val) + '" oninput="' + cb + '"></div>';
 }
 
 function updateBtn(i, key, val) {
@@ -665,6 +857,7 @@ function applyToPreview() {
   });
 
   applyBtnStylesToPreview();
+  applyAllFieldsToPreview();
 }
 
 /* ── 파일 내보내기 (Step 6에서 완성) ── */
@@ -677,6 +870,8 @@ var PATCH_NOTES = [
   {
     date: '2026.04.23',
     items: [
+      '<strong>[v0.4.0]</strong> Step 4-B 완료 — 모든 섹션 ✏ 편집 폼 추가 (텍스트/이미지/링크/textarea/리피터 아이템 편집, iframe 실시간 반영)',
+      '<strong>[v0.4.0]</strong> SECTION_DOM_MAP 기반 자동 필드 매핑 — 8개 섹션 DOM 커버',
       '<strong>[v0.3.9]</strong> 버튼 배너 개별 편집 기능 추가 — 섹션 패널 ✏ 버튼 클릭으로 버튼별 텍스트/링크/너비/배경색/인셋쉐도우/호버효과 편집',
       '<strong>[v0.3.9]</strong> 호버 효과 PC 전용 적용 (≥1025px) — @media(hover:hover) 동적 style 태그 주입 방식',
     ]
