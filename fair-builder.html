@@ -160,6 +160,40 @@
     .fmt-color-label { font-size:10px; font-weight:700; color:#e5e7eb; line-height:1; pointer-events:none; }
     .fmt-color-bar { width:18px; height:3px; border-radius:1px; margin-top:1px; pointer-events:none; }
 
+    /* E3: 섹션 ▲▼ 이동 버튼 */
+    .sec-move-btn { background: none; border: 1px solid #2e3a52; border-radius: 3px; color: #4b5563; font-size: 10px; width: 16px; height: 16px; cursor: pointer; line-height: 14px; text-align: center; padding: 0; flex-shrink: 0; }
+    .sec-move-btn:hover:not(:disabled) { border-color: #60a5fa; color: #60a5fa; }
+    .sec-move-btn:disabled { opacity: .2; cursor: default; }
+    .sec-move-group { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; }
+
+    /* E4: 섹션 이름 클릭 → 스크롤 */
+    .section-name { cursor: pointer; }
+    .section-name:hover { color: #60a5fa !important; }
+
+    /* E1/E2: 미니 모달 */
+    #mini-modal { display: none; position: fixed; inset: 0; z-index: 9500; background: rgba(0,0,0,.55); align-items: center; justify-content: center; }
+    #mini-modal.open { display: flex; }
+    #mini-modal-box { background: #1e2433; border: 1px solid #2e3a52; border-radius: 10px; padding: 20px; width: 380px; box-shadow: 0 16px 48px rgba(0,0,0,.6); }
+    #mini-modal-box h4 { font-size: 13px; font-weight: 700; color: #e5e7eb; margin: 0 0 14px 0; }
+    #mini-modal-box .mm-label { font-size: 11px; color: #6b7280; display: block; margin-bottom: 4px; }
+    #mini-modal-box input[type=text] { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 5px 8px; outline: none; box-sizing: border-box; }
+    #mini-modal-box input[type=text]:focus { border-color: #0066cc; }
+    #mini-modal-box .mm-sep { text-align: center; font-size: 11px; color: #4b5563; margin: 10px 0; }
+    #mini-modal-box .mm-upload-btn { background: #2e3a52; color: #d1d5db; border: 1px solid #374151; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; display: inline-block; }
+    #mini-modal-box .mm-preview { width: 100%; max-height: 100px; object-fit: contain; margin-top: 10px; border-radius: 4px; border: 1px solid #2e3a52; display: none; }
+    #mini-modal-box .mm-hint { font-size: 10px; color: #4b5563; margin-top: 6px; }
+    #mini-modal-box .mm-actions { display: flex; gap: 8px; margin-top: 14px; justify-content: flex-end; }
+    #mini-modal-box .mm-btn { font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 6px; border: none; cursor: pointer; }
+    #mini-modal-box .mm-cancel { background: #374151; color: #9ca3af; }
+    #mini-modal-box .mm-apply { background: #0066cc; color: #fff; }
+
+    /* 편집모드 이미지 클릭 힌트 */
+    .builder-edit-mode [data-builder-section] img[data-img-edit-bound] { outline: 2px dashed rgba(245,158,11,.5); cursor: pointer; }
+    .builder-edit-mode [data-builder-section] img[data-img-edit-bound]:hover { outline-color: rgba(245,158,11,.9); }
+    /* 편집모드 video 컨테이너 클릭 힌트 */
+    .builder-edit-mode [data-builder-section] [data-yt-edit-bound] { outline: 2px dashed rgba(239,68,68,.5) !important; cursor: pointer; position: relative; }
+    .builder-edit-mode [data-builder-section] [data-yt-edit-bound]:hover { outline-color: rgba(239,68,68,.9) !important; }
+
     /* 패치노트 버튼 */
     #top-bar .btn-patch { background: transparent; border: 1px solid #2e3a52; color: #6b7280; font-size: 11px; padding: 3px 9px; }
     #top-bar .btn-patch:hover { border-color: #60a5fa; color: #60a5fa; }
@@ -516,6 +550,7 @@ function setDevice(type, btn) {
 function renderSectionList() {
   var list = document.getElementById('section-list');
   list.innerHTML = '';
+  var visibleOrder = sectionOrder.filter(function(id) { return !FAIR_BUILDER_SCHEMA[id].hideFromPanel; });
   sectionOrder.forEach(function(id) {
     var schema  = FAIR_BUILDER_SCHEMA[id];
     if (schema.hideFromPanel) return;
@@ -523,13 +558,22 @@ function renderSectionList() {
     var enabled = sectionEnabled[id];
     var bgColor = sectionBgColors[id] || '';
     var swatchStyle = bgColor ? 'background:' + bgColor + ';' : '';
+    var visIdx  = visibleOrder.indexOf(id);
+    var isFirst = visIdx === 0;
+    var isLast  = visIdx === visibleOrder.length - 1;
     var item = document.createElement('div');
     item.className = 'section-item';
     item.setAttribute('draggable', 'true');
     item.dataset.id = id;
     item.innerHTML =
       '<span class="drag-handle">⠿</span>' +
-      '<span class="section-name">' + schema.name + '</span>' +
+      /* E3: ▲▼ 이동 버튼 */
+      '<div class="sec-move-group">' +
+        '<button class="sec-move-btn" title="위로" onclick="event.stopPropagation();moveSectionOrder(\'' + id + '\',-1)" ' + (isFirst ? 'disabled' : '') + '>▲</button>' +
+        '<button class="sec-move-btn" title="아래로" onclick="event.stopPropagation();moveSectionOrder(\'' + id + '\',1)" ' + (isLast ? 'disabled' : '') + '>▼</button>' +
+      '</div>' +
+      /* E4: 섹션명 클릭 → 스크롤 */
+      '<span class="section-name" onclick="event.stopPropagation();scrollToSection(\'' + id + '\')" title="클릭 시 해당 섹션으로 이동">' + schema.name + '</span>' +
       (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
       (id === 'section_gradient' ? '' : '<button class="ep-edit-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="섹션 편집">✏</button>') +
       '<div class="section-bg-swatch' + (bgColor ? ' has-color' : '') + '" style="' + swatchStyle + '" title="섹션 배경 색상">' +
@@ -545,6 +589,34 @@ function renderSectionList() {
   });
   initDragDrop();
   if (openEditPanelId) toggleSectionEdit(openEditPanelId);
+}
+
+/* ── E3: 섹션 ▲▼ 이동 ── */
+function moveSectionOrder(id, dir) {
+  var idx = sectionOrder.indexOf(id);
+  if (idx === -1) return;
+  /* 같은 방향으로 이동할 visible 섹션 찾기 */
+  var step = dir > 0 ? 1 : -1;
+  var target = idx + step;
+  while (target >= 0 && target < sectionOrder.length) {
+    if (!FAIR_BUILDER_SCHEMA[sectionOrder[target]].hideFromPanel) break;
+    target += step;
+  }
+  if (target < 0 || target >= sectionOrder.length) return;
+  var tmp = sectionOrder[idx];
+  sectionOrder[idx] = sectionOrder[target];
+  sectionOrder[target] = tmp;
+  saveState();
+  applyToPreview();
+  renderSectionList();
+}
+
+/* ── E4: 섹션 클릭 → iframe 스크롤 ── */
+function scrollToSection(id) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var el = doc.querySelector('[data-builder-section="' + id + '"]');
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function toggleSection(id, val) {
@@ -1388,6 +1460,8 @@ function enterEditMode() {
   applyEditableAttr(doc);
   injectSectionDragHandles(doc);
   injectBtnEditUI(doc);
+  applyImageEditListeners(doc);   /* E1 */
+  applyYoutubeEditListeners(doc); /* E2 */
   editMode = true;
   document.getElementById('edit-mode-btn').classList.add('active');
   document.getElementById('edit-mode-btn').textContent = '✕ 편집 종료';
@@ -1518,6 +1592,119 @@ function preventEditNavigation(e) {
   if (editMode) e.preventDefault();
 }
 
+/* ── E1: 이미지 인라인 편집 ── */
+var _currentImgEl  = null;
+var _currentImgSId = null;
+
+function applyImageEditListeners(doc) {
+  doc.querySelectorAll('[data-builder-section] img').forEach(function(img) {
+    if (img.dataset.imgEditBound || img.hasAttribute('data-builder-ui')) return;
+    img.dataset.imgEditBound = '';
+    img.addEventListener('click', function(e) {
+      if (!editMode) return;
+      e.stopPropagation();
+      _currentImgEl  = img;
+      _currentImgSId = img.closest('[data-builder-section]').dataset.builderSection;
+      var curSrc = img.getAttribute('src') || '';
+      openMiniModal('이미지 편집',
+        '<span class="mm-label">이미지 URL</span>' +
+        '<input type="text" id="mm-img-url" value="' + curSrc.replace(/"/g,'&quot;') + '" placeholder="https://">' +
+        '<div class="mm-sep">또는</div>' +
+        '<label class="mm-upload-btn">📁 파일 업로드<input type="file" accept="image/*" style="display:none" onchange="onImgFileSelect(this)"></label>' +
+        '<img id="mm-img-preview" class="mm-preview">',
+        function() {
+          var url = document.getElementById('mm-img-url').value.trim();
+          if (!url) return;
+          _currentImgEl.src = url;
+          _saveExtraPath(_currentImgSId, '_img:', _currentImgEl, url);
+          closeMiniModal();
+        }
+      );
+    });
+  });
+}
+
+window.onImgFileSelect = function(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    document.getElementById('mm-img-url').value = dataUrl;
+    var prev = document.getElementById('mm-img-preview');
+    if (prev) { prev.src = dataUrl; prev.style.display = 'block'; }
+  };
+  reader.readAsDataURL(file);
+};
+
+/* ── E2: YouTube URL 편집 ── */
+var _currentIframeEl = null;
+
+function applyYoutubeEditListeners(doc) {
+  doc.querySelectorAll('[data-builder-section="section_videos"] .video').forEach(function(container) {
+    if (container.dataset.ytEditBound) return;
+    container.dataset.ytEditBound = '';
+    container.addEventListener('click', function(e) {
+      if (!editMode) return;
+      e.stopPropagation();
+      var iframe = container.querySelector('iframe');
+      _currentIframeEl = iframe;
+      var curSrc = iframe ? (iframe.getAttribute('src') || '') : '';
+      openMiniModal('YouTube URL 편집',
+        '<span class="mm-label">YouTube 영상 URL 또는 Embed URL</span>' +
+        '<input type="text" id="mm-yt-url" value="' + curSrc.replace(/"/g,'&quot;') + '" placeholder="https://www.youtube.com/watch?v=...">' +
+        '<div class="mm-hint">watch?v=... 또는 youtu.be/... 입력 시 자동 변환됩니다.</div>',
+        function() {
+          var raw = document.getElementById('mm-yt-url').value.trim();
+          if (!raw || !_currentIframeEl) return;
+          var embed = ytToEmbed(raw);
+          _currentIframeEl.src = embed;
+          var sEl = _currentIframeEl.closest('[data-builder-section]');
+          var sId = sEl ? sEl.dataset.builderSection : 'section_videos';
+          _saveExtraPath(sId, '_iframe:', _currentIframeEl, embed);
+          closeMiniModal();
+        }
+      );
+    });
+  });
+}
+
+function ytToEmbed(url) {
+  if (url.includes('/embed/')) return url;
+  var m = url.match(/[?&]v=([A-Za-z0-9_-]+)/);
+  if (m) return 'https://www.youtube.com/embed/' + m[1];
+  var m2 = url.match(/youtu\.be\/([A-Za-z0-9_-]+)/);
+  if (m2) return 'https://www.youtube.com/embed/' + m2[1];
+  return url;
+}
+
+/* 공통: _extra 경로 저장 헬퍼 */
+function _saveExtraPath(sId, prefix, el, val) {
+  if (!sId) return;
+  var doc = getPreviewDoc();
+  var sEl = doc && doc.querySelector('[data-builder-section="' + sId + '"]');
+  if (!sEl) return;
+  if (!sectionData[sId]) sectionData[sId] = {};
+  if (!sectionData[sId]._extra) sectionData[sId]._extra = {};
+  sectionData[sId]._extra[prefix + getElPath(el, sEl)] = val;
+  saveState();
+}
+
+/* ── E1/E2: 미니 모달 ── */
+var _miniModalApply = null;
+
+function openMiniModal(title, content, onApply) {
+  document.getElementById('mini-modal-title').textContent = title;
+  document.getElementById('mini-modal-content').innerHTML = content;
+  _miniModalApply = onApply;
+  document.getElementById('mini-modal').classList.add('open');
+}
+
+function closeMiniModal() {
+  document.getElementById('mini-modal').classList.remove('open');
+  _miniModalApply = null;
+}
+
 function restoreExtraEdits(doc) {
   Object.keys(sectionData).forEach(function(sId) {
     var extra = sectionData[sId] && sectionData[sId]._extra;
@@ -1525,9 +1712,16 @@ function restoreExtraEdits(doc) {
     var sEl = doc.querySelector('[data-builder-section="' + sId + '"]');
     if (!sEl) return;
     Object.keys(extra).forEach(function(field) {
-      if (!field.startsWith('_el:')) return;
-      var el = findElByPath(field.slice(4), sEl);
-      if (el) el.innerHTML = extra[field];
+      if (field.startsWith('_el:')) {
+        var el = findElByPath(field.slice(4), sEl);
+        if (el) el.innerHTML = extra[field];
+      } else if (field.startsWith('_img:')) {
+        var img = findElByPath(field.slice(5), sEl);
+        if (img) img.src = extra[field];
+      } else if (field.startsWith('_iframe:')) {
+        var ifr = findElByPath(field.slice(8), sEl);
+        if (ifr) ifr.src = extra[field];
+      }
     });
   });
 }
@@ -1844,6 +2038,18 @@ loadState();
 renderSectionList();
 renderColorList();
 </script>
+
+<!-- E1/E2: 미니 모달 -->
+<div id="mini-modal" onclick="if(event.target===this)closeMiniModal()">
+  <div id="mini-modal-box">
+    <h4 id="mini-modal-title"></h4>
+    <div id="mini-modal-content"></div>
+    <div class="mm-actions">
+      <button class="mm-btn mm-cancel" onclick="closeMiniModal()">취소</button>
+      <button class="mm-btn mm-apply" onclick="if(_miniModalApply)_miniModalApply()">적용</button>
+    </div>
+  </div>
+</div>
 
 <!-- 패치노트 오버레이 -->
 <div id="patch-overlay" onclick="if(event.target===this)togglePatchNotes()">
