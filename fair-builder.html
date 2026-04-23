@@ -201,6 +201,33 @@
     .ep-spacing-item input { width: 100%; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 11px; padding: 3px 5px; }
     .ep-spacing-item input:focus { border-color: #3b82f6; outline: none; }
 
+    /* M1: 프로젝트 패널 */
+    #top-bar .btn-project { background: transparent; border: 1px solid #2e3a52; color: #93c5fd; font-size: 11px; padding: 3px 10px; }
+    #top-bar .btn-project:hover { border-color: #93c5fd; background: rgba(147,197,253,.08); }
+    #project-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.55); z-index:9000; align-items:center; justify-content:center; }
+    #project-overlay.open { display:flex; }
+    #project-modal { background:#1a2235; border:1px solid #2e3a52; border-radius:12px; width:520px; max-width:95vw; max-height:80vh; display:flex; flex-direction:column; overflow:hidden; }
+    #project-modal .pm-head { display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid #2e3a52; }
+    #project-modal .pm-head h3 { font-size:15px; font-weight:700; color:#e2e8f0; margin:0; }
+    #project-save-section { padding:16px 20px 0; }
+    .proj-label { font-size:11px; font-weight:700; color:#6b7280; text-transform:uppercase; letter-spacing:.06em; padding:0 20px; }
+    .proj-save-row { display:flex; gap:8px; margin-top:6px; }
+    .proj-save-row input { flex:1; background:#0f172a; border:1px solid #2e3a52; border-radius:6px; color:#e2e8f0; font-size:12px; padding:7px 10px; }
+    .proj-save-row input:focus { border-color:#3b82f6; outline:none; }
+    .btn-project-save { background:#0066cc; border:none; color:#fff; font-size:12px; font-weight:600; padding:7px 14px; border-radius:6px; cursor:pointer; white-space:nowrap; }
+    .btn-project-save:hover { background:#0052a3; }
+    #project-list { flex:1; overflow-y:auto; padding:10px 20px 16px; display:flex; flex-direction:column; gap:6px; margin-top:8px; }
+    .proj-empty { font-size:12px; color:#4b5563; text-align:center; padding:20px 0; }
+    .proj-item { background:#0f172a; border:1px solid #2e3a52; border-radius:8px; padding:10px 12px; display:flex; justify-content:space-between; align-items:center; gap:8px; }
+    .proj-item-info { display:flex; flex-direction:column; gap:2px; min-width:0; }
+    .proj-item-name { font-size:13px; font-weight:600; color:#e2e8f0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .proj-item-meta { font-size:10px; color:#6b7280; }
+    .proj-item-actions { display:flex; gap:6px; flex-shrink:0; }
+    .proj-btn-load { background:#1d4ed8; border:none; color:#fff; font-size:11px; padding:4px 10px; border-radius:5px; cursor:pointer; }
+    .proj-btn-load:hover { background:#1e40af; }
+    .proj-btn-del { background:#374151; border:none; color:#f87171; font-size:11px; padding:4px 10px; border-radius:5px; cursor:pointer; }
+    .proj-btn-del:hover { background:#4b5563; }
+
     /* ST3: AOS 토글 행 */
     .aos-toggle-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #2e3a52; padding-bottom: 6px; margin-bottom: 8px; }
 
@@ -280,9 +307,10 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.7.8</span>
+  <span id="ver-badge" title="배포 버전">v0.8.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
+  <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
   <div class="divider"></div>
   <button class="btn btn-outline" onclick="exportCSS()">CSS</button>
@@ -2404,6 +2432,80 @@ function applyToPreview() {
   if (!editMode) applyAllFieldsToPreview(); // 편집 모드 중엔 contenteditable 덮어쓰기 방지
 }
 
+/* ── M1: 멀티 프로젝트 히스토리 ── */
+var PROJECTS_KEY = 'fair_builder_projects_v1';
+
+function getProjects() {
+  try { return JSON.parse(localStorage.getItem(PROJECTS_KEY)) || []; } catch(e) { return []; }
+}
+
+function saveProject() {
+  var name = document.getElementById('proj-name-input').value.trim();
+  if (!name) { alert('프로젝트 이름을 입력하세요.'); return; }
+  var code = document.getElementById('fair-code').value.trim();
+  var raw  = localStorage.getItem(STATE_KEY);
+  var projects = getProjects();
+  var id = Date.now().toString(36);
+  var now = new Date();
+  var savedAt = now.getFullYear() + '.' +
+    String(now.getMonth()+1).padStart(2,'0') + '.' +
+    String(now.getDate()).padStart(2,'0') + ' ' +
+    String(now.getHours()).padStart(2,'0') + ':' +
+    String(now.getMinutes()).padStart(2,'0');
+  projects.unshift({ id: id, name: name, code: code, savedAt: savedAt, state: raw });
+  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  document.getElementById('proj-name-input').value = '';
+  renderProjectList();
+}
+
+function loadProject(id) {
+  if (!confirm('현재 작업이 저장된 프로젝트로 교체됩니다. 계속하시겠습니까?')) return;
+  var projects = getProjects();
+  var proj = projects.find(function(p) { return p.id === id; });
+  if (!proj || !proj.state) return;
+  localStorage.setItem(STATE_KEY, proj.state);
+  closeProjectPanel();
+  location.reload();
+}
+
+function deleteProject(id) {
+  if (!confirm('이 프로젝트를 삭제하시겠습니까?')) return;
+  var projects = getProjects().filter(function(p) { return p.id !== id; });
+  localStorage.setItem(PROJECTS_KEY, JSON.stringify(projects));
+  renderProjectList();
+}
+
+function renderProjectList() {
+  var list = document.getElementById('project-list');
+  if (!list) return;
+  var projects = getProjects();
+  if (!projects.length) {
+    list.innerHTML = '<div class="proj-empty">저장된 프로젝트가 없습니다.</div>';
+    return;
+  }
+  list.innerHTML = projects.map(function(p) {
+    return '<div class="proj-item">' +
+      '<div class="proj-item-info">' +
+        '<span class="proj-item-name">' + esc(p.name) + '</span>' +
+        '<span class="proj-item-meta">' + esc(p.code || '-') + ' · ' + esc(p.savedAt) + '</span>' +
+      '</div>' +
+      '<div class="proj-item-actions">' +
+        '<button class="proj-btn-load" onclick="loadProject(\'' + p.id + '\')">불러오기</button>' +
+        '<button class="proj-btn-del" onclick="deleteProject(\'' + p.id + '\')">삭제</button>' +
+      '</div>' +
+    '</div>';
+  }).join('');
+}
+
+function openProjectPanel() {
+  renderProjectList();
+  document.getElementById('project-overlay').classList.add('open');
+}
+
+function closeProjectPanel() {
+  document.getElementById('project-overlay').classList.remove('open');
+}
+
 /* ── 파일 내보내기 (Step 6에서 완성) ── */
 function exportCSS()  { alert('Step 6에서 구현 예정입니다.'); }
 function exportASP()  { alert('Step 6에서 구현 예정입니다.'); }
@@ -2411,6 +2513,23 @@ function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.23 15:10 (v0.8.1)',
+    items: [
+      '<strong>[v0.8.1]</strong> Phase 7 M1 — 멀티 프로젝트 히스토리: 📂 프로젝트 버튼으로 저장/불러오기/삭제',
+      '<strong>[v0.8.1]</strong> fair_builder_projects_v1 키로 여러 프로젝트 localStorage 관리',
+      '<strong>[v0.8.1]</strong> 불러오기 시 STATE_KEY 교체 후 자동 새로고침 (전체 상태 복원)',
+    ]
+  },
+  {
+    date: '2026.04.23 15:00 (v0.8.0)',
+    items: [
+      '<strong>[v0.8.0]</strong> Phase 6 X2 — 헤더 로고 이미지 교체: .logo_f/.logo_f2 background-image CSS 오버라이드',
+      '<strong>[v0.8.0]</strong> Phase 6 X1 — 내보내기 설정: 스타일 탭 하단 박람회명·이미지 경로 prefix 입력 (Step 6용)',
+      '<strong>[v0.8.0]</strong> Phase 5 V1 — 메인 비주얼 전용 편집 패널: 7개 이미지 라벨 교체 (URL + 파일 업로드)',
+      '<strong>[v0.8.0]</strong> Phase 5 V2 — 우측 비주얼 패널 표시/숨김 토글 (visualRightVisible 상태)',
+    ]
+  },
   {
     date: '2026.04.23 14:20 (v0.7.8)',
     items: [
@@ -2626,6 +2745,25 @@ renderColorList();
       <button class="mm-btn mm-cancel" onclick="closeMiniModal()">취소</button>
       <button class="mm-btn mm-apply" onclick="if(_miniModalApply)_miniModalApply()">적용</button>
     </div>
+  </div>
+</div>
+
+<!-- 프로젝트 패널 -->
+<div id="project-overlay" onclick="if(event.target===this)closeProjectPanel()">
+  <div id="project-modal">
+    <div class="pm-head">
+      <h3>📂 프로젝트 관리</h3>
+      <button class="pm-close" onclick="closeProjectPanel()">✕</button>
+    </div>
+    <div id="project-save-section">
+      <div class="proj-label">현재 작업을 저장</div>
+      <div class="proj-save-row">
+        <input type="text" id="proj-name-input" placeholder="프로젝트 이름 (예: 현대자동차 2026 상반기)">
+        <button class="btn btn-project-save" onclick="saveProject()">저장</button>
+      </div>
+    </div>
+    <div class="proj-label" style="margin-top:16px;">저장된 프로젝트</div>
+    <div id="project-list"></div>
   </div>
 </div>
 
