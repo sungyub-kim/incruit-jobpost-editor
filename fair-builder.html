@@ -229,7 +229,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.6.4</span>
+  <span id="ver-badge" title="배포 버전">v0.7.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-danger" onclick="resetAll()">초기화</button>
@@ -360,6 +360,7 @@ var cssColors = {};
 var openEditPanelId = null;
 var sectionData = {};
 var editMode = false;
+var posterConfig = 'both'; /* 'both' | 'online' | 'offline' */
 
 /* ── 섹션 DOM 매핑 테이블 ── */
 var SECTION_DOM_MAP = {
@@ -445,7 +446,8 @@ function saveState() {
     sectionBgColors:sectionBgColors,
     cssColors:      cssColors,
     buttonStyles:   buttonStyles,
-    sectionData:    sectionData
+    sectionData:    sectionData,
+    posterConfig:   posterConfig
   }));
 }
 
@@ -482,8 +484,9 @@ function loadState() {
         if (cssColors[v] === undefined) cssColors[v] = FAIR_BUILDER_COLORS[v].default;
       });
     }
-    if (s.buttonStyles) buttonStyles = s.buttonStyles;
-    if (s.sectionData)  sectionData  = s.sectionData;
+    if (s.buttonStyles)  buttonStyles  = s.buttonStyles;
+    if (s.sectionData)   sectionData   = s.sectionData;
+    if (s.posterConfig)  posterConfig  = s.posterConfig;
   } catch(e) {}
 }
 
@@ -774,6 +777,7 @@ function buildSectionPanel(sectionId) {
   var data   = sectionData[sectionId] || {};
   var map    = SECTION_DOM_MAP[sectionId] || {};
   var h = '<div class="ep-title">' + schema.name + ' 편집</div>';
+  if (sectionId === 'section_event_info') h += buildPosterLayoutCtrl();
   Object.keys(schema.fields).forEach(function(fk) {
     var field = schema.fields[fk];
     if (!map[fk]) return; // DOM_MAP에 없는 필드는 폼에서 제외
@@ -1307,6 +1311,59 @@ function applyColorToPreview(varName, value) {
   try { document.getElementById('preview-frame').contentDocument.documentElement.style.setProperty(varName, value); } catch(e) {}
 }
 
+/* ── 포스터 레이아웃 (Step G) ── */
+function applyPosterLayout(doc) {
+  var styleId = 'builder-poster-layout';
+  var tag = doc.getElementById(styleId);
+  if (!tag) {
+    tag = doc.createElement('style');
+    tag.id = styleId;
+    doc.head.appendChild(tag);
+  }
+  if (posterConfig === 'online') {
+    tag.textContent = '.poster-box.type--offline{display:none!important}' +
+      '.poster-box-wrap .poster-box.type--online{width:100%!important}';
+  } else if (posterConfig === 'offline') {
+    tag.textContent = '.poster-box.type--online{display:none!important}' +
+      '.poster-box-wrap .poster-box.type--offline{width:100%!important}';
+  } else {
+    tag.textContent = '';
+  }
+}
+
+function setPosterConfig(val) {
+  posterConfig = val;
+  saveState();
+  var doc = getPreviewDoc();
+  if (doc) applyPosterLayout(doc);
+  if (openEditPanelId === 'section_event_info') {
+    var panel = document.getElementById('edit-panel-section_event_info');
+    if (panel) {
+      loadFieldsFromPreview('section_event_info');
+      panel.innerHTML = buildSectionPanel('section_event_info');
+    }
+  }
+}
+
+function buildPosterLayoutCtrl() {
+  var configs = [
+    { val: 'both',    label: '온+오프 (2개)' },
+    { val: 'online',  label: '온라인만' },
+    { val: 'offline', label: '오프라인만' },
+  ];
+  var h = '<div class="ep-title" style="margin-top:6px;font-size:10px;">포스터 레이아웃</div>' +
+    '<div style="display:flex;gap:4px;margin-bottom:10px;">';
+  configs.forEach(function(c) {
+    var active = posterConfig === c.val;
+    h += '<button onclick="setPosterConfig(\'' + c.val + '\')" style="flex:1;padding:5px 2px;font-size:10px;border-radius:4px;' +
+      'border:1px solid ' + (active ? '#0066cc' : '#2e3a52') + ';' +
+      'background:' + (active ? '#0066cc' : 'transparent') + ';' +
+      'color:' + (active ? '#fff' : '#9ca3af') + ';cursor:pointer;">' + c.label + '</button>';
+  });
+  h += '</div>';
+  return h;
+}
+
 /* ── 편집 모드 ── */
 function toggleEditMode() {
   if (editMode) { exitEditMode(); } else { enterEditMode(); }
@@ -1570,10 +1627,11 @@ document.getElementById('preview-frame').addEventListener('load', function() {
     });
   } catch(e) {}
   applyToPreview();
-  /* 저장된 CSS 색상 복원 */
+  /* 저장된 CSS 색상 + 포스터 레이아웃 복원 */
   Object.keys(cssColors).forEach(function(varName) {
     applyColorToPreview(varName, cssColors[varName]);
   });
+  try { applyPosterLayout(this.contentDocument); } catch(e) {}
 });
 
 function getPreviewDoc() {
@@ -1619,6 +1677,7 @@ function applyToPreview() {
   });
 
   applyBtnStylesToPreview();
+  applyPosterLayout(doc);
   if (!editMode) applyAllFieldsToPreview(); // 편집 모드 중엔 contenteditable 덮어쓰기 방지
 }
 
@@ -1629,6 +1688,15 @@ function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.23 (v0.7.0)',
+    items: [
+      '<strong>[v0.7.0]</strong> Step G — 포스터 레이아웃 가변: 온+오프 2개 / 온라인만 / 오프라인만 선택',
+      '<strong>[v0.7.0]</strong> 선택 시 iframe에 &lt;style id=builder-poster-layout&gt; 동적 주입 (display:none + width:100%)',
+      '<strong>[v0.7.0]</strong> posterConfig 상태 localStorage 저장/복원, 페이지 새로고침 후에도 유지',
+      '<strong>[v0.7.0]</strong> 행사안내 ✏ 편집 패널 상단에 [온+오프] [온라인만] [오프라인만] 토글 버튼 표시',
+    ]
+  },
   {
     date: '2026.04.23 (v0.6.4)',
     items: [
