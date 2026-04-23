@@ -588,10 +588,10 @@ a:active, a:hover{color:var(--c-color); text-decoration:none;}
 .greetings-cont span em{color:#004EA2;}
 
 @media(max-width:1024px){
-	.greetings{flex-wrap:wrap;}
-	.greetings-photo{margin:0 auto 20px auto;}
+	.greetings{flex-wrap:wrap; flex-direction:column;}
+	.greetings-photo{flex:0 0 auto; max-width:349px; margin:0 auto 20px auto;}
 	.greetings-photo ins em{letter-spacing:0;}
-	.greetings-cont{width:100%;padding-left:0;padding-right:0;}
+	.greetings-cont{flex:1 1 100%; width:100%; padding-left:0; padding-right:0;}
 	.greetings-cont strong{letter-spacing:-0.9px;padding-bottom:2px;}
 	.greetings-cont span{font-size:15px;line-height:21px;letter-spacing:-0.75px;}
 }

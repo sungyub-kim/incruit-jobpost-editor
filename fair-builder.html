@@ -309,7 +309,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.9.0</span>
+  <span id="ver-badge" title="배포 버전">v0.9.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2403,6 +2403,11 @@ function applyToPreview() {
     el.style.display = sectionEnabled[id] ? '' : 'none';
     if (sectionBgColors[id]) {
       el.style.backgroundColor = sectionBgColors[id];
+      /* section_gradient는 CSS linear-gradient 덮어써야 색 보임 */
+      if (id === 'section_gradient') el.style.backgroundImage = 'none';
+    } else {
+      el.style.backgroundColor = '';
+      if (id === 'section_gradient') el.style.backgroundImage = '';
     }
   });
 
@@ -2543,7 +2548,9 @@ function buildOverrideCSS() {
   /* 2. 섹션 배경색 */
   Object.keys(sectionBgColors).forEach(function(sId) {
     if (sectionBgColors[sId]) {
-      css += '[data-builder-section="' + sId + '"]{background-color:' + sectionBgColors[sId] + ' !important;}\n';
+      var rules = 'background-color:' + sectionBgColors[sId] + ' !important;';
+      if (sId === 'section_gradient') rules += 'background-image:none !important;';
+      css += '[data-builder-section="' + sId + '"]{' + rules + '}\n';
     }
   });
 
@@ -2727,6 +2734,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.23 16:20 (v0.9.1)',
+    items: [
+      '<strong>[v0.9.1]</strong> Phase 1 긴급 버그 수정 (UX 재설계 로드맵 1단계)',
+      '<strong>[v0.9.1]</strong> 공지사항 sectionClass: \'section joblist\' → \'section notice\' (schema.js + temp.html)',
+      '<strong>[v0.9.1]</strong> hideFromPanel: true 제거 — 채용공고·공지사항 좌측 패널 이동 가능',
+      '<strong>[v0.9.1]</strong> 인사말 1024px 반응형 수정: flex-direction:column + flex-basis 재설정으로 wrap 트리거',
+      '<strong>[v0.9.1]</strong> 버튼 배너(section_gradient) 배경색 적용 수정: CSS linear-gradient 위에 안 보이던 문제 해결 (background-image:none override)',
+      '<strong>[v0.9.1]</strong> export 오버라이드 CSS에도 section_gradient 배경색 우선순위 반영',
+    ]
+  },
   {
     date: '2026.04.23 15:40 (v0.9.0)',
     items: [

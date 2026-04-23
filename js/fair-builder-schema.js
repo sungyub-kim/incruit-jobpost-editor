@@ -159,7 +159,6 @@ const FAIR_BUILDER_SCHEMA = {
     anchorId: 'm-section-04',
     enabled: true,
     fixed_content: true,
-    hideFromPanel: true,
     note: '채용공고 리스트는 동적 데이터. 탭 이름만 편집 가능.',
     fields: {
       sec_title: { type: 'text', label: '섹션 제목', default: '채용공고' },
@@ -258,10 +257,9 @@ const FAIR_BUILDER_SCHEMA = {
   section_notice: {
     id: 'section_notice',
     name: '공지사항',
-    sectionClass: 'section joblist',
+    sectionClass: 'section notice',
     anchorId: '',
     enabled: false,
-    hideFromPanel: true,
     fields: {
       sec_title: { type: 'text', label: '섹션 제목', default: '공지사항' },
       items: {
