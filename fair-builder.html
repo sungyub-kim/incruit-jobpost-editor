@@ -274,6 +274,8 @@
     .pn-content ul li { font-size: 12px; color: #9ca3af; line-height: 1.7; }
     .pn-content ul li strong { color: #60a5fa; font-weight: 600; }
   </style>
+  <!-- Step 6: JSZip CDN (일괄 다운로드용) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
 
@@ -307,7 +309,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.8.1</span>
+  <span id="ver-badge" title="배포 버전">v0.9.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2506,13 +2508,235 @@ function closeProjectPanel() {
   document.getElementById('project-overlay').classList.remove('open');
 }
 
-/* ── 파일 내보내기 (Step 6에서 완성) ── */
-function exportCSS()  { alert('Step 6에서 구현 예정입니다.'); }
-function exportASP()  { alert('Step 6에서 구현 예정입니다.'); }
-function exportZIP()  { alert('Step 6에서 구현 예정입니다.'); }
+/* ── Step 6: 파일 내보내기 ── */
+function getFileBaseName() {
+  var code = document.getElementById('fair-code').value.trim() || 'unnamed';
+  return 'fair_2026_' + code;
+}
+
+function downloadBlob(filename, blob) {
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(function() { URL.revokeObjectURL(a.href); }, 200);
+}
+
+function downloadText(filename, content, mime) {
+  downloadBlob(filename, new Blob([content], { type: mime || 'text/plain; charset=utf-8' }));
+}
+
+/* ── Step 6-A: 오버라이드 CSS 생성 ── */
+function buildOverrideCSS() {
+  var css = '/* ═══════════════════════════════════════════\n';
+  css += ' * Fair Builder 생성 오버라이드\n';
+  css += ' * 생성: ' + new Date().toISOString().slice(0,19).replace('T',' ') + '\n';
+  css += ' * ═══════════════════════════════════════════ */\n\n';
+
+  /* 1. CSS 변수 (:root) */
+  var varEntries = Object.keys(cssColors).filter(function(k){ return cssColors[k]; })
+    .map(function(k) { return '  ' + k + ': ' + cssColors[k] + ';'; });
+  if (varEntries.length) css += ':root {\n' + varEntries.join('\n') + '\n}\n\n';
+
+  /* 2. 섹션 배경색 */
+  Object.keys(sectionBgColors).forEach(function(sId) {
+    if (sectionBgColors[sId]) {
+      css += '[data-builder-section="' + sId + '"]{background-color:' + sectionBgColors[sId] + ' !important;}\n';
+    }
+  });
+
+  /* 3. 섹션 배경 이미지 */
+  Object.keys(sectionBgImages).forEach(function(sId) {
+    if (sectionBgImages[sId]) {
+      css += '[data-builder-section="' + sId + '"]{' +
+        'background-image:url("' + sectionBgImages[sId] + '") !important;' +
+        'background-size:cover !important;' +
+        'background-position:center !important;' +
+        'background-repeat:no-repeat !important;' +
+      '}\n';
+    }
+  });
+
+  /* 4. 섹션 여백 */
+  Object.keys(sectionSpacing).forEach(function(sId) {
+    var sp = sectionSpacing[sId];
+    var pc = [];
+    if (sp.pt !== '' && sp.pt !== null) pc.push('padding-top:' + sp.pt + 'px !important');
+    if (sp.pb !== '' && sp.pb !== null) pc.push('padding-bottom:' + sp.pb + 'px !important');
+    if (pc.length) css += '[data-builder-section="' + sId + '"]{' + pc.join(';') + '}\n';
+    var mo = [];
+    if (sp.mpt !== '' && sp.mpt !== null) mo.push('padding-top:' + sp.mpt + 'px !important');
+    if (sp.mpb !== '' && sp.mpb !== null) mo.push('padding-bottom:' + sp.mpb + 'px !important');
+    if (mo.length) css += '@media(max-width:768px){[data-builder-section="' + sId + '"]{' + mo.join(';') + '}}\n';
+  });
+
+  /* 5. 로고 이미지 */
+  if (logoImages.logo1) css += '.sec-wrap .logo_f{background-image:url("' + logoImages.logo1 + '") !important;}\n';
+  if (logoImages.logo2) css += '.sec-wrap .logo_f2{background-image:url("' + logoImages.logo2 + '") !important;}\n';
+
+  /* 6. 버튼 배너 스타일 */
+  var btnStyles = buttonStyles.section_gradient || [];
+  btnStyles.forEach(function(s, i) {
+    if (!s) return;
+    var sel = '[data-builder-section="section_gradient"] .round-btn:nth-of-type(' + (i+1) + ')';
+    var rules = [];
+    if (s.width)    rules.push('width:' + s.width);
+    if (s.bgColor)  rules.push('background-color:' + s.bgColor);
+    if (s.shadowEnabled && s.shadowColor) rules.push('box-shadow:-5px -5px 4px 0 ' + s.shadowColor + ' inset');
+    if (rules.length) css += sel + '{' + rules.join(' !important;') + ' !important;}\n';
+    if (s.hoverEnabled) {
+      css += '@media(hover:hover) and (min-width:1025px){' + sel + ':hover{' +
+        'background-color:' + s.hoverBgColor + ' !important;' +
+        'box-shadow:-5px -5px 4px 0 ' + s.hoverShadowColor + ' inset !important;' +
+      '}}\n';
+    }
+  });
+
+  /* 7. 포스터 레이아웃 */
+  if (posterConfig === 'online') {
+    css += '[data-builder-section="section_event_info"] .poster-box.offline{display:none !important;}\n';
+    css += '[data-builder-section="section_event_info"] .poster-box.online{width:100% !important;}\n';
+  } else if (posterConfig === 'offline') {
+    css += '[data-builder-section="section_event_info"] .poster-box.online{display:none !important;}\n';
+    css += '[data-builder-section="section_event_info"] .poster-box.offline{width:100% !important;}\n';
+  }
+
+  /* 8. 섹션 숨김 */
+  sectionOrder.forEach(function(sId) {
+    if (!sectionEnabled[sId]) {
+      css += '[data-builder-section="' + sId + '"]{display:none !important;}\n';
+    }
+  });
+
+  return css;
+}
+
+/* ── Step 6-A: CSS 다운로드 ── */
+function exportCSS() {
+  var baseName = getFileBaseName();
+  fetch('ui/static/css/specialty/fair_2026_temp.css')
+    .then(function(r) { if (!r.ok) throw new Error('CSS 템플릿 로드 실패'); return r.text(); })
+    .then(function(baseCss) {
+      var overrides = buildOverrideCSS();
+      var finalCss = baseCss + '\n\n' + overrides;
+      downloadText(baseName + '.css', finalCss, 'text/css; charset=utf-8');
+    })
+    .catch(function(e) { alert('CSS 내보내기 실패: ' + e.message); });
+}
+
+/* ── Step 6-B: ASP 클린업 생성 ── */
+function buildExportASP() {
+  var doc = getPreviewDoc();
+  if (!doc) throw new Error('미리보기가 로드되지 않았습니다.');
+
+  /* iframe 전체 DOM 복제 */
+  var clone = doc.documentElement.cloneNode(true);
+
+  /* 1. 빌더 주입 스타일 태그 제거 */
+  ['builder-edit-css','builder-spacing-css','builder-bgimage-css',
+   'builder-aos-disable','builder-logo-css','builder-btn-styles',
+   'builder-poster-layout'].forEach(function(id) {
+    var el = clone.querySelector('#' + id);
+    if (el) el.parentNode.removeChild(el);
+  });
+
+  /* 2. 빌더 UI 요소 제거 */
+  clone.querySelectorAll('[data-builder-ui]').forEach(function(el) { el.parentNode.removeChild(el); });
+  clone.querySelectorAll('[data-handle-for]').forEach(function(el) { el.parentNode.removeChild(el); });
+
+  /* 3. 편집 관련 속성/클래스 제거 */
+  var editAttrs = ['contenteditable','data-editable','data-builder-field',
+                   'data-builder-prop','data-img-edit-bound','data-yt-edit-bound',
+                   'data-edit-nav-blocked'];
+  clone.querySelectorAll('*').forEach(function(el) {
+    editAttrs.forEach(function(a) { el.removeAttribute(a); });
+    /* 편집 힌트 title 제거 */
+    if (el.tagName === 'IMG' && el.title === '클릭하여 이미지 교체') el.removeAttribute('title');
+    if (el.title === '클릭하여 YouTube URL 변경') el.removeAttribute('title');
+  });
+  if (clone.querySelector('body')) {
+    clone.querySelector('body').classList.remove('builder-edit-mode');
+  }
+  clone.querySelectorAll('.builder-section-active').forEach(function(el) {
+    el.classList.remove('builder-section-active');
+  });
+
+  /* 4. CSS 파일 링크를 내보낸 CSS로 교체 */
+  var baseName = getFileBaseName();
+  clone.querySelectorAll('link[rel="stylesheet"]').forEach(function(link) {
+    var href = link.getAttribute('href') || '';
+    if (href.indexOf('fair_2026_temp.css') !== -1) {
+      link.setAttribute('href', '/ui/static/css/specialty/' + baseName + '.css');
+    }
+  });
+
+  /* 5. 인라인 style에서 display:none 제거(실제 배포 시 CSS 오버라이드로 처리) */
+  clone.querySelectorAll('[data-builder-section]').forEach(function(el) {
+    if (el.style.display === 'none') el.style.display = '';
+    if (el.style.backgroundColor) el.style.backgroundColor = ''; /* CSS 오버라이드에서 처리 */
+  });
+
+  /* 6. 직렬화 */
+  var html = '<!DOCTYPE html>\n' + clone.outerHTML;
+  /* ASP 파일 헤더 추가 */
+  var aspHeader = '<%@ Language="VBScript" CodePage="65001" %>\n<% Response.Charset = "utf-8" %>\n';
+  return aspHeader + html;
+}
+
+/* ── Step 6-B: ASP 다운로드 ── */
+function exportASP() {
+  try {
+    var baseName = getFileBaseName();
+    var asp = buildExportASP();
+    downloadText(baseName + '.asp', asp, 'text/html; charset=utf-8');
+  } catch(e) {
+    alert('ASP 내보내기 실패: ' + e.message);
+  }
+}
+
+/* ── Step 6-C: ZIP 일괄 다운로드 ── */
+function exportZIP() {
+  if (typeof JSZip === 'undefined') { alert('JSZip 라이브러리 로드 실패. 새로고침 후 다시 시도하세요.'); return; }
+  var baseName = getFileBaseName();
+  fetch('ui/static/css/specialty/fair_2026_temp.css')
+    .then(function(r) { if (!r.ok) throw new Error('CSS 템플릿 로드 실패'); return r.text(); })
+    .then(function(baseCss) {
+      var zip = new JSZip();
+      var finalCss = baseCss + '\n\n' + buildOverrideCSS();
+      var asp = buildExportASP();
+      zip.file(baseName + '.asp', asp);
+      zip.file(baseName + '.css', finalCss);
+      /* README */
+      zip.file('README.txt',
+        'Fair Builder 내보낸 파일\n' +
+        '생성: ' + new Date().toISOString().slice(0,19).replace('T',' ') + '\n\n' +
+        '파일:\n' +
+        '  - ' + baseName + '.asp → event/ 폴더에 업로드\n' +
+        '  - ' + baseName + '.css → ui/static/css/specialty/ 폴더에 업로드\n\n' +
+        '※ ASP 파일은 UTF-8로 저장됩니다. 서버가 EUC-KR을 요구하면 변환 후 업로드하세요.\n'
+      );
+      return zip.generateAsync({ type: 'blob' });
+    })
+    .then(function(blob) {
+      downloadBlob(baseName + '.zip', blob);
+    })
+    .catch(function(e) { alert('ZIP 내보내기 실패: ' + e.message); });
+}
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.23 15:40 (v0.9.0)',
+    items: [
+      '<strong>[v0.9.0]</strong> Step 6 — 파일 내보내기 완성: CSS / ASP / 일괄 ZIP 다운로드',
+      '<strong>[v0.9.0]</strong> exportCSS: 템플릿 CSS + buildOverrideCSS() 병합 (색상·배경·여백·로고·버튼·포스터·숨김 전체 반영)',
+      '<strong>[v0.9.0]</strong> exportASP: iframe DOM 클론 → 빌더 속성/UI 제거 → 원본 CSS 링크 교체 후 저장',
+      '<strong>[v0.9.0]</strong> exportZIP: JSZip CDN 연동, ASP+CSS+README 묶음 생성',
+      '<strong>[v0.9.0]</strong> 파일명: fair_2026_{박람회코드}.{asp|css|zip} (UTF-8 저장, EUC-KR 필요 시 변환)',
+    ]
+  },
   {
     date: '2026.04.23 15:10 (v0.8.1)',
     items: [
