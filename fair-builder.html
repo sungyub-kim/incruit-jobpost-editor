@@ -212,6 +212,21 @@
     .ep-spacing-item input { width: 100%; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 11px; padding: 3px 5px; }
     .ep-spacing-item input:focus { border-color: #3b82f6; outline: none; }
 
+    /* ST4: 고급 스타일 패널 */
+    .ep-advanced-group { margin-top: 12px; border-top: 1px solid #2e3a52; padding-top: 10px; }
+    .ep-adv-section { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
+    .ep-adv-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .ep-adv-title { font-size: 11px; font-weight: 600; color: #9ca3af; margin-bottom: 6px; }
+    .ep-adv-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 10px; }
+    .ep-adv-label { color: #6b7280; width: 50px; flex-shrink: 0; }
+    .ep-adv-row input[type="color"] { width: 32px; height: 28px; border: 1px solid #2e3a52; border-radius: 4px; cursor: pointer; }
+    .ep-adv-row input[type="number"] { width: 50px; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 10px; padding: 3px 5px; }
+    .ep-adv-row input[type="number"]:focus { border-color: #3b82f6; outline: none; }
+    .ep-adv-row input[type="range"] { flex: 1; cursor: pointer; }
+    .ep-adv-row select { background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 10px; padding: 3px 5px; cursor: pointer; }
+    .ep-adv-row select:focus { border-color: #3b82f6; outline: none; }
+    .ep-adv-value { color: #6b7280; font-size: 10px; }
+
     /* M1: 프로젝트 패널 */
     #top-bar .btn-project { background: transparent; border: 1px solid #2e3a52; color: #93c5fd; font-size: 11px; padding: 3px 10px; }
     #top-bar .btn-project:hover { border-color: #93c5fd; background: rgba(147,197,253,.08); }
@@ -505,6 +520,7 @@ var sectionEnabled = {};
 var sectionBgColors = {};
 var sectionBgImages = {};  /* ST2: 섹션 배경 이미지 URL */
 var sectionSpacing = {};   /* ST1: { sId: { pt, pb, mpt, mpb } } */
+var sectionAdvancedStyles = {};  /* ST4: { sId: { borderColor, borderWidth, borderStyle, shadowColor, shadowBlur, shadowSpread, shadowX, shadowY, opacity } } */
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
@@ -604,6 +620,7 @@ function saveState() {
     sectionBgColors:sectionBgColors,
     sectionBgImages:sectionBgImages,
     sectionSpacing: sectionSpacing,
+    sectionAdvancedStyles: sectionAdvancedStyles,
     aosEnabled:          aosEnabled,
     visualRightVisible:  visualRightVisible,
     logoImages:          logoImages,
@@ -654,6 +671,12 @@ function loadState() {
       sectionSpacing = s.sectionSpacing;
       FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
         if (!sectionSpacing[id]) sectionSpacing[id] = { pt:'', pb:'', mpt:'', mpb:'' };
+      });
+    }
+    if (s.sectionAdvancedStyles) {
+      sectionAdvancedStyles = s.sectionAdvancedStyles;
+      FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
+        if (!sectionAdvancedStyles[id]) sectionAdvancedStyles[id] = { borderColor:'', borderWidth:'', borderStyle:'solid', shadowColor:'', shadowBlur:'', shadowSpread:'', shadowX:'', shadowY:'', opacity:'' };
       });
     }
     if (s.cssColors) {
@@ -1021,6 +1044,7 @@ function buildGradientPanel() {
     h += '</div>';
   });
   h += buildSpacingPanel('section_gradient');
+  h += buildAdvancedStylePanel('section_gradient');
   return h;
 }
 
@@ -1212,6 +1236,7 @@ function buildSectionPanel(sectionId) {
   });
   h += buildColorPanel(sectionId);
   h += buildSpacingPanel(sectionId);
+  h += buildAdvancedStylePanel(sectionId);
   return h;
 }
 
@@ -1577,6 +1602,117 @@ function buildSpacingPanel(sId) {
       '<span class="ep-spacing-item">하단<input type="number" min="0" max="300" value="' + sp.mpb + '" placeholder="기본" oninput="updateSpacing(\'' + sId + '\',\'mpb\',this.value)"></span>' +
     '</div>' +
   '</div>';
+}
+
+/* ST4: 고급 스타일 편집 패널 (테두리·그림자·투명도) */
+function buildAdvancedStylePanel(sId) {
+  var adv = sectionAdvancedStyles[sId] || {
+    borderColor: '', borderWidth: '', borderStyle: 'solid',
+    shadowColor: '', shadowBlur: '', shadowSpread: '', shadowX: '', shadowY: '',
+    opacity: ''
+  };
+  return '<div class="ep-advanced-group">' +
+    /* 테두리 */
+    '<div class="ep-adv-section">' +
+      '<div class="ep-adv-title">테두리</div>' +
+      '<div class="ep-adv-row">' +
+        '<span class="ep-adv-label">색상</span>' +
+        '<input type="color" value="' + (adv.borderColor || '#000000') + '" oninput="updateAdvancedStyle(\'' + sId + '\',\'borderColor\',this.value)">' +
+      '</div>' +
+      '<div class="ep-adv-row">' +
+        '<span class="ep-adv-label">두께</span>' +
+        '<input type="number" min="0" max="20" value="' + adv.borderWidth + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'borderWidth\',this.value)"> px' +
+      '</div>' +
+      '<div class="ep-adv-row">' +
+        '<span class="ep-adv-label">스타일</span>' +
+        '<select onchange="updateAdvancedStyle(\'' + sId + '\',\'borderStyle\',this.value)">' +
+          '<option value="solid" ' + (adv.borderStyle === 'solid' ? 'selected' : '') + '>실선</option>' +
+          '<option value="dashed" ' + (adv.borderStyle === 'dashed' ? 'selected' : '') + '>점선</option>' +
+          '<option value="dotted" ' + (adv.borderStyle === 'dotted' ? 'selected' : '') + '>점들</option>' +
+        '</select>' +
+      '</div>' +
+    '</div>' +
+    /* 그림자 */
+    '<div class="ep-adv-section">' +
+      '<div class="ep-adv-title">그림자</div>' +
+      '<div class="ep-adv-row">' +
+        '<span class="ep-adv-label">색상</span>' +
+        '<input type="color" value="' + (adv.shadowColor || '#000000') + '" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowColor\',this.value)">' +
+      '</div>' +
+      '<div class="ep-adv-row">' +
+        '<span class="ep-adv-label">흐릿함</span>' +
+        '<input type="number" min="0" max="50" value="' + adv.shadowBlur + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowBlur\',this.value)"> px' +
+      '</div>' +
+      '<div class="ep-adv-row">' +
+        '<span class="ep-adv-label">확산</span>' +
+        '<input type="number" min="-20" max="20" value="' + adv.shadowSpread + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowSpread\',this.value)"> px' +
+      '</div>' +
+      '<div class="ep-adv-row">' +
+        '<span class="ep-adv-label">위치 X/Y</span>' +
+        '<input type="number" min="-20" max="20" value="' + adv.shadowX + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowX\',this.value)"> / ' +
+        '<input type="number" min="-20" max="20" value="' + adv.shadowY + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowY\',this.value)"> px' +
+      '</div>' +
+    '</div>' +
+    /* 투명도 */
+    '<div class="ep-adv-section">' +
+      '<div class="ep-adv-title">투명도</div>' +
+      '<div class="ep-adv-row">' +
+        '<span class="ep-adv-label">opacity</span>' +
+        '<input type="range" min="0" max="100" value="' + (adv.opacity === '' ? 100 : adv.opacity) + '" oninput="updateAdvancedStyle(\'' + sId + '\',\'opacity\',this.value)"> ' +
+        '<span class="ep-adv-value">' + (adv.opacity === '' ? 100 : adv.opacity) + '%</span>' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+}
+
+function updateAdvancedStyle(sId, key, val) {
+  if (!sectionAdvancedStyles[sId]) {
+    sectionAdvancedStyles[sId] = {
+      borderColor: '', borderWidth: '', borderStyle: 'solid',
+      shadowColor: '', shadowBlur: '', shadowSpread: '', shadowX: '', shadowY: '',
+      opacity: ''
+    };
+  }
+  if (key === 'opacity') {
+    sectionAdvancedStyles[sId][key] = val === '100' ? '' : val;
+  } else if (key === 'borderWidth' || key === 'shadowBlur' || key === 'shadowSpread' || key === 'shadowX' || key === 'shadowY') {
+    sectionAdvancedStyles[sId][key] = val === '' ? '' : parseInt(val, 10);
+  } else {
+    sectionAdvancedStyles[sId][key] = val;
+  }
+  saveState();
+  applyAdvancedStylesToPreview();
+}
+
+function applyAdvancedStylesToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var tag = doc.getElementById('builder-advanced-css');
+  if (!tag) { tag = doc.createElement('style'); tag.id = 'builder-advanced-css'; doc.head.appendChild(tag); }
+  var css = '';
+  Object.keys(sectionAdvancedStyles).forEach(function(sId) {
+    var adv = sectionAdvancedStyles[sId];
+    if (!adv) return;
+    var props = [];
+    /* 테두리 */
+    if (adv.borderWidth && adv.borderWidth !== '') {
+      props.push('border:' + adv.borderWidth + 'px ' + (adv.borderStyle || 'solid') + ' ' + (adv.borderColor || '#000000') + '!important');
+    }
+    /* 그림자 */
+    if (adv.shadowBlur !== '' || adv.shadowX !== '' || adv.shadowY !== '') {
+      var sx = adv.shadowX === '' ? 0 : adv.shadowX;
+      var sy = adv.shadowY === '' ? 0 : adv.shadowY;
+      var sb = adv.shadowBlur === '' ? 0 : adv.shadowBlur;
+      var ss = adv.shadowSpread === '' ? 0 : adv.shadowSpread;
+      props.push('box-shadow:' + sx + 'px ' + sy + 'px ' + sb + 'px ' + ss + 'px ' + (adv.shadowColor || '#000000') + '!important');
+    }
+    /* 투명도 */
+    if (adv.opacity !== '' && adv.opacity !== '100') {
+      props.push('opacity:' + (adv.opacity / 100) + '!important');
+    }
+    if (props.length) css += '[data-builder-section="' + sId + '"]{' + props.join(';') + '}';
+  });
+  tag.textContent = css;
 }
 
 function applyBtnStylesToPreview() {
@@ -2565,6 +2701,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyTabsToPreview();
   applySpacingToPreview();
   applyBgImagesToPreview();
+  applyAdvancedStylesToPreview();
   applyAosToPreview();
   applyVisualRightToPreview();
   applyLogoImagesToPreview();
@@ -2621,6 +2758,7 @@ function applyToPreview() {
 
   applyBtnStylesToPreview();
   applyPosterLayout(doc);
+  applyAdvancedStylesToPreview();
   if (!editMode) applyAllFieldsToPreview(); // 편집 모드 중엔 contenteditable 덮어쓰기 방지
 }
 
