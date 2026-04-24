@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.9</span>
+  <span id="ver-badge" title="배포 버전">v0.15.10</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2272,11 +2272,6 @@ function cleanupFormattingInElement(el) {
       span.parentNode.removeChild(span);
     }
   });
-
-  /* 3. contenteditable 요소 자체: 부모 스타일 상속 방지 */
-  el.style.fontFamily = 'inherit';
-  el.style.fontWeight = 'normal';
-  el.style.fontSize = 'inherit';
 }
 
 function execFmt(cmd, value) {
@@ -3599,6 +3594,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 14:03 (v0.15.10)',
+    items: [
+      '<strong>[v0.15.10]</strong> 핫픽스: contenteditable 레이아웃 붕괴 문제 해결',
+      '<strong>[v0.15.10]</strong> cleanupFormattingInElement 제거: 부모 스타일 상속 방지 코드 (el.style.fontFamily/fontWeight/fontSize 초기화) → 이 코드로 인해 텍스트 선택 후 다른 요소 클릭 시 contenteditable 높이 붕괴 현상 발생',
+      '<strong>[v0.15.10]</strong> 결과: 편집 모드에서 텍스트 선택 후 다른 영역 클릭해도 레이아웃 안정적 유지',
+    ]
+  },
   {
     date: '2026.04.24 14:02 (v0.15.9)',
     items: [
