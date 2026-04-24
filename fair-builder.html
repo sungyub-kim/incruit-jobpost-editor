@@ -2205,28 +2205,21 @@ function execFmtFontName(name) {
   var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
   if (!selection.rangeCount) return;
 
-  var range = selection.getRangeAt(0);
+  /* 선택된 텍스트의 가장 가까운 contenteditable 부모 찾기 */
+  var node = selection.anchorNode;
+  var editableParent = null;
 
-  /* 기존 <font> 태그 제거 */
-  doc.querySelectorAll('[data-builder-section] font[face]').forEach(function(f) {
-    while (f.firstChild) {
-      f.parentNode.insertBefore(f.firstChild, f);
+  while (node) {
+    if (node.nodeType === 1 && node.getAttribute('contenteditable') === 'true') {
+      editableParent = node;
+      break;
     }
-    f.parentNode.removeChild(f);
-  });
+    node = node.parentNode;
+  }
 
-  /* 새로운 span으로 감싸서 style 적용 */
-  var span = doc.createElement('span');
-  span.style.fontFamily = name + ' !important';
-  span.setAttribute('data-font-family', name);
-
-  try {
-    range.surroundContents(span);
-  } catch(e) {
-    span.innerHTML = range.extractContents().childNodes.length > 0
-      ? range.extractContents()
-      : range.toString();
-    range.insertNode(span);
+  /* contenteditable 부모의 style에 폰트 직접 적용 (!important 포함) */
+  if (editableParent) {
+    editableParent.style.setProperty('font-family', name, 'important');
   }
 }
 
@@ -2249,21 +2242,25 @@ function execFmtFontWeight(weight) {
   if (!weight) return;
   var doc = getPreviewDoc();
   if (!doc) return;
+
   var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
   if (!selection.rangeCount) return;
 
-  var range = selection.getRangeAt(0);
-  var span = doc.createElement('span');
-  span.style.fontWeight = weight + ' !important';
-  span.setAttribute('data-font-weight', weight);  /* 데이터 어트리뷰트로도 저장 */
+  /* 선택된 텍스트의 가장 가까운 contenteditable 부모 찾기 */
+  var node = selection.anchorNode;
+  var editableParent = null;
 
-  try {
-    range.surroundContents(span);
-  } catch(e) {
-    span.innerHTML = range.extractContents().childNodes.length > 0
-      ? range.extractContents()
-      : range.toString();
-    range.insertNode(span);
+  while (node) {
+    if (node.nodeType === 1 && node.getAttribute('contenteditable') === 'true') {
+      editableParent = node;
+      break;
+    }
+    node = node.parentNode;
+  }
+
+  /* contenteditable 부모의 style에 굵기 직접 적용 (!important 포함) */
+  if (editableParent) {
+    editableParent.style.setProperty('font-weight', weight, 'important');
   }
 }
 
