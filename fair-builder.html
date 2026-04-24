@@ -2252,26 +2252,25 @@ function execFmtFontName(name) {
   /* 선택 범위가 없으면 리턴 */
   if (range.collapsed) return;
 
-  /* 선택된 범위의 공통 부모 찾기 */
-  var commonAncestor = range.commonAncestorContainer;
-  var ancestorElement = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
-
-  /* 기존 포매팅 span이 있으면 그 span의 style만 업데이트 */
-  var parentSpan = ancestorElement.closest('[data-fmt-font]');
-  if (parentSpan && parentSpan.contains(range.startContainer) && parentSpan.contains(range.endContainer)) {
-    /* 선택이 완전히 같은 포매팅 span 내에 있으면: style만 업데이트 */
-    parentSpan.style.setProperty('font-family', name, 'important');
-    parentSpan.setAttribute('data-fmt-font', name);
-    selection.removeAllRanges();
-    return;
-  }
-
-  /* 새 span 생성 (innerHTML 보존, textContent 아님) */
+  /* 선택된 범위 추출 */
   var contents = range.extractContents();
+
+  /* 기존의 모든 nested formatting span 제거 (unwrap) */
+  var fmtSpans = contents.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]');
+  Array.from(fmtSpans).forEach(function(span) {
+    while (span.firstChild) {
+      span.parentNode.insertBefore(span.firstChild, span);
+    }
+    span.parentNode.removeChild(span);
+  });
+
+  /* 새로운 formatting span 생성 (기존 HTML 구조는 보존) */
   var span = doc.createElement('span');
   span.style.setProperty('font-family', name, 'important');
   span.setAttribute('data-fmt-font', name);
-  span.appendChild(contents);
+  while (contents.firstChild) {
+    span.appendChild(contents.firstChild);
+  }
 
   range.insertNode(span);
   selection.removeAllRanges();
@@ -2290,25 +2289,25 @@ function execFmtFontSize(px) {
   /* 선택 범위가 없으면 리턴 */
   if (range.collapsed) return;
 
-  /* 선택된 범위의 공통 부모 찾기 */
-  var commonAncestor = range.commonAncestorContainer;
-  var ancestorElement = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
-
-  /* 기존 포매팅 span이 있으면 그 span의 style만 업데이트 */
-  var parentSpan = ancestorElement.closest('[data-fmt-size]');
-  if (parentSpan && parentSpan.contains(range.startContainer) && parentSpan.contains(range.endContainer)) {
-    parentSpan.style.setProperty('font-size', px + 'px', 'important');
-    parentSpan.setAttribute('data-fmt-size', px);
-    selection.removeAllRanges();
-    return;
-  }
-
-  /* 새 span 생성 (font 태그 X, innerHTML 보존) */
+  /* 선택된 범위 추출 */
   var contents = range.extractContents();
+
+  /* 기존의 모든 nested formatting span 제거 (unwrap) */
+  var fmtSpans = contents.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]');
+  Array.from(fmtSpans).forEach(function(span) {
+    while (span.firstChild) {
+      span.parentNode.insertBefore(span.firstChild, span);
+    }
+    span.parentNode.removeChild(span);
+  });
+
+  /* 새로운 formatting span 생성 (기존 HTML 구조는 보존) */
   var span = doc.createElement('span');
   span.style.setProperty('font-size', px + 'px', 'important');
   span.setAttribute('data-fmt-size', px);
-  span.appendChild(contents);
+  while (contents.firstChild) {
+    span.appendChild(contents.firstChild);
+  }
 
   range.insertNode(span);
   selection.removeAllRanges();
@@ -2327,26 +2326,25 @@ function execFmtFontWeight(weight) {
   /* 선택 범위가 없으면 리턴 */
   if (range.collapsed) return;
 
-  /* 선택된 범위의 공통 부모 찾기 */
-  var commonAncestor = range.commonAncestorContainer;
-  var ancestorElement = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
-
-  /* 기존 포매팅 span이 있으면 그 span의 style만 업데이트 */
-  var parentSpan = ancestorElement.closest('[data-fmt-weight]');
-  if (parentSpan && parentSpan.contains(range.startContainer) && parentSpan.contains(range.endContainer)) {
-    /* 선택이 완전히 같은 포매팅 span 내에 있으면: style만 업데이트 */
-    parentSpan.style.setProperty('font-weight', weight, 'important');
-    parentSpan.setAttribute('data-fmt-weight', weight);
-    selection.removeAllRanges();
-    return;
-  }
-
-  /* 새 span 생성 (innerHTML 보존, textContent 아님) */
+  /* 선택된 범위 추출 */
   var contents = range.extractContents();
+
+  /* 기존의 모든 nested formatting span 제거 (unwrap) */
+  var fmtSpans = contents.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]');
+  Array.from(fmtSpans).forEach(function(span) {
+    while (span.firstChild) {
+      span.parentNode.insertBefore(span.firstChild, span);
+    }
+    span.parentNode.removeChild(span);
+  });
+
+  /* 새로운 formatting span 생성 (기존 HTML 구조는 보존) */
   var span = doc.createElement('span');
   span.style.setProperty('font-weight', weight, 'important');
   span.setAttribute('data-fmt-weight', weight);
-  span.appendChild(contents);
+  while (contents.firstChild) {
+    span.appendChild(contents.firstChild);
+  }
 
   range.insertNode(span);
   selection.removeAllRanges();
