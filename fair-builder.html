@@ -576,8 +576,17 @@ var cssColors = {};
 var openEditPanelId = null;
 var sectionData = {
   section_visual: {
-    mvisual_texts: [  /* Step 2: 동적 요소 배열 */
-      { index: 1, pcText: '2025 동대문구 온·오프 취업박람회', mText: '2025 동대문구<br>온·오프<br>취업박람회', fontFamily: 'inherit', fontWeight: '400' }
+    mvisual_texts: [  /* Step 2-3: 동적 요소 배열 + 여백 */
+      {
+        index: 1,
+        pcText: '2025 동대문구 온·오프 취업박람회',
+        mText: '2025 동대문구<br>온·오프<br>취업박람회',
+        fontFamily: 'inherit',
+        fontWeight: '400',
+        /* Step 3: 여백 설정 */
+        marginTop: '', marginBottom: '', marginLeft: '', marginRight: '',
+        paddingTop: '', paddingBottom: '', paddingLeft: '', paddingRight: ''
+      }
     ]
   }
 };
@@ -1532,6 +1541,28 @@ function buildVisualPanel() {
         })() +
       '</select></div>';
 
+    /* Step 3: 여백 설정 */
+    h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #2e3a52;">' +
+      '<div class="ep-spacing-title">여백 (margin)</div>';
+    ['Top', 'Bottom', 'Left', 'Right'].forEach(function(dir) {
+      var val = activeText['margin' + dir] || '';
+      h += '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
+        '<label style="width:50px;font-size:10px;">' + dir + '</label>' +
+        '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + val + '" placeholder="px" oninput="updateVisualElementSpacing(' + activeIdx + ',\'margin' + dir + '\',this.value)">' +
+        '<span style="font-size:10px;color:#6b7280;">px</span>' +
+      '</div>';
+    });
+    h += '<div class="ep-spacing-title" style="margin-top:10px;">여백 (padding)</div>';
+    ['Top', 'Bottom', 'Left', 'Right'].forEach(function(dir) {
+      var val = activeText['padding' + dir] || '';
+      h += '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
+        '<label style="width:50px;font-size:10px;">' + dir + '</label>' +
+        '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + val + '" placeholder="px" oninput="updateVisualElementSpacing(' + activeIdx + ',\'padding' + dir + '\',this.value)">' +
+        '<span style="font-size:10px;color:#6b7280;">px</span>' +
+      '</div>';
+    });
+    h += '</div>';
+
     /* 요소 삭제 버튼 */
     if (texts.length > 1) {
       h += '<button class="ep-remove-btn" style="width:100%;background:#7f1d1d;color:#fca5a5;padding:6px;margin-top:8px;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;" onclick="removeVisualText(' + activeIdx + ')">이 요소 삭제</button>';
@@ -1566,6 +1597,15 @@ function buildVisualPanel() {
   return h;
 }
 
+/* Step 3: 요소 여백 업데이트 */
+function updateVisualElementSpacing(idx, prop, val) {
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  if (!texts[idx]) return;
+  texts[idx][prop] = val;
+  renderVisualTexts();
+  saveState();
+}
+
 /* Step 2: 요소 추가 */
 window.visualTextActiveIdx = 0;
 function addVisualText() {
@@ -1579,7 +1619,10 @@ function addVisualText() {
     pcText: '새로운 제목 ' + (newIdx + 1),
     mText: '새로운 제목<br>' + (newIdx + 1),
     fontFamily: 'inherit',
-    fontWeight: '400'
+    fontWeight: '400',
+    /* Step 3: 여백 기본값 */
+    marginTop: '', marginBottom: '', marginLeft: '', marginRight: '',
+    paddingTop: '', paddingBottom: '', paddingLeft: '', paddingRight: ''
   });
 
   window.visualTextActiveIdx = newIdx;
@@ -1654,6 +1697,16 @@ function renderVisualTexts() {
     var div = doc.createElement('div');
     div.className = 'mvisual-text-' + (i+1);
     div.setAttribute('data-text-index', i+1);
+
+    /* Step 3: 여백 적용 */
+    if (textData.marginTop) div.style.marginTop = textData.marginTop + 'px';
+    if (textData.marginBottom) div.style.marginBottom = textData.marginBottom + 'px';
+    if (textData.marginLeft) div.style.marginLeft = textData.marginLeft + 'px';
+    if (textData.marginRight) div.style.marginRight = textData.marginRight + 'px';
+    if (textData.paddingTop) div.style.paddingTop = textData.paddingTop + 'px';
+    if (textData.paddingBottom) div.style.paddingBottom = textData.paddingBottom + 'px';
+    if (textData.paddingLeft) div.style.paddingLeft = textData.paddingLeft + 'px';
+    if (textData.paddingRight) div.style.paddingRight = textData.paddingRight + 'px';
 
     var pcDiv = doc.createElement('div');
     pcDiv.className = 'mvisual-text-pc d-xxs-none d-lg-block';
