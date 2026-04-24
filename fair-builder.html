@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.10</span>
+  <span id="ver-badge" title="배포 버전">v0.15.11</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2235,7 +2235,12 @@ function applyUnifiedFormatting(styleProp, styleValue) {
 
   /* 기존 span이 있고 선택이 완전히 그 안에 있으면: style만 업데이트 */
   if (existingSpan && existingSpan.contains(range.startContainer) && existingSpan.contains(range.endContainer)) {
-    existingSpan.style[styleProp] = styleValue;
+    /* fontFamily/fontWeight/fontSize는 !important 필수 (전역 * !important 규칙 대응) */
+    if (/fontFamily|fontWeight|fontSize/.test(styleProp)) {
+      existingSpan.style.setProperty(styleProp.replace(/([A-Z])/g, '-$1').toLowerCase(), styleValue, 'important');
+    } else {
+      existingSpan.style[styleProp] = styleValue;
+    }
     selection.removeAllRanges();
     return;
   }
@@ -2244,7 +2249,12 @@ function applyUnifiedFormatting(styleProp, styleValue) {
   var contents = range.extractContents();
   var span = doc.createElement('span');
   span.setAttribute('data-fmt-unified', 'true');
-  span.style[styleProp] = styleValue;
+  /* fontFamily/fontWeight/fontSize는 !important 필수 (전역 * !important 규칙 대응) */
+  if (/fontFamily|fontWeight|fontSize/.test(styleProp)) {
+    span.style.setProperty(styleProp.replace(/([A-Z])/g, '-$1').toLowerCase(), styleValue, 'important');
+  } else {
+    span.style[styleProp] = styleValue;
+  }
   span.appendChild(contents);
 
   range.insertNode(span);
@@ -3594,6 +3604,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 14:04 (v0.15.11)',
+    items: [
+      '<strong>[v0.15.11]</strong> 포맷팅 !important 추가: fontFamily/fontWeight/fontSize에 !important 플래그 적용',
+      '<strong>[v0.15.11]</strong> applyUnifiedFormatting: span.style.setProperty로 변경 → 전역 * !important 규칙 압도 가능',
+      '<strong>[v0.15.11]</strong> 원인: 전역 CSS `* { font-family: ... !important }` 규칙이 inline style을 압도하므로 명시적으로 !important 필요',
+      '<strong>[v0.15.11]</strong> 결과: 메인 비주얼 텍스트 선택 후 폰트 변경 시 즉시 반영 (기존 nested span 제거 + layout 안정성 + 폰트 적용 완성)',
+    ]
+  },
   {
     date: '2026.04.24 14:03 (v0.15.10)',
     items: [
