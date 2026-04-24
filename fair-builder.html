@@ -494,14 +494,30 @@
       <div class="fmt-divider"></div>
       <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="서식 전체 제거" onmousedown="event.preventDefault()" onclick="execFmt('removeFormat')">서식제거</button>
       <div class="fmt-divider"></div>
-      <select id="fmt-font" class="fmt-select" title="폰트" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontName(this.value)">
+      <select id="fmt-font" class="fmt-select" title="폰트" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontName(this.value);updateFmtWeightOptions()">
         <option value="">폰트</option>
+        <option value="'Noto Sans KR','Noto Sans',sans-serif">나눔고딕</option>
+        <option value="'Noto Serif KR','Noto Serif',serif">나눔명조</option>
+        <option value="'Paperozi'">페이퍼로지</option>
+        <option value="'GMarketSans'">G마켓</option>
+        <option value="'YeogiOttaeJalnan'">여기어때잘난체</option>
+        <option value="'Pretendard'">프리텐다드</option>
         <option value="'Apple SD Gothic Neo',sans-serif">Apple SD Gothic</option>
         <option value="'Malgun Gothic',sans-serif">맑은 고딕</option>
-        <option value="'Noto Sans KR',sans-serif">Noto Sans KR</option>
-        <option value="'Nanum Gothic',sans-serif">나눔고딕</option>
         <option value="Arial,sans-serif">Arial</option>
         <option value="Georgia,serif">Georgia</option>
+      </select>
+      <select id="fmt-weight" class="fmt-select" title="굵기" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontWeight(this.value)">
+        <option value="">굵기</option>
+        <option value="100">100</option>
+        <option value="200">200</option>
+        <option value="300">300</option>
+        <option value="400" selected>400</option>
+        <option value="500">500</option>
+        <option value="600">600</option>
+        <option value="700">700</option>
+        <option value="800">800</option>
+        <option value="900">900</option>
       </select>
       <input id="fmt-size" class="fmt-input-num" type="number" min="8" max="200" value="16" title="폰트 크기(px)"
         onmousedown="saveIframeSelection()"
@@ -2180,6 +2196,48 @@ function execFmtFontSize(px) {
     span.innerHTML = f.innerHTML;
     f.parentNode.replaceChild(span, f);
   });
+}
+
+/* 메인 비주얼: 폰트 굵기 적용 */
+function execFmtFontWeight(weight) {
+  if (!weight) return;
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
+  if (!selection.rangeCount) return;
+  var range = selection.getRangeAt(0);
+  var span = doc.createElement('span');
+  span.style.fontWeight = weight;
+  try {
+    range.surroundContents(span);
+  } catch(e) {
+    span.innerHTML = range.extractContents().childNodes.length > 0
+      ? range.extractContents()
+      : range.toString();
+    range.insertNode(span);
+  }
+}
+
+/* 포맷팅 툴바: 폰트별 굵기 옵션 동적 업데이트 */
+function updateFmtWeightOptions() {
+  var fontSelect = document.getElementById('fmt-font');
+  var weightSelect = document.getElementById('fmt-weight');
+  if (!fontSelect || !weightSelect) return;
+
+  var selectedFont = fontSelect.value;
+  var fontObj = WEBFONTS.find(f => f.family === selectedFont.replace(/'/g, '"').replace(/"/g, "'"));
+
+  if (!fontObj || !fontObj.weights) {
+    /* 기본 weights */
+    var defaultWeights = [400, 700];
+    weightSelect.innerHTML = '<option value="">굵기</option>' +
+      defaultWeights.map(w => '<option value="' + w + '" ' + (w === 400 ? 'selected' : '') + '>' + w + '</option>').join('');
+    return;
+  }
+
+  /* 폰트별 가능한 weights 표시 */
+  weightSelect.innerHTML = '<option value="">굵기</option>' +
+    fontObj.weights.map(w => '<option value="' + w + '" ' + (w === 400 ? 'selected' : '') + '>' + w + '</option>').join('');
 }
 
 function execFmtLineHeight(lh) {
