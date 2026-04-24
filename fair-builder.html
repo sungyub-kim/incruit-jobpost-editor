@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.3</span>
+  <span id="ver-badge" title="배포 버전">v0.15.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3539,6 +3539,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 13:14 (v0.15.4)',
+    items: [
+      '<strong>[v0.15.4]</strong> 메인 비주얼 Step 1 포맷팅 지속성 고정: 폰트/굵기 변경이 새로고침 후에도 유지',
+      '<strong>[v0.15.4]</strong> sectionData에 pcHtml/mHtml 필드 추가 — 형식화된 HTML 저장 (형식 없는 텍스트와 병행)',
+      '<strong>[v0.15.4]</strong> renderVisualTexts: innerHTML 사용으로 포맷팅 복원 (pcHtml || pcText 우선순위)',
+      '<strong>[v0.15.4]</strong> blur 핸들러가 contenteditable 요소의 전체 innerHTML 자동 캡처해 sectionData 저장',
+      '<strong>[v0.15.4]</strong> 좌측 패널 텍스트 수정 시 HTML 초기화 — 포맷팅 리셋으로 일관성 보장',
+    ]
+  },
   {
     date: '2026.04.24 12:59 (v0.15.3)',
     items: [
