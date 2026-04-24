@@ -499,7 +499,7 @@
       <div class="fmt-divider"></div>
       <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="서식 전체 제거" onmousedown="event.preventDefault()" onclick="execFmt('removeFormat')">서식제거</button>
       <div class="fmt-divider"></div>
-      <select id="fmt-font" class="fmt-select" title="폰트" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontName(this.value);updateFmtWeightOptions()">
+      <select id="fmt-font" class="fmt-select" title="폰트" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontName(this.value)">
         <option value="">폰트</option>
         <option value="'Noto Sans KR','Noto Sans',sans-serif">나눔고딕</option>
         <option value="'Noto Serif KR','Noto Serif',serif">나눔명조</option>
@@ -511,18 +511,6 @@
         <option value="'Malgun Gothic',sans-serif">맑은 고딕</option>
         <option value="Arial,sans-serif">Arial</option>
         <option value="Georgia,serif">Georgia</option>
-      </select>
-      <select id="fmt-weight" class="fmt-select" title="굵기" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontWeight(this.value)">
-        <option value="">굵기</option>
-        <option value="100">100</option>
-        <option value="200">200</option>
-        <option value="300">300</option>
-        <option value="400" selected>400</option>
-        <option value="500">500</option>
-        <option value="600">600</option>
-        <option value="700">700</option>
-        <option value="800">800</option>
-        <option value="900">900</option>
       </select>
       <input id="fmt-size" class="fmt-input-num" type="number" min="8" max="200" value="16" title="폰트 크기(px)"
         onmousedown="saveIframeSelection()"
@@ -1512,14 +1500,39 @@ var WEBFONTS = [
   { name: '기본(상속)', family: "inherit", weights: [400] }
 ];
 
-var VISUAL_IMAGES = [
-  /* mvisual-text-1은 이제 contenteditable 텍스트로 처리 */
-  { label: '온라인 기간 이미지 (PC)',     sel: '.mvisual-term-online img.d-lg-block' },
-  { label: '온라인 기간 이미지 (모바일)', sel: '.mvisual-term-online img.d-lg-none' },
-  { label: '오프라인 기간 이미지 (PC)',     sel: '.mvisual-term-offline img.d-lg-block' },
-  { label: '오프라인 기간 이미지 (모바일)', sel: '.mvisual-term-offline img.d-lg-none' },
-  { label: '우측 비주얼 이미지',     sel: '.mvisual-img img' },
+/* 비주얼 이미지 그룹 (PC/M 묶음, on/off 토글 지원) */
+var VISUAL_IMAGE_GROUPS = [
+  {
+    groupId: 'online',
+    label: '온라인 기간 이미지',
+    images: [
+      { label: 'PC', sel: '.mvisual-term-online img.d-lg-block' },
+      { label: 'M',  sel: '.mvisual-term-online img.d-lg-none' }
+    ]
+  },
+  {
+    groupId: 'offline',
+    label: '오프라인 기간 이미지',
+    images: [
+      { label: 'PC', sel: '.mvisual-term-offline img.d-lg-block' },
+      { label: 'M',  sel: '.mvisual-term-offline img.d-lg-none' }
+    ]
+  },
+  {
+    groupId: 'rightvisual',
+    label: '우측 비주얼 이미지',
+    images: [
+      { label: '', sel: '.mvisual-img img' }
+    ]
+  }
 ];
+
+/* 비주얼 이미지 on/off 상태 */
+var visualImageToggle = {
+  online: true,
+  offline: true,
+  rightvisual: true
+};
 
 function buildVisualPanel() {
   var doc = getPreviewDoc();
@@ -1600,21 +1613,36 @@ function buildVisualPanel() {
   '</div>';
   /* V1: 이미지 필드 목록 */
   h += '<div class="ep-spacing-title">비주얼 이미지 교체</div>';
-  VISUAL_IMAGES.forEach(function(def, idx) {
-    var curSrc = '';
-    if (sEl) { var img = sEl.querySelector(def.sel); if (img) curSrc = img.getAttribute('src') || ''; }
-    h += '<div class="ep-field">' +
-      '<label>' + def.label + '</label>' +
-      '<div class="ep-bgimg-row">' +
-        '<input type="text" class="ep-bgimg-input" id="vi-url-' + idx + '" value="' + esc(curSrc) + '" placeholder="URL" oninput="updateVisualImage(' + idx + ',this.value)">' +
-        '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
-          '<input type="file" accept="image/*" style="display:none" onchange="onVisualImgFile(this,' + idx + ')">' +
-        '</label>' +
-      '</div>' +
-      (curSrc
-        ? '<img id="vi-thumb-' + idx + '" class="ep-bgimg-thumb" src="' + esc(curSrc) + '">'
-        : '<img id="vi-thumb-' + idx + '" class="ep-bgimg-thumb" style="display:none">') +
-    '</div>';
+
+  /* 그룹별 on/off 토글 */
+  VISUAL_IMAGE_GROUPS.forEach(function(group, gIdx) {
+    var isActive = visualImageToggle[group.groupId];
+    h += '<div style="margin-bottom:12px;border:1px solid #334155;border-radius:4px;padding:8px;background:#1e293b;">' +
+      '<button style="width:100%;padding:8px;background:' + (isActive ? '#059669' : '#666') + ';color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;" ' +
+        'onclick="toggleVisualImageGroup(\'' + group.groupId + '\')">' +
+        (isActive ? '✓' : '✕') + ' ' + group.label +
+      '</button>';
+
+    if (isActive) {
+      group.images.forEach(function(imgDef, iIdx) {
+        var imgIdx = (gIdx * 10) + iIdx;
+        var curSrc = '';
+        if (sEl) { var img = sEl.querySelector(imgDef.sel); if (img) curSrc = img.getAttribute('src') || ''; }
+        h += '<div class="ep-field" style="margin-top:8px;">' +
+          '<label style="font-size:11px;">' + (imgDef.label ? '- ' + imgDef.label : group.label) + '</label>' +
+          '<div class="ep-bgimg-row">' +
+            '<input type="text" class="ep-bgimg-input" id="vi-url-' + imgIdx + '" value="' + esc(curSrc) + '" placeholder="URL" oninput="updateVisualImage(' + gIdx + ',' + iIdx + ',this.value)">' +
+            '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
+              '<input type="file" accept="image/*" style="display:none" onchange="onVisualImgFile(this,' + gIdx + ',' + iIdx + ')">' +
+            '</label>' +
+          '</div>' +
+          (curSrc
+            ? '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" src="' + esc(curSrc) + '">'
+            : '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" style="display:none">') +
+        '</div>';
+      });
+    }
+    h += '</div>';
   });
   h += buildSpacingPanel('section_visual');
   return h;
@@ -1680,18 +1708,32 @@ function switchVisualTextTab(idx) {
   openEditPanel('section_visual');
 }
 
-function updateVisualImage(idx, url) {
+function updateVisualImage(gIdx, iIdx, url) {
   var doc = getPreviewDoc();
   if (!doc) return;
   var sEl = doc.querySelector('[data-builder-section="section_visual"]');
   if (!sEl) return;
-  var img = sEl.querySelector(VISUAL_IMAGES[idx].sel);
+
+  var group = VISUAL_IMAGE_GROUPS[gIdx];
+  if (!group || !group.images[iIdx]) return;
+
+  var imgDef = group.images[iIdx];
+  var img = sEl.querySelector(imgDef.sel);
   if (!img) return;
+
   img.src = url;
   _saveExtraPath('section_visual', '_img:', img, url);
   saveState();
-  var thumb = document.getElementById('vi-thumb-' + idx);
+
+  var thumbId = 'vi-thumb-' + (gIdx * 10 + iIdx);
+  var thumb = document.getElementById(thumbId);
   if (thumb) { thumb.src = url; thumb.style.display = url ? 'block' : 'none'; }
+}
+
+/* 비주얼 이미지 그룹 on/off 토글 */
+function toggleVisualImageGroup(groupId) {
+  visualImageToggle[groupId] = !visualImageToggle[groupId];
+  openEditPanel('section_visual');  /* 패널 새로고침 */
 }
 
 /* Step 1-2: 텍스트 업데이트 (인덱스 기반) */
@@ -1795,15 +1837,16 @@ function updateVisualFontStyle(idx) {
   saveState();
 }
 
-window.onVisualImgFile = function(input, idx) {
+window.onVisualImgFile = function(input, gIdx, iIdx) {
   var file = input.files[0];
   if (!file) return;
   var reader = new FileReader();
   reader.onload = function(ev) {
     var dataUrl = ev.target.result;
-    var urlInput = document.getElementById('vi-url-' + idx);
+    var thumbId = 'vi-url-' + (gIdx * 10 + iIdx);
+    var urlInput = document.getElementById(thumbId);
     if (urlInput) urlInput.value = dataUrl;
-    updateVisualImage(idx, dataUrl);
+    updateVisualImage(gIdx, iIdx, dataUrl);
   };
   reader.readAsDataURL(file);
 };
