@@ -574,7 +574,13 @@ var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
 var exportSettings = { imgBasePath: '/ui/static/image/specialty/', fairName: '' }; /* X1: 내보내기 설정 */
 var cssColors = {};
 var openEditPanelId = null;
-var sectionData = {};
+var sectionData = {
+  section_visual: {
+    mvisual_texts: [  /* Step 2: 동적 요소 배열 */
+      { index: 1, pcText: '2025 동대문구 온·오프 취업박람회', mText: '2025 동대문구<br>온·오프<br>취업박람회', fontFamily: 'inherit', fontWeight: '400' }
+    ]
+  }
+};
 var editMode = false;
 var previewBreakpoint = 'desktop';  /* R3: 반응형 미리보기 선택 breakpoint (desktop | tablet | mobile) */
 var posterConfig = 'both'; /* 'both' | 'online' | 'offline' */
@@ -1488,30 +1494,48 @@ function buildVisualPanel() {
   var sEl = doc ? doc.querySelector('[data-builder-section="section_visual"]') : null;
   var h = '<div class="ep-title">메인 비주얼 편집</div>';
 
-  /* Step 1: 제목 텍스트 편집 */
+  /* Step 2: 요소 탭 + 추가/삭제 버튼 */
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  h += '<div class="ep-spacing-title">텍스트 요소 (' + texts.length + ')</div>';
+  h += '<div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;">';
+  texts.forEach(function(t, i) {
+    h += '<button class="ep-add-btn" style="background:#1e3a8a;color:#93c5fd;flex:1;padding:6px;font-size:11px;border:1px solid #3b82f6;cursor:pointer;" onclick="switchVisualTextTab(' + i + ')">' +
+      '요소 ' + (i+1) + '</button>';
+  });
+  h += '</div>';
+  if (texts.length < 5) {
+    h += '<button class="ep-add-btn" style="width:100%;background:#059669;margin-bottom:8px;" onclick="addVisualText()">+ 요소 추가</button>';
+  }
+
+  /* Step 1: 선택된 요소의 텍스트 편집 */
   h += '<div class="ep-spacing-title">제목 텍스트</div>';
-  if (sEl) {
-    var pcText = sEl.querySelector('.mvisual-text-pc');
-    var mText = sEl.querySelector('.mvisual-text-m');
-    var pcVal = pcText ? (pcText.textContent || '') : '';
-    var mVal = mText ? (mText.innerHTML || '') : '';
-    h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(\'pc\',this.value)"></div>';
-    h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
+  var activeIdx = window.visualTextActiveIdx !== undefined ? window.visualTextActiveIdx : 0;
+  var activeText = texts[activeIdx];
+  if (activeText && sEl) {
+    var pcVal = activeText.pcText || '';
+    var mVal = activeText.mText || '';
+    h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(' + activeIdx + ',\'pc\',this.value)"></div>';
+    h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(' + activeIdx + ',\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
 
     /* 폰트 선택 */
-    var pcFont = pcText ? (pcText.style.fontFamily || 'inherit') : 'inherit';
-    var pcWeight = pcText ? (pcText.style.fontWeight || '400') : '400';
+    var fontFamily = activeText.fontFamily || 'inherit';
+    var fontWeight = activeText.fontWeight || '400';
     h += '<div class="ep-field"><label>폰트</label>' +
-      '<select id="visual-font-select" onchange="updateVisualFontStyle(\'pc\')">' +
-        WEBFONTS.map(function(f) { return '<option value="' + f.family + '" ' + (pcFont === f.family ? 'selected' : '') + '>' + f.name + '</option>'; }).join('') +
+      '<select id="visual-font-select-' + activeIdx + '" onchange="updateVisualFontStyle(' + activeIdx + ')">' +
+        WEBFONTS.map(function(f) { return '<option value="' + f.family + '" ' + (fontFamily === f.family ? 'selected' : '') + '>' + f.name + '</option>'; }).join('') +
       '</select></div>' +
       '<div class="ep-field"><label>굵기</label>' +
-      '<select id="visual-weight-select" onchange="updateVisualFontStyle(\'pc\')">' +
+      '<select id="visual-weight-select-' + activeIdx + '" onchange="updateVisualFontStyle(' + activeIdx + ')">' +
         (function() {
-          var currentFont = WEBFONTS.find(f => f.family === pcFont) || WEBFONTS[0];
-          return currentFont.weights.map(function(w) { return '<option value="' + w + '" ' + (pcWeight === String(w) ? 'selected' : '') + '>' + w + '</option>'; }).join('');
+          var currentFont = WEBFONTS.find(f => f.family === fontFamily) || WEBFONTS[0];
+          return currentFont.weights.map(function(w) { return '<option value="' + w + '" ' + (fontWeight === String(w) ? 'selected' : '') + '>' + w + '</option>'; }).join('');
         })() +
       '</select></div>';
+
+    /* 요소 삭제 버튼 */
+    if (texts.length > 1) {
+      h += '<button class="ep-remove-btn" style="width:100%;background:#7f1d1d;color:#fca5a5;padding:6px;margin-top:8px;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;" onclick="removeVisualText(' + activeIdx + ')">이 요소 삭제</button>';
+    }
   }
 
   h += buildBgImagePanel('section_visual');
@@ -1542,6 +1566,52 @@ function buildVisualPanel() {
   return h;
 }
 
+/* Step 2: 요소 추가 */
+window.visualTextActiveIdx = 0;
+function addVisualText() {
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  if (!sectionData.section_visual) sectionData.section_visual = {};
+  if (!sectionData.section_visual.mvisual_texts) sectionData.section_visual.mvisual_texts = [];
+
+  var newIdx = texts.length;
+  sectionData.section_visual.mvisual_texts.push({
+    index: newIdx + 1,
+    pcText: '새로운 제목 ' + (newIdx + 1),
+    mText: '새로운 제목<br>' + (newIdx + 1),
+    fontFamily: 'inherit',
+    fontWeight: '400'
+  });
+
+  window.visualTextActiveIdx = newIdx;
+  renderVisualTexts();
+  openEditPanel('section_visual');
+  saveState();
+}
+
+/* Step 2: 요소 삭제 */
+function removeVisualText(idx) {
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  if (texts.length <= 1) {
+    alert('최소 1개 요소는 유지해야 합니다.');
+    return;
+  }
+  if (confirm('요소 ' + (idx+1) + '을(를) 삭제하시겠습니까?')) {
+    sectionData.section_visual.mvisual_texts.splice(idx, 1);
+    if (window.visualTextActiveIdx >= sectionData.section_visual.mvisual_texts.length) {
+      window.visualTextActiveIdx = sectionData.section_visual.mvisual_texts.length - 1;
+    }
+    renderVisualTexts();
+    openEditPanel('section_visual');
+    saveState();
+  }
+}
+
+/* Step 2: 요소 탭 전환 */
+function switchVisualTextTab(idx) {
+  window.visualTextActiveIdx = idx;
+  openEditPanel('section_visual');
+}
+
 function updateVisualImage(idx, url) {
   var doc = getPreviewDoc();
   if (!doc) return;
@@ -1556,57 +1626,84 @@ function updateVisualImage(idx, url) {
   if (thumb) { thumb.src = url; thumb.style.display = url ? 'block' : 'none'; }
 }
 
-/* Step 1: 제목 텍스트 업데이트 */
-function updateVisualText(type, val) {
-  var doc = getPreviewDoc();
-  if (!doc) return;
-  var sEl = doc.querySelector('[data-builder-section="section_visual"]');
-  if (!sEl) return;
+/* Step 1-2: 텍스트 업데이트 (인덱스 기반) */
+function updateVisualText(idx, type, val) {
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  if (!texts[idx]) return;
 
   if (type === 'pc') {
-    var pcText = sEl.querySelector('.mvisual-text-pc');
-    if (pcText) pcText.textContent = val;
+    texts[idx].pcText = val;
   } else if (type === 'm') {
-    var mText = sEl.querySelector('.mvisual-text-m');
-    if (mText) mText.innerHTML = val.replace(/\n/g, '<br>');
+    texts[idx].mText = val;
   }
+  renderVisualTexts();
   saveState();
 }
 
-/* 폰트 + 굵기 변경 */
-function updateVisualFontStyle(type) {
+/* Step 2: 메인 비주얼 텍스트 렌더링 (iframe) */
+function renderVisualTexts() {
   var doc = getPreviewDoc();
   if (!doc) return;
-  var sEl = doc.querySelector('[data-builder-section="section_visual"]');
-  if (!sEl) return;
+  var container = doc.querySelector('.mvisual-texts-container');
+  if (!container) return;
 
-  var fontSelect = document.getElementById('visual-font-select');
-  var weightSelect = document.getElementById('visual-weight-select');
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  container.innerHTML = '';
+
+  texts.forEach(function(textData, i) {
+    var div = doc.createElement('div');
+    div.className = 'mvisual-text-' + (i+1);
+    div.setAttribute('data-text-index', i+1);
+
+    var pcDiv = doc.createElement('div');
+    pcDiv.className = 'mvisual-text-pc d-xxs-none d-lg-block';
+    pcDiv.setAttribute('contenteditable', 'true');
+    pcDiv.setAttribute('data-builder-field', 'mvisual_text_' + (i+1) + '_pc');
+    pcDiv.textContent = textData.pcText || '';
+    if (textData.fontFamily && textData.fontFamily !== 'inherit') pcDiv.style.fontFamily = textData.fontFamily;
+    if (textData.fontWeight && textData.fontWeight !== '400') pcDiv.style.fontWeight = textData.fontWeight;
+
+    var mDiv = doc.createElement('div');
+    mDiv.className = 'mvisual-text-m d-xxs-block d-lg-none';
+    mDiv.setAttribute('contenteditable', 'true');
+    mDiv.setAttribute('data-builder-field', 'mvisual_text_' + (i+1) + '_m');
+    mDiv.innerHTML = textData.mText || '';
+    if (textData.fontFamily && textData.fontFamily !== 'inherit') mDiv.style.fontFamily = textData.fontFamily;
+    if (textData.fontWeight && textData.fontWeight !== '400') mDiv.style.fontWeight = textData.fontWeight;
+
+    div.appendChild(pcDiv);
+    div.appendChild(mDiv);
+    container.appendChild(div);
+  });
+
+  /* 편집 모드 CSS 재적용 */
+  if (editMode) injectEditModeCSS(doc);
+}
+
+/* 폰트 + 굵기 변경 (인덱스 기반) */
+function updateVisualFontStyle(idx) {
+  var fontSelect = document.getElementById('visual-font-select-' + idx);
+  var weightSelect = document.getElementById('visual-weight-select-' + idx);
   if (!fontSelect || !weightSelect) return;
 
   var fontFamily = fontSelect.value;
   var fontWeight = weightSelect.value;
 
-  if (type === 'pc') {
-    var pcText = sEl.querySelector('.mvisual-text-pc');
-    if (pcText) {
-      pcText.style.fontFamily = fontFamily;
-      pcText.style.fontWeight = fontWeight;
-      /* weight 변경 시 select 업데이트 */
-      var currentFont = WEBFONTS.find(f => f.family === fontFamily);
-      if (currentFont && weightSelect.innerHTML) {
-        weightSelect.innerHTML = currentFont.weights.map(function(w) {
-          return '<option value="' + w + '" ' + (fontWeight === String(w) ? 'selected' : '') + '>' + w + '</option>';
-        }).join('');
-      }
-    }
-  } else if (type === 'm') {
-    var mText = sEl.querySelector('.mvisual-text-m');
-    if (mText) {
-      mText.style.fontFamily = fontFamily;
-      mText.style.fontWeight = fontWeight;
-    }
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  if (!texts[idx]) return;
+
+  texts[idx].fontFamily = fontFamily;
+  texts[idx].fontWeight = fontWeight;
+
+  /* weight 드롭다운 동적 업데이트 */
+  var currentFont = WEBFONTS.find(f => f.family === fontFamily);
+  if (currentFont && weightSelect.innerHTML) {
+    weightSelect.innerHTML = currentFont.weights.map(function(w) {
+      return '<option value="' + w + '" ' + (fontWeight === String(w) ? 'selected' : '') + '>' + w + '</option>';
+    }).join('');
   }
+
+  renderVisualTexts();
   saveState();
 }
 
@@ -2929,6 +3026,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyAosToPreview();
   applyVisualRightToPreview();
   applyLogoImagesToPreview();
+  renderVisualTexts();  /* Step 2: 메인 비주얼 텍스트 요소 렌더링 */
   renderNavPanel();
   renderTabPanel();
 });
