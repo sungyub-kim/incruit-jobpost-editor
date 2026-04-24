@@ -1192,6 +1192,7 @@ function buildSectionPanel(sectionId) {
       h += buildFieldInput(sectionId, fk, field, data[fk]);
     }
   });
+  h += buildColorPanel(sectionId);
   h += buildSpacingPanel(sectionId);
   return h;
 }
@@ -1503,6 +1504,44 @@ function updateSpacing(sId, key, val) {
   sectionSpacing[sId][key] = val === '' ? '' : parseInt(val, 10);
   saveState();
   applySpacingToPreview();
+}
+
+/* ST1: 섹션 색상 편집 패널 */
+function buildColorPanel(sectionId) {
+  var schema = FAIR_BUILDER_SCHEMA[sectionId];
+  var bgColor = sectionBgColors[sectionId] || '';
+  var h = '<div class="ep-spacing-group">' +
+    '<div class="ep-spacing-title">배경색 설정</div>' +
+    '<div class="ep-field">' +
+      '<label>섹션 배경색</label>' +
+      '<div class="ep-color-wrap">' +
+        '<div class="ep-color-preview" style="background:' + (bgColor || '#ffffff') + ';">' +
+          '<input type="color" value="' + (bgColor || '#ffffff') + '" oninput="updateSectionColor(\'' + sectionId + '\',this.value);this.parentNode.style.background=this.value;syncSectionColorHex(this,\'' + sectionId + '\')">' +
+        '</div>' +
+        '<input type="text" class="ep-hex" id="ep-color-' + sectionId + '" value="' + (bgColor || '#ffffff') + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateSectionColor(\'' + sectionId + '\',this.value)}">' +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  return h;
+}
+
+function updateSectionColor(sectionId, hex) {
+  sectionBgColors[sectionId] = hex;
+  saveState();
+  applySectionColorToPreview(sectionId, hex);
+}
+
+function syncSectionColorHex(colorInput, sectionId) {
+  var hexInput = document.getElementById('ep-color-' + sectionId);
+  if (hexInput) hexInput.value = colorInput.value;
+}
+
+function applySectionColorToPreview(sectionId, hex) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sEl = doc.querySelector('[data-builder-section="' + sectionId + '"]');
+  if (!sEl) return;
+  sEl.style.backgroundColor = hex;
 }
 
 function buildSpacingPanel(sId) {
