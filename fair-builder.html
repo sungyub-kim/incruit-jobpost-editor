@@ -2204,23 +2204,27 @@ function execFmtFontName(name) {
 
   var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
   if (!selection.rangeCount) return;
+  var range = selection.getRangeAt(0);
 
-  /* 선택된 텍스트의 가장 가까운 contenteditable 부모 찾기 */
-  var node = selection.anchorNode;
-  var editableParent = null;
+  /* 선택 범위가 없으면 리턴 */
+  if (range.collapsed) return;
 
-  while (node) {
-    if (node.nodeType === 1 && node.getAttribute('contenteditable') === 'true') {
-      editableParent = node;
-      break;
-    }
-    node = node.parentNode;
-  }
+  /* 기존 포매팅 span 제거 (nested 방지) */
+  var contents = range.extractContents();
+  var tempDiv = doc.createElement('div');
+  tempDiv.appendChild(contents);
 
-  /* contenteditable 부모의 style에 폰트 직접 적용 (!important 포함) */
-  if (editableParent) {
-    editableParent.style.setProperty('font-family', name, 'important');
-  }
+  /* 기존 포매팅 span/strong 등 제거하고 텍스트만 추출 */
+  var textContent = tempDiv.textContent || tempDiv.innerText;
+
+  /* 새로운 span으로 감싸기 (선택된 부분만) */
+  var span = doc.createElement('span');
+  span.style.setProperty('font-family', name, 'important');
+  span.setAttribute('data-fmt-font', name);
+  span.textContent = textContent;
+
+  range.insertNode(span);
+  selection.removeAllRanges();
 }
 
 function execFmtFontSize(px) {
@@ -2237,7 +2241,7 @@ function execFmtFontSize(px) {
   });
 }
 
-/* 메인 비주얼: 폰트 굵기 적용 (style 방식, !important) */
+/* 메인 비주얼: 폰트 굵기 적용 (선택된 부분만, !important) */
 function execFmtFontWeight(weight) {
   if (!weight) return;
   var doc = getPreviewDoc();
@@ -2245,23 +2249,27 @@ function execFmtFontWeight(weight) {
 
   var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
   if (!selection.rangeCount) return;
+  var range = selection.getRangeAt(0);
 
-  /* 선택된 텍스트의 가장 가까운 contenteditable 부모 찾기 */
-  var node = selection.anchorNode;
-  var editableParent = null;
+  /* 선택 범위가 없으면 리턴 */
+  if (range.collapsed) return;
 
-  while (node) {
-    if (node.nodeType === 1 && node.getAttribute('contenteditable') === 'true') {
-      editableParent = node;
-      break;
-    }
-    node = node.parentNode;
-  }
+  /* 기존 포매팅 span 제거 (nested 방지) */
+  var contents = range.extractContents();
+  var tempDiv = doc.createElement('div');
+  tempDiv.appendChild(contents);
 
-  /* contenteditable 부모의 style에 굵기 직접 적용 (!important 포함) */
-  if (editableParent) {
-    editableParent.style.setProperty('font-weight', weight, 'important');
-  }
+  /* 기존 포매팅 span/strong 등 제거하고 텍스트만 추출 */
+  var textContent = tempDiv.textContent || tempDiv.innerText;
+
+  /* 새로운 span으로 감싸기 (선택된 부분만) */
+  var span = doc.createElement('span');
+  span.style.setProperty('font-weight', weight, 'important');
+  span.setAttribute('data-fmt-weight', weight);
+  span.textContent = textContent;
+
+  range.insertNode(span);
+  selection.removeAllRanges();
 }
 
 /* 포맷팅 툴바: 폰트별 굵기 옵션 동적 업데이트 */
