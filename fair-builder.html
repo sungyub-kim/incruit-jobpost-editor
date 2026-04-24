@@ -61,6 +61,10 @@
     .section-item .section-name { flex: 1; font-size: 13px; color: #d1d5db; }
     .section-item .section-badge { font-size: 10px; padding: 2px 6px; border-radius: 4px; background: #1f3a5f; color: #60a5fa; }
     .section-item .section-badge.fixed { background: #1f2937; color: #6b7280; }
+    /* E5: Repeater 아이템 개수 표시 */
+    .sec-repeater-badge { font-size: 9px; color: #6b7280; margin-left: 4px; }
+    .sec-quick-add-btn { background: none; border: none; color: #059669; cursor: pointer; font-size: 12px; padding: 0 6px; transition: color .15s; flex-shrink: 0; }
+    .sec-quick-add-btn:hover { color: #047857; }
     #top-bar .btn-danger { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
     #top-bar .btn-danger:hover { background: #ef4444; color: #fff; }
     #top-bar .btn-zip { background: #059669; color: #fff; }
@@ -805,16 +809,30 @@ function renderSectionList() {
     item.className = 'section-item' + (isEditing ? ' editing' : '');
     item.setAttribute('draggable', 'true');
     item.dataset.id = id;
+    /* E5: repeater 아이템 개수 계산 */
+    var repeaterCount = '';
+    var mainRepeaterKey = '';
+    Object.keys(schema.fields).forEach(function(fk) {
+      var f = schema.fields[fk];
+      if (f.type === 'repeater' && !mainRepeaterKey) {
+        mainRepeaterKey = fk;
+        var items = (sectionData[id] && sectionData[id][fk]) ? sectionData[id][fk].length : 0;
+        repeaterCount = ' <span class="sec-repeater-badge">' + items + '/' + f.maxItems + '</span>';
+      }
+    });
     item.innerHTML =
       '<span class="drag-handle">⠿</span>' +
       /* 섹션명 버튼: 클릭 → 편집 드로어 열기 */
-      '<button class="sec-name-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="클릭하여 편집 · Shift+클릭 시 미리보기로 스크롤">' + schema.name + '</button>' +
+      '<button class="sec-name-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="클릭하여 편집 · Shift+클릭 시 미리보기로 스크롤">' + schema.name + repeaterCount + '</button>' +
       (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
       /* ▲▼ 이동 버튼 (hover 시 표시) */
       '<div class="sec-move-group">' +
         '<button class="sec-move-btn" title="위로" onclick="event.stopPropagation();moveSectionOrder(\'' + id + '\',-1)" ' + (isFirst ? 'disabled' : '') + '>▲</button>' +
         '<button class="sec-move-btn" title="아래로" onclick="event.stopPropagation();moveSectionOrder(\'' + id + '\',1)" ' + (isLast ? 'disabled' : '') + '>▼</button>' +
       '</div>' +
+      (mainRepeaterKey && sectionData[id] && sectionData[id][mainRepeaterKey] && sectionData[id][mainRepeaterKey].length < schema.fields[mainRepeaterKey].maxItems
+        ? '<button class="sec-quick-add-btn" onclick="event.stopPropagation();addRepeaterItem(\'' + id + '\',\'' + mainRepeaterKey + '\');renderSectionList();toggleSectionEdit(\'' + id + '\')" title="빠른 추가">+</button>'
+        : '') +
       '<div class="toggle-wrap">' +
         '<label class="toggle">' +
           '<input type="checkbox" ' + (enabled ? 'checked' : '') + ' onchange="toggleSection(\'' + id + '\', this.checked)">' +

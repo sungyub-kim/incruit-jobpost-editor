@@ -79,7 +79,7 @@ const FAIR_BUILDER_SCHEMA = {
         type: 'repeater',
         label: '포스터 박스',
         itemLabel: '포스터',
-        maxItems: 2,
+        maxItems: 5,
         fields: {
           type:      { type: 'text',  label: '유형 (online/offline)', default: 'online' },
           title:     { type: 'text',  label: '제목', default: '온라인 행사안내' },
