@@ -9,6 +9,11 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
   <style>
+    /* 나눔 폰트 로드 */
+    @import url('https://cdn.rawgit.com/moonspam/NanumSquare/master/nanumsquare.css');
+    @import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
+    @import url('//fonts.googleapis.com/earlyaccess/notosanskr.css');
+
     /* 추가 웹폰트 */
     @font-face { font-family: 'Paperozi'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-1Thin.woff2') format('woff2'); font-weight: 100; font-display: swap; }
     @font-face { font-family: 'Paperozi'; src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2408-3@1.0/Paperlogy-2ExtraLight.woff2') format('woff2'); font-weight: 200; font-display: swap; }
@@ -2179,9 +2184,36 @@ function execFmtLink() {
 }
 
 function execFmtFontName(name) {
+  if (!name) return;
   var doc = getPreviewDoc();
-  if (!doc || !name) return;
-  doc.execCommand('fontName', false, name);
+  if (!doc) return;
+
+  var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
+  if (!selection.rangeCount) return;
+
+  var range = selection.getRangeAt(0);
+
+  /* 기존 <font> 태그 제거 */
+  doc.querySelectorAll('[data-builder-section] font[face]').forEach(function(f) {
+    while (f.firstChild) {
+      f.parentNode.insertBefore(f.firstChild, f);
+    }
+    f.parentNode.removeChild(f);
+  });
+
+  /* 새로운 span으로 감싸서 style 적용 */
+  var span = doc.createElement('span');
+  span.style.fontFamily = name + ' !important';
+  span.setAttribute('data-font-family', name);
+
+  try {
+    range.surroundContents(span);
+  } catch(e) {
+    span.innerHTML = range.extractContents().childNodes.length > 0
+      ? range.extractContents()
+      : range.toString();
+    range.insertNode(span);
+  }
 }
 
 function execFmtFontSize(px) {
@@ -2198,16 +2230,19 @@ function execFmtFontSize(px) {
   });
 }
 
-/* 메인 비주얼: 폰트 굵기 적용 */
+/* 메인 비주얼: 폰트 굵기 적용 (style 방식, !important) */
 function execFmtFontWeight(weight) {
   if (!weight) return;
   var doc = getPreviewDoc();
   if (!doc) return;
   var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
   if (!selection.rangeCount) return;
+
   var range = selection.getRangeAt(0);
   var span = doc.createElement('span');
-  span.style.fontWeight = weight;
+  span.style.fontWeight = weight + ' !important';
+  span.setAttribute('data-font-weight', weight);  /* 데이터 어트리뷰트로도 저장 */
+
   try {
     range.surroundContents(span);
   } catch(e) {
