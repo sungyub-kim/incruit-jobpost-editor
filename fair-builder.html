@@ -1434,8 +1434,7 @@ function renderExportSettings() {
 
 /* ── V1/V2: 메인 비주얼 편집 ── */
 var VISUAL_IMAGES = [
-  { label: 'PC 제목 이미지',        sel: '.mvisual-text-1 img.d-lg-block' },
-  { label: '모바일 제목 이미지',     sel: '.mvisual-text-1 img.d-lg-none' },
+  /* mvisual-text-1은 이제 contenteditable 텍스트로 처리 */
   { label: '온라인 기간 이미지 (PC)',     sel: '.mvisual-term-online img.d-lg-block' },
   { label: '온라인 기간 이미지 (모바일)', sel: '.mvisual-term-online img.d-lg-none' },
   { label: '오프라인 기간 이미지 (PC)',     sel: '.mvisual-term-offline img.d-lg-block' },
@@ -1447,6 +1446,18 @@ function buildVisualPanel() {
   var doc = getPreviewDoc();
   var sEl = doc ? doc.querySelector('[data-builder-section="section_visual"]') : null;
   var h = '<div class="ep-title">메인 비주얼 편집</div>';
+
+  /* Step 1: 제목 텍스트 편집 */
+  h += '<div class="ep-spacing-title">제목 텍스트</div>';
+  if (sEl) {
+    var pcText = sEl.querySelector('.mvisual-text-pc');
+    var mText = sEl.querySelector('.mvisual-text-m');
+    var pcVal = pcText ? (pcText.textContent || '') : '';
+    var mVal = mText ? (mText.innerHTML || '') : '';
+    h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(\'pc\',this.value)"></div>';
+    h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
+  }
+
   h += buildBgImagePanel('section_visual');
   /* V2: 우측 패널 토글 */
   h += '<div class="ep-row" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #2e3a52;">' +
@@ -1487,6 +1498,23 @@ function updateVisualImage(idx, url) {
   saveState();
   var thumb = document.getElementById('vi-thumb-' + idx);
   if (thumb) { thumb.src = url; thumb.style.display = url ? 'block' : 'none'; }
+}
+
+/* Step 1: 제목 텍스트 업데이트 */
+function updateVisualText(type, val) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sEl = doc.querySelector('[data-builder-section="section_visual"]');
+  if (!sEl) return;
+
+  if (type === 'pc') {
+    var pcText = sEl.querySelector('.mvisual-text-pc');
+    if (pcText) pcText.textContent = val;
+  } else if (type === 'm') {
+    var mText = sEl.querySelector('.mvisual-text-m');
+    if (mText) mText.innerHTML = val.replace(/\n/g, '<br>');
+  }
+  saveState();
 }
 
 window.onVisualImgFile = function(input, idx) {

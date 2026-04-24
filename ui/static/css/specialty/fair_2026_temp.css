@@ -543,6 +543,9 @@ a:active, a:hover{color:var(--c-color); text-decoration:none;}
 .main-visual-left{text-align:left;position:relative;padding:5.555% 0 0 0;}
 .main-visual-right{position:relative;margin-left:auto;padding:8.73% 0 0 2.936%;}
 .mvisual-text-1{position:relative;z-index:3;text-align:left;}
+.mvisual-text-pc, .mvisual-text-m{position:relative;z-index:3;font-size:64px;font-weight:700;line-height:1.2;color:#333;word-break:keep-all;}
+.mvisual-text-pc{outline:none;}
+.mvisual-text-m{outline:none;}
 .mvisual-term-online{position:relative;z-index:3;max-width:378px;width:69.204%;margin-top:8.045%;}
 .mvisual-term-offline{position:relative;z-index:3;max-width:378px;width:69.204%;margin-top:3.475%;}
 .mvisual-text-4{position:relative;z-index:3;margin-top:28px;}
