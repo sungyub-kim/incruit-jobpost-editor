@@ -108,6 +108,12 @@
     #preview-frame-wrap.tablet #preview-frame { width: 768px; }
     #preview-frame-wrap.mobile #preview-frame { width: 375px; }
 
+    /* R3: 반응형 미리보기 탭 */
+    #breakpoint-tabs { display: flex; gap: 8px; padding: 8px 12px; background: #0d1117; border-bottom: 1px solid #2e3a52; }
+    .breakpoint-btn { background: #161c2d; border: 1px solid #2e3a52; color: #9ca3af; font-size: 11px; padding: 6px 10px; border-radius: 4px; cursor: pointer; transition: all .2s; }
+    .breakpoint-btn:hover { border-color: #3b82f6; color: #93c5fd; }
+    .breakpoint-btn.active { background: #1e3a8a; border-color: #3b82f6; color: #93c5fd; }
+
     /* 패널 섹션 헤더 */
     .p-section-header { font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #2e3a52; }
 
@@ -494,6 +500,12 @@
       <button class="fmt-btn" title="강조 텍스트(&lt;em&gt;)" onmousedown="event.preventDefault()" onclick="insertInlineEl('em')"><em style="font-size:11px;">em</em></button>
       <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="구분선(&lt;hr&gt;) 삽입" onmousedown="event.preventDefault()" onclick="execFmt('insertHorizontalRule')">hr</button>
     </div>
+    <!-- R3: 반응형 미리보기 브레이크포인트 선택 -->
+    <div id="breakpoint-tabs">
+      <button class="breakpoint-btn active" data-bp="desktop" onclick="setPreviewBreakpoint('desktop')" title="데스크톱 (≥1024px)">🖥️ Desktop</button>
+      <button class="breakpoint-btn" data-bp="tablet" onclick="setPreviewBreakpoint('tablet')" title="태블릿 (768~1023px)">📱 Tablet</button>
+      <button class="breakpoint-btn" data-bp="mobile" onclick="setPreviewBreakpoint('mobile')" title="모바일 (≤767px)">📱 Mobile</button>
+    </div>
     <div id="preview-frame-wrap">
       <iframe id="preview-frame" src="temp.html"></iframe>
     </div>
@@ -529,6 +541,7 @@ var cssColors = {};
 var openEditPanelId = null;
 var sectionData = {};
 var editMode = false;
+var previewBreakpoint = 'desktop';  /* R3: 반응형 미리보기 선택 breakpoint (desktop | tablet | mobile) */
 var posterConfig = 'both'; /* 'both' | 'online' | 'offline' */
 var navLinks    = [];  /* S2: 네비게이션 링크 [{text,href}] */
 var joblistTabs = [];  /* S1: 채용공고 탭 [{name}] */
@@ -629,6 +642,7 @@ function saveState() {
     buttonStyles:   buttonStyles,
     sectionData:    sectionData,
     posterConfig:   posterConfig,
+    previewBreakpoint: previewBreakpoint,
     navLinks:       navLinks,
     joblistTabs:    joblistTabs
   }));
@@ -694,6 +708,7 @@ function loadState() {
     if (s.visualRightVisible !== undefined) visualRightVisible = s.visualRightVisible;
     if (s.logoImages)      { logoImages = Object.assign({ logo1:'', logo2:'' }, s.logoImages); }
     if (s.exportSettings)  { exportSettings = Object.assign({ imgBasePath:'/ui/static/image/specialty/', fairName:'' }, s.exportSettings); }
+    if (s.previewBreakpoint) { setPreviewBreakpoint(s.previewBreakpoint); }
   } catch(e) {}
 }
 
@@ -902,6 +917,20 @@ function scrollToSection(id) {
   if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
+/* R3: 반응형 미리보기 breakpoint 전환 */
+function setPreviewBreakpoint(bp) {
+  previewBreakpoint = bp;
+  var wrap = document.getElementById('preview-frame-wrap');
+  wrap.classList.remove('tablet', 'mobile');
+  if (bp === 'tablet') wrap.classList.add('tablet');
+  else if (bp === 'mobile') wrap.classList.add('mobile');
+  /* 탭 버튼 활성화 상태 업데이트 */
+  document.querySelectorAll('.breakpoint-btn').forEach(function(btn) {
+    btn.classList.toggle('active', btn.dataset.bp === bp);
+  });
+  saveState();
+}
+
 function toggleSection(id, val) {
   sectionEnabled[id] = val;
   saveState();
@@ -968,7 +997,8 @@ function openEditDrawer(id) {
   var title  = document.getElementById('edit-drawer-title');
   var schema = FAIR_BUILDER_SCHEMA[id];
   if (!drawer || !body) return;
-  title.textContent = (schema ? schema.name : id) + ' 편집';
+  var bpLabel = previewBreakpoint === 'desktop' ? '🖥️ PC' : (previewBreakpoint === 'tablet' ? '📱 태블릿' : '📱 모바일');
+  title.textContent = (schema ? schema.name : id) + ' 편집 (' + bpLabel + ')';
   if (id === 'section_gradient') {
     body.innerHTML = buildGradientPanel();
   } else if (id === 'section_visual') {
