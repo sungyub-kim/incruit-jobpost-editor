@@ -320,7 +320,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.11.0</span>
+  <span id="ver-badge" title="배포 버전">v0.12.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2919,6 +2919,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 12:03 (v0.12.0)',
+    items: [
+      '<strong>[v0.12.0]</strong> Phase 5–E5, E6 섹션 repeater 동적 관리: 포스터·링크카드 개수 표시 및 빠른 추가 버튼',
+      '<strong>[v0.12.0]</strong> Phase 5–E5 포스터 박스: maxItems 2→5 확장, 섹션명 우측에 "현재/최대" 뱃지 표시',
+      '<strong>[v0.12.0]</strong> Phase 5–E6 링크 카드: 행사소개(5) / 성공사례(5) / 소개기관(6) 모두 반복 항목 추가/제거 가능',
+      '<strong>[v0.12.0]</strong> renderSectionList 제네릭화: 모든 repeater 섹션을 자동 감지하여 뱃지·버튼 표시',
+    ]
+  },
   {
     date: '2026.04.24 10:02 (v0.11.0)',
     items: [
