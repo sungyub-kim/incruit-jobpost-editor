@@ -3625,12 +3625,12 @@ var PATCH_NOTES = [
   {
     date: '2026.04.24 13:41 (v0.15.7)',
     items: [
-      '<strong>[v0.15.7]</strong> 메인 비주얼 포맷팅 HTML 구조 정리: nested span 완전 제거',
-      '<strong>[v0.15.7]</strong> execFmtFontName: [data-fmt-font] span이 있으면 style만 업데이트, 없으면 새 span 생성',
-      '<strong>[v0.15.7]</strong> execFmtFontWeight: [data-fmt-weight] span이 있으면 style만 업데이트, 없으면 새 span 생성',
-      '<strong>[v0.15.7]</strong> execFmtFontSize: execCommand 제거 → [data-fmt-size] span 재사용, font 태그 생성 중단',
-      '<strong>[v0.15.7]</strong> 모든 포맷팅 함수: textContent 대신 appendChild(contents)로 inner HTML 보존',
-      '<strong>[v0.15.7]</strong> 결과: 반복 포맷팅 시에도 깔끔한 단일 span 유지, 폰트 지정 중복 제거',
+      '<strong>[v0.15.7]</strong> 메인 비주얼 포맷팅 HTML 구조 정리: nested span 완전 제거 (unwrap 방식)',
+      '<strong>[v0.15.7]</strong> execFmtFontName: 범위 추출 → 기존 [data-fmt-*] span 모두 unwrap → 새 span 1개만 생성',
+      '<strong>[v0.15.7]</strong> execFmtFontWeight: 범위 추출 → 기존 [data-fmt-*] span 모두 unwrap → 새 span 1개만 생성',
+      '<strong>[v0.15.7]</strong> execFmtFontSize: 범위 추출 → 기존 [data-fmt-*] span 모두 unwrap → 새 span 1개만 생성',
+      '<strong>[v0.15.7]</strong> 모든 포맷팅 함수: extractContents → querySelectorAll unwrap → appendChild(contents) 흐름',
+      '<strong>[v0.15.7]</strong> 결과: 폰트/크기/굵기를 반복 변경해도 nested span 생기지 않음, 깔끔한 단일 span 구조 보장',
     ]
   },
   {
