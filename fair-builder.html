@@ -2252,19 +2252,26 @@ function execFmtFontName(name) {
   /* 선택 범위가 없으면 리턴 */
   if (range.collapsed) return;
 
-  /* 기존 포매팅 span 제거 (nested 방지) */
+  /* 선택된 범위의 공통 부모 찾기 */
+  var commonAncestor = range.commonAncestorContainer;
+  var ancestorElement = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
+
+  /* 기존 포매팅 span이 있으면 그 span의 style만 업데이트 */
+  var parentSpan = ancestorElement.closest('[data-fmt-font]');
+  if (parentSpan && parentSpan.contains(range.startContainer) && parentSpan.contains(range.endContainer)) {
+    /* 선택이 완전히 같은 포매팅 span 내에 있으면: style만 업데이트 */
+    parentSpan.style.setProperty('font-family', name, 'important');
+    parentSpan.setAttribute('data-fmt-font', name);
+    selection.removeAllRanges();
+    return;
+  }
+
+  /* 새 span 생성 (innerHTML 보존, textContent 아님) */
   var contents = range.extractContents();
-  var tempDiv = doc.createElement('div');
-  tempDiv.appendChild(contents);
-
-  /* 기존 포매팅 span/strong 등 제거하고 텍스트만 추출 */
-  var textContent = tempDiv.textContent || tempDiv.innerText;
-
-  /* 새로운 span으로 감싸기 (선택된 부분만) */
   var span = doc.createElement('span');
   span.style.setProperty('font-family', name, 'important');
   span.setAttribute('data-fmt-font', name);
-  span.textContent = textContent;
+  span.appendChild(contents);
 
   range.insertNode(span);
   selection.removeAllRanges();
@@ -2275,13 +2282,36 @@ function execFmtFontSize(px) {
   if (!px || px < 1) return;
   var doc = getPreviewDoc();
   if (!doc) return;
-  doc.execCommand('fontSize', false, '7');
-  doc.querySelectorAll('[data-builder-section] font[size="7"]').forEach(function(f) {
-    var span = doc.createElement('span');
-    span.style.fontSize = px + 'px';
-    span.innerHTML = f.innerHTML;
-    f.parentNode.replaceChild(span, f);
-  });
+
+  var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
+  if (!selection.rangeCount) return;
+  var range = selection.getRangeAt(0);
+
+  /* 선택 범위가 없으면 리턴 */
+  if (range.collapsed) return;
+
+  /* 선택된 범위의 공통 부모 찾기 */
+  var commonAncestor = range.commonAncestorContainer;
+  var ancestorElement = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
+
+  /* 기존 포매팅 span이 있으면 그 span의 style만 업데이트 */
+  var parentSpan = ancestorElement.closest('[data-fmt-size]');
+  if (parentSpan && parentSpan.contains(range.startContainer) && parentSpan.contains(range.endContainer)) {
+    parentSpan.style.setProperty('font-size', px + 'px', 'important');
+    parentSpan.setAttribute('data-fmt-size', px);
+    selection.removeAllRanges();
+    return;
+  }
+
+  /* 새 span 생성 (font 태그 X, innerHTML 보존) */
+  var contents = range.extractContents();
+  var span = doc.createElement('span');
+  span.style.setProperty('font-size', px + 'px', 'important');
+  span.setAttribute('data-fmt-size', px);
+  span.appendChild(contents);
+
+  range.insertNode(span);
+  selection.removeAllRanges();
 }
 
 /* 메인 비주얼: 폰트 굵기 적용 (선택된 부분만, !important) */
@@ -2297,19 +2327,26 @@ function execFmtFontWeight(weight) {
   /* 선택 범위가 없으면 리턴 */
   if (range.collapsed) return;
 
-  /* 기존 포매팅 span 제거 (nested 방지) */
+  /* 선택된 범위의 공통 부모 찾기 */
+  var commonAncestor = range.commonAncestorContainer;
+  var ancestorElement = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
+
+  /* 기존 포매팅 span이 있으면 그 span의 style만 업데이트 */
+  var parentSpan = ancestorElement.closest('[data-fmt-weight]');
+  if (parentSpan && parentSpan.contains(range.startContainer) && parentSpan.contains(range.endContainer)) {
+    /* 선택이 완전히 같은 포매팅 span 내에 있으면: style만 업데이트 */
+    parentSpan.style.setProperty('font-weight', weight, 'important');
+    parentSpan.setAttribute('data-fmt-weight', weight);
+    selection.removeAllRanges();
+    return;
+  }
+
+  /* 새 span 생성 (innerHTML 보존, textContent 아님) */
   var contents = range.extractContents();
-  var tempDiv = doc.createElement('div');
-  tempDiv.appendChild(contents);
-
-  /* 기존 포매팅 span/strong 등 제거하고 텍스트만 추출 */
-  var textContent = tempDiv.textContent || tempDiv.innerText;
-
-  /* 새로운 span으로 감싸기 (선택된 부분만) */
   var span = doc.createElement('span');
   span.style.setProperty('font-weight', weight, 'important');
   span.setAttribute('data-fmt-weight', weight);
-  span.textContent = textContent;
+  span.appendChild(contents);
 
   range.insertNode(span);
   selection.removeAllRanges();
