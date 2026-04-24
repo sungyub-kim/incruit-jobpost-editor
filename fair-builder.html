@@ -346,7 +346,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.14.0</span>
+  <span id="ver-badge" title="배포 버전">v0.15.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3160,6 +3160,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 12:19 (v0.15.0)',
+    items: [
+      '<strong>[v0.15.0]</strong> Phase 5–Adv 컴포넌트 템플릿 저장/로드: 섹션 필드+스타일을 재사용 가능한 템플릿으로 저장',
+      '<strong>[v0.15.0]</strong> saveSectionTemplate: 현재 섹션의 모든 필드/배경색/배경이미지/여백/고급스타일을 템플릿화',
+      '<strong>[v0.15.0]</strong> applySectionTemplate: 저장된 템플릿을 다른 섹션에 한번에 적용 (필드+스타일 일괄 복사)',
+      '<strong>[v0.15.0]</strong> 템플릿 메타데이터: 사용자 입력 이름 + 저장 시각 + 원본 섹션 ID 자동 기록',
+      '<strong>[v0.15.0]</strong> Phase 5 완료 — E(섹션 반복 확장) / ST(스타일 편집) / R3(반응형 미리보기) / Adv(템플릿) 전체 완료',
+    ]
+  },
   {
     date: '2026.04.24 12:16 (v0.14.0)',
     items: [
