@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.5</span>
+  <span id="ver-badge" title="배포 버전">v0.15.6</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3587,6 +3587,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 13:33 (v0.15.6)',
+    items: [
+      '<strong>[v0.15.6]</strong> 메인 비주얼 편집 UI 개선: 폰트 굵기 드롭다운 제거',
+      '<strong>[v0.15.6]</strong> 비주얼 이미지 교체 그룹화: PC/M을 한 묶음으로 관리 (온라인, 오프라인, 우측)',
+      '<strong>[v0.15.6]</strong> 각 이미지 그룹별 on/off 토글 버튼 추가 — 필요 없는 이미지는 숨김 처리',
+      '<strong>[v0.15.6]</strong> toggleVisualImageGroup: 그룹 활성화/비활성화 제어',
+      '<strong>[v0.15.6]</strong> 함수 시그니처 변경: updateVisualImage(gIdx, iIdx, url) — 그룹/이미지 인덱스',
+    ]
+  },
   {
     date: '2026.04.24 13:28 (v0.15.5)',
     items: [
