@@ -335,7 +335,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.12.0</span>
+  <span id="ver-badge" title="배포 버전">v0.13.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3057,6 +3057,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 12:11 (v0.13.0)',
+    items: [
+      '<strong>[v0.13.0]</strong> Phase 5–ST4 고급 스타일 편집: 테두리 / 그림자 / 투명도 설정',
+      '<strong>[v0.13.0]</strong> 테두리: 색상 + 두께(0~20px) + 스타일(실선/점선/점들)',
+      '<strong>[v0.13.0]</strong> 그림자: 색상 + 흐릿함(blur) + 확산(spread) + 위치 X/Y offset',
+      '<strong>[v0.13.0]</strong> 투명도: 0~100% 슬라이더로 직관적 조절, 100%는 기본값 처리',
+    ]
+  },
   {
     date: '2026.04.24 12:03 (v0.12.0)',
     items: [
