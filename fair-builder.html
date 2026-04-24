@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.15</span>
+  <span id="ver-badge" title="배포 버전">v0.15.16</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -499,7 +499,7 @@
       <div class="fmt-divider"></div>
       <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="서식 전체 제거" onmousedown="event.preventDefault()" onclick="execFmt('removeFormat')">서식제거</button>
       <div class="fmt-divider"></div>
-      <select id="fmt-font" class="fmt-select" title="폰트" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontName(this.value);updateFmtWeightOptions()">
+      <select id="fmt-font" class="fmt-select" title="폰트 (같은 폰트 재선택 가능)" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontName(this.value);updateFmtWeightOptions();this.selectedIndex=0">
         <option value="">폰트</option>
         <option value="'Noto Sans KR','Noto Sans',sans-serif">나눔고딕</option>
         <option value="'Noto Serif KR','Noto Serif',serif">나눔명조</option>
@@ -512,7 +512,7 @@
         <option value="Arial,sans-serif">Arial</option>
         <option value="Georgia,serif">Georgia</option>
       </select>
-      <select id="fmt-weight" class="fmt-select" title="굵기" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontWeight(this.value)">
+      <select id="fmt-weight" class="fmt-select" title="굵기 (같은 굵기 재선택 가능)" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontWeight(this.value);this.selectedIndex=0">
         <option value="">굵기</option>
         <option value="100">100</option>
         <option value="200">200</option>
@@ -530,16 +530,16 @@
         onchange="restoreIframeSelection();execFmtFontSize(this.value)">
       <span class="fmt-unit">px</span>
       <div class="fmt-divider"></div>
-      <label class="fmt-color-wrap" title="텍스트 색상" onmousedown="saveIframeSelection()">
+      <label class="fmt-color-wrap" title="텍스트 색상 (picker)" onmousedown="saveIframeSelection()">
         <span class="fmt-color-label">A</span>
-        <input type="color" value="#000000" oninput="restoreIframeSelection();applyUnifiedFormatting('color',this.value);this.nextElementSibling.style.background=this.value">
-        <div class="fmt-color-bar" style="background:#000000"></div>
+        <input id="fmt-color-text" type="color" value="#000000" onchange="restoreIframeSelection();applyUnifiedFormatting('color',this.value);document.getElementById('fmt-color-text-bar').style.background=this.value">
       </label>
-      <label class="fmt-color-wrap" title="배경 색상" onmousedown="saveIframeSelection()">
+      <button id="fmt-color-text-bar" class="fmt-color-bar" style="background:#000000" title="같은 색 재적용" onmousedown="saveIframeSelection();event.preventDefault()" onclick="restoreIframeSelection();applyUnifiedFormatting('color',document.getElementById('fmt-color-text').value)"></button>
+      <label class="fmt-color-wrap" title="배경 색상 (picker)" onmousedown="saveIframeSelection()">
         <span class="fmt-color-label" style="font-size:9px;">BG</span>
-        <input type="color" value="#ffff00" oninput="restoreIframeSelection();applyUnifiedFormatting('backgroundColor',this.value);this.nextElementSibling.style.background=this.value">
-        <div class="fmt-color-bar" style="background:#ffff00"></div>
+        <input id="fmt-color-bg" type="color" value="#ffff00" onchange="restoreIframeSelection();applyUnifiedFormatting('backgroundColor',this.value);document.getElementById('fmt-color-bg-bar').style.background=this.value">
       </label>
+      <button id="fmt-color-bg-bar" class="fmt-color-bar" style="background:#ffff00" title="같은 배경색 재적용" onmousedown="saveIframeSelection();event.preventDefault()" onclick="restoreIframeSelection();applyUnifiedFormatting('backgroundColor',document.getElementById('fmt-color-bg').value)"></button>
       <div class="fmt-divider"></div>
       <span class="fmt-label">행간</span>
       <input id="fmt-lh" class="fmt-input-num" type="number" min="1" max="4" step="0.1" value="1.6" title="행간(line-height)"
@@ -2265,12 +2265,8 @@ function applyUnifiedFormatting(styleProp, styleValue) {
   /* 케이스 1: 선택이 같은 data-fmt-unified span 내부에 있음 → style만 업데이트 */
   if (startSpan && startSpan === endSpan) {
     startSpan.style.setProperty(cssProp, styleValue, 'important');
-    /* selection을 span 전체로 확장 + _savedRange 업데이트 (다음 호출에서 유지) */
-    var keepRange = doc.createRange();
-    keepRange.selectNodeContents(startSpan);
-    selection.removeAllRanges();
-    selection.addRange(keepRange);
-    _savedRange = keepRange.cloneRange();
+    /* selection/savedRange 변경 안 함 — 사용자의 드래그 범위 유지 */
+    _savedRange = range.cloneRange();
     return;
   }
 
@@ -2309,11 +2305,11 @@ function applyUnifiedFormatting(styleProp, styleValue) {
 
   range.insertNode(span);
 
-  /* selection을 새 span 내부로 업데이트 + _savedRange 동기화 */
+  /* _savedRange만 새 span 전체로 저장 (다음 툴바 조작 대비).
+     selection은 브라우저 기본 동작에 맡김 — 사용자 시각적으로 블록 전체가 선택된 것처럼
+     보이는 혼란 방지. */
   var newRange = doc.createRange();
   newRange.selectNodeContents(span);
-  selection.removeAllRanges();
-  selection.addRange(newRange);
   _savedRange = newRange.cloneRange();
 }
 
@@ -3682,6 +3678,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 15:00 (v0.15.16)',
+    items: [
+      '<strong>[v0.15.16]</strong> 툴바 UX 2건 해결: 같은 속성 재적용 가능 + 드래그 범위만 변경',
+      '<strong>[v0.15.16]</strong> fmt-font / fmt-weight select: onchange 후 selectedIndex=0 리셋 → 같은 폰트/굵기 재선택 가능 (HTML select의 native 한계 우회)',
+      '<strong>[v0.15.16]</strong> 텍스트/배경 색상: oninput → onchange 변경 + 색상 바를 label 밖으로 분리하여 버튼화 → 클릭 시 "같은 색 재적용" 동작',
+      '<strong>[v0.15.16]</strong> applyUnifiedFormatting selection 확장 제거: 기존 span 부분 드래그 시 span 전체가 하이라이트되던 시각적 혼란 제거. 드래그한 범위만 표시됨',
+      '<strong>[v0.15.16]</strong> _savedRange만 span으로 동기화 유지: 연속 툴바 조작 시 selection 유실 방지',
+    ]
+  },
   {
     date: '2026.04.24 14:44 (v0.15.15)',
     items: [
