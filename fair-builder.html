@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.13</span>
+  <span id="ver-badge" title="배포 버전">v0.15.14</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -604,8 +604,8 @@ var sectionData = {
         pcHtml: '',  /* 포맷팅 포함된 HTML 저장 (blur 이벤트로 자동 저장) */
         mText: '2025 동대문구<br>온·오프<br>취업박람회',
         mHtml: '',   /* 포맷팅 포함된 HTML 저장 (blur 이벤트로 자동 저장) */
-        fontFamily: 'inherit',
-        fontWeight: '400',
+        fontFamily: '',
+        fontWeight: '',
         /* Step 3: 여백 설정 */
         marginTop: '', marginBottom: '', marginLeft: '', marginRight: '',
         paddingTop: '', paddingBottom: '', paddingLeft: '', paddingRight: ''
@@ -774,7 +774,16 @@ function loadState() {
       });
     }
     if (s.buttonStyles)  buttonStyles  = s.buttonStyles;
-    if (s.sectionData)   sectionData   = s.sectionData;
+    if (s.sectionData) {
+      sectionData = s.sectionData;
+      /* 마이그레이션: mvisual_texts의 레거시 기본값('inherit'/'400') → '' (inline style 자동 주입 방지) */
+      if (sectionData.section_visual && Array.isArray(sectionData.section_visual.mvisual_texts)) {
+        sectionData.section_visual.mvisual_texts.forEach(function(t) {
+          if (t.fontFamily === 'inherit') t.fontFamily = '';
+          if (t.fontWeight === '400' || t.fontWeight === 'normal') t.fontWeight = '';
+        });
+      }
+    }
     if (s.posterConfig)  posterConfig  = s.posterConfig;
     if (s.navLinks)      navLinks      = s.navLinks;
     if (s.joblistTabs)   joblistTabs   = s.joblistTabs;
@@ -1683,8 +1692,8 @@ function addVisualText() {
     pcHtml: '',  /* 포맷팅 포함 HTML */
     mText: '새로운 제목<br>' + (newIdx + 1),
     mHtml: '',   /* 포맷팅 포함 HTML */
-    fontFamily: 'inherit',
-    fontWeight: '400',
+    fontFamily: '',
+    fontWeight: '',
     /* Step 3: 여백 기본값 */
     marginTop: '', marginBottom: '', marginLeft: '', marginRight: '',
     paddingTop: '', paddingBottom: '', paddingLeft: '', paddingRight: ''
@@ -1796,8 +1805,9 @@ function renderVisualTexts() {
     pcDiv.setAttribute('data-builder-prop', 'innerHTML');
     /* 포맷팅이 저장된 HTML이 있으면 사용, 아니면 텍스트 fallback */
     pcDiv.innerHTML = textData.pcHtml || textData.pcText || '';
-    if (textData.fontFamily) pcDiv.style.fontFamily = textData.fontFamily;
-    if (textData.fontWeight) pcDiv.style.fontWeight = textData.fontWeight;
+    /* 'inherit'/'400'/'normal'은 실질적 의미 없는 기본값 → inline style 주입 생략 */
+    if (textData.fontFamily && textData.fontFamily !== 'inherit') pcDiv.style.fontFamily = textData.fontFamily;
+    if (textData.fontWeight && textData.fontWeight !== '400' && textData.fontWeight !== 'normal') pcDiv.style.fontWeight = textData.fontWeight;
     /* 편집 모드 중이면 즉시 blur 리스너 attach */
     if (editMode) makeEditable(pcDiv, 'section_visual', 'mvisual_texts.' + i + '.pcHtml', 'innerHTML');
 
@@ -1808,8 +1818,8 @@ function renderVisualTexts() {
     mDiv.setAttribute('data-builder-prop', 'innerHTML');
     /* 포맷팅이 저장된 HTML이 있으면 사용, 아니면 텍스트 fallback */
     mDiv.innerHTML = textData.mHtml || textData.mText || '';
-    if (textData.fontFamily) mDiv.style.fontFamily = textData.fontFamily;
-    if (textData.fontWeight) mDiv.style.fontWeight = textData.fontWeight;
+    if (textData.fontFamily && textData.fontFamily !== 'inherit') mDiv.style.fontFamily = textData.fontFamily;
+    if (textData.fontWeight && textData.fontWeight !== '400' && textData.fontWeight !== 'normal') mDiv.style.fontWeight = textData.fontWeight;
     /* 편집 모드 중이면 즉시 blur 리스너 attach */
     if (editMode) makeEditable(mDiv, 'section_visual', 'mvisual_texts.' + i + '.mHtml', 'innerHTML');
 
@@ -2320,10 +2330,12 @@ function cleanupFormattingInElement(el) {
   });
 
   /* 2. nested [data-fmt-unified] 병합: 부모 span에 없는 style만 자식에서 옮기고 자식은 unwrap */
-  /* 안쪽부터 처리하기 위해 뒤집음 — 가장 깊은 nested부터 바깥쪽으로 정리 */
+  /* DOM 변조 중 참조 깨짐 방지 — 가장 깊은 nested부터 바깥쪽으로 정리 */
   var nestedSelector = '[data-fmt-unified] [data-fmt-unified]';
   var nestedList = Array.prototype.slice.call(el.querySelectorAll(nestedSelector));
   nestedList.reverse().forEach(function(inner) {
+    /* 방어: 이전 반복에서 이미 unwrap된 요소일 수 있음 */
+    if (!inner.parentElement || !inner.parentNode) return;
     var outer = inner.parentElement.closest('[data-fmt-unified]');
     if (!outer) return;
     /* 자식(inner)의 style을 부모(outer)에 반영 — 자식 스타일이 더 우선(나중에 적용된 것) */
@@ -2396,7 +2408,10 @@ function updateFmtWeightOptions() {
   if (!fontSelect || !weightSelect) return;
 
   var selectedFont = fontSelect.value;
-  var fontObj = WEBFONTS.find(f => f.family === selectedFont.replace(/'/g, '"').replace(/"/g, "'"));
+  /* WEBFONTS.family와 option value는 공백 유무가 다를 수 있어 공백 제거 후 비교 */
+  var normalize = function(s) { return (s || '').replace(/\s+/g, ''); };
+  var sel = normalize(selectedFont);
+  var fontObj = WEBFONTS.find(function(f) { return normalize(f.family) === sel; });
 
   if (!fontObj || !fontObj.weights) {
     /* 기본 weights */
@@ -3669,6 +3684,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 14:37 (v0.15.14)',
+    items: [
+      '<strong>[v0.15.14]</strong> 전체 검수 후 4건 수정 — inline style 자동 주입 + 폰트 매칭 + null 방어 + 마이그레이션',
+      '<strong>[v0.15.14]</strong> 비주얼 텍스트 inline style 자동 주입 제거: mvisual_texts 기본값 \'inherit\'/\'400\' → \'\' (빈 문자열)',
+      '<strong>[v0.15.14]</strong> renderVisualTexts 방어: \'inherit\'/\'400\'/\'normal\' 값은 inline style 주입 생략',
+      '<strong>[v0.15.14]</strong> [C2] updateFmtWeightOptions 폰트 매칭 수정: WEBFONTS.family와 option value의 공백 차이로 매칭 실패하던 버그 → normalize(공백 제거) 비교로 변경',
+      '<strong>[v0.15.14]</strong> [C4] cleanupFormattingInElement null 방어: DOM 변조 중 unwrap된 inner.parentElement가 null일 때 런타임 에러 방지',
+      '<strong>[v0.15.14]</strong> [W2] loadState 마이그레이션: 기존 localStorage에 저장된 \'inherit\'/\'400\'/\'normal\' 레거시 값을 \'\' 로 자동 변환',
+    ]
+  },
   {
     date: '2026.04.24 14:31 (v0.15.13)',
     items: [
