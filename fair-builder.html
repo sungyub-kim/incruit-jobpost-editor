@@ -4,6 +4,10 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Fair Page Builder | 인크루트 박람회 빌더</title>
+  <!-- 웹폰트 (나눔고딕, 나눔명조) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
     tailwind.config = {
@@ -1433,6 +1437,14 @@ function renderExportSettings() {
 }
 
 /* ── V1/V2: 메인 비주얼 편집 ── */
+/* 웹폰트 목록 */
+var WEBFONTS = [
+  { name: '나눔고딕', family: "'Noto Sans KR', 'Noto Sans', sans-serif", load: true },
+  { name: '나눔명조', family: "'Noto Serif KR', 'Noto Serif', serif", load: true },
+  { name: '너비고딕', family: "system-ui, -apple-system, sans-serif", load: false },
+  { name: '기본(시스템)', family: "inherit", load: false }
+];
+
 var VISUAL_IMAGES = [
   /* mvisual-text-1은 이제 contenteditable 텍스트로 처리 */
   { label: '온라인 기간 이미지 (PC)',     sel: '.mvisual-term-online img.d-lg-block' },
@@ -1456,6 +1468,14 @@ function buildVisualPanel() {
     var mVal = mText ? (mText.innerHTML || '') : '';
     h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(\'pc\',this.value)"></div>';
     h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
+
+    /* 폰트 선택 */
+    var pcFont = pcText ? (pcText.style.fontFamily || 'inherit') : 'inherit';
+    var mFont = mText ? (mText.style.fontFamily || 'inherit') : 'inherit';
+    h += '<div class="ep-field"><label>폰트</label>' +
+      '<select onchange="updateVisualFont(\'pc\',this.value)">' +
+        WEBFONTS.map(function(f) { return '<option value="' + f.family + '" ' + (pcFont === f.family ? 'selected' : '') + '>' + f.name + '</option>'; }).join('') +
+      '</select></div>';
   }
 
   h += buildBgImagePanel('section_visual');
@@ -1513,6 +1533,23 @@ function updateVisualText(type, val) {
   } else if (type === 'm') {
     var mText = sEl.querySelector('.mvisual-text-m');
     if (mText) mText.innerHTML = val.replace(/\n/g, '<br>');
+  }
+  saveState();
+}
+
+/* 폰트 변경 */
+function updateVisualFont(type, fontFamily) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sEl = doc.querySelector('[data-builder-section="section_visual"]');
+  if (!sEl) return;
+
+  if (type === 'pc') {
+    var pcText = sEl.querySelector('.mvisual-text-pc');
+    if (pcText) pcText.style.fontFamily = fontFamily;
+  } else if (type === 'm') {
+    var mText = sEl.querySelector('.mvisual-text-m');
+    if (mText) mText.style.fontFamily = fontFamily;
   }
   saveState();
 }
