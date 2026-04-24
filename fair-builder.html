@@ -316,7 +316,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.9.1</span>
+  <span id="ver-badge" title="배포 버전">v0.10.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2862,6 +2862,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 09:55 (v0.10.0)',
+    items: [
+      '<strong>[v0.10.0]</strong> Phase 2–3 필드 편집 패널 확장: image/link/textarea/text 필드 동적 입력 폼',
+      '<strong>[v0.10.0]</strong> Phase 2–1 편집 드로어: 우측 사이드 슬라이드 패널, 섹션명 클릭으로 오픈',
+      '<strong>[v0.10.0]</strong> 섹션 리스트 단순화: 색상 스와치 제거, 섹션명 버튼화, ▲▼ hover-only 표시',
+      '<strong>[v0.10.0]</strong> 이미지 필드 업그레이드: 파일 업로드 + URL 입력 + 실시간 미리보기',
+      '<strong>[v0.10.0]</strong> Phase 3–S3 Repeater 동적 관리: + 추가 / ✕ 제거 버튼 (maxItems/최소1개 제약)',
+      '<strong>[v0.10.0]</strong> 양방향 미리보기 동기화: 드로어 필드 변경 → iframe 즉시 반영',
+    ]
+  },
   {
     date: '2026.04.23 16:20 (v0.9.1)',
     items: [
