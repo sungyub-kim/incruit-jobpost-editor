@@ -316,7 +316,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.10.0</span>
+  <span id="ver-badge" title="배포 버전">v0.11.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2901,6 +2901,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 10:02 (v0.11.0)',
+    items: [
+      '<strong>[v0.11.0]</strong> Phase 4–ST1 스타일 편집: 드로어에서 섹션 배경색 설정 (색상 피커 + HEX 입력)',
+      '<strong>[v0.11.0]</strong> Phase 4–ST2 배경 이미지: URL + 파일 업로드 + 미리보기 (이미 구현)',
+      '<strong>[v0.11.0]</strong> Phase 4–ST3 여백 설정: PC/모바일 상단/하단 패딩 (이미 구현)',
+      '<strong>[v0.11.0]</strong> 1차 완성 — 필드편집·구조편집·스타일편집 전체 완료',
+    ]
+  },
   {
     date: '2026.04.24 09:55 (v0.10.0)',
     items: [
