@@ -1520,7 +1520,7 @@ function buildVisualPanel() {
   h += '<div class="ep-spacing-title">제목 텍스트</div>';
   var activeIdx = window.visualTextActiveIdx !== undefined ? window.visualTextActiveIdx : 0;
   var activeText = texts[activeIdx];
-  if (activeText && sEl) {
+  if (activeText) {  /* sEl 체크 제거 — iframe 로드 여부와 무관하게 폰트 드롭다운 표시 */
     var pcVal = activeText.pcText || '';
     var mVal = activeText.mText || '';
     h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(' + activeIdx + ',\'pc\',this.value)"></div>';
@@ -1713,16 +1713,16 @@ function renderVisualTexts() {
     pcDiv.setAttribute('contenteditable', 'true');
     pcDiv.setAttribute('data-builder-field', 'mvisual_text_' + (i+1) + '_pc');
     pcDiv.textContent = textData.pcText || '';
-    if (textData.fontFamily && textData.fontFamily !== 'inherit') pcDiv.style.fontFamily = textData.fontFamily;
-    if (textData.fontWeight && textData.fontWeight !== '400') pcDiv.style.fontWeight = textData.fontWeight;
+    if (textData.fontFamily) pcDiv.style.fontFamily = textData.fontFamily;
+    if (textData.fontWeight) pcDiv.style.fontWeight = textData.fontWeight;
 
     var mDiv = doc.createElement('div');
     mDiv.className = 'mvisual-text-m d-xxs-block d-lg-none';
     mDiv.setAttribute('contenteditable', 'true');
     mDiv.setAttribute('data-builder-field', 'mvisual_text_' + (i+1) + '_m');
     mDiv.innerHTML = textData.mText || '';
-    if (textData.fontFamily && textData.fontFamily !== 'inherit') mDiv.style.fontFamily = textData.fontFamily;
-    if (textData.fontWeight && textData.fontWeight !== '400') mDiv.style.fontWeight = textData.fontWeight;
+    if (textData.fontFamily) mDiv.style.fontFamily = textData.fontFamily;
+    if (textData.fontWeight) mDiv.style.fontWeight = textData.fontWeight;
 
     div.appendChild(pcDiv);
     div.appendChild(mDiv);
