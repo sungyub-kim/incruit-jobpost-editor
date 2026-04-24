@@ -520,12 +520,12 @@
       <div class="fmt-divider"></div>
       <label class="fmt-color-wrap" title="텍스트 색상" onmousedown="saveIframeSelection()">
         <span class="fmt-color-label">A</span>
-        <input type="color" value="#000000" oninput="restoreIframeSelection();execFmt('foreColor',this.value);this.nextElementSibling.style.background=this.value">
+        <input type="color" value="#000000" oninput="restoreIframeSelection();applyUnifiedFormatting('color',this.value);this.nextElementSibling.style.background=this.value">
         <div class="fmt-color-bar" style="background:#000000"></div>
       </label>
       <label class="fmt-color-wrap" title="배경 색상" onmousedown="saveIframeSelection()">
         <span class="fmt-color-label" style="font-size:9px;">BG</span>
-        <input type="color" value="#ffff00" oninput="restoreIframeSelection();execFmt('backColor',this.value);this.nextElementSibling.style.background=this.value">
+        <input type="color" value="#ffff00" oninput="restoreIframeSelection();applyUnifiedFormatting('backgroundColor',this.value);this.nextElementSibling.style.background=this.value">
         <div class="fmt-color-bar" style="background:#ffff00"></div>
       </label>
       <div class="fmt-divider"></div>
@@ -2217,11 +2217,45 @@ function restoreIframeSelection() {
   sel.addRange(_savedRange);
 }
 
-/* contenteditable 포맷팅 정리: <font> 태그 제거 + nested span unwrap + 비어있는 span 제거 */
+/* 통합 포맷팅: 하나의 span에 모든 style 속성 누적 */
+function applyUnifiedFormatting(styleProp, styleValue) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+
+  var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
+  if (!selection.rangeCount) return;
+  var range = selection.getRangeAt(0);
+
+  if (range.collapsed) return;
+
+  /* 선택된 범위 내에서 data-fmt-unified span 찾기 */
+  var commonAncestor = range.commonAncestorContainer;
+  var ancestorElement = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
+  var existingSpan = ancestorElement ? ancestorElement.closest('[data-fmt-unified]') : null;
+
+  /* 기존 span이 있고 선택이 완전히 그 안에 있으면: style만 업데이트 */
+  if (existingSpan && existingSpan.contains(range.startContainer) && existingSpan.contains(range.endContainer)) {
+    existingSpan.style[styleProp] = styleValue;
+    selection.removeAllRanges();
+    return;
+  }
+
+  /* 새로운 span 생성 (처음 한 번만) */
+  var contents = range.extractContents();
+  var span = doc.createElement('span');
+  span.setAttribute('data-fmt-unified', 'true');
+  span.style[styleProp] = styleValue;
+  span.appendChild(contents);
+
+  range.insertNode(span);
+  selection.removeAllRanges();
+}
+
+/* contenteditable 포맷팅 정리: <font> 태그만 제거 (data-fmt-unified는 유지) */
 function cleanupFormattingInElement(el) {
   if (!el) return;
 
-  /* 1. <font> 태그 제거 (span으로 변환 또는 unwrap) */
+  /* 1. <font> 태그 제거 (execCommand로 인한 레거시 제거) */
   el.querySelectorAll('font').forEach(function(font) {
     while (font.firstChild) {
       font.parentNode.insertBefore(font.firstChild, font);
@@ -2229,33 +2263,8 @@ function cleanupFormattingInElement(el) {
     font.parentNode.removeChild(font);
   });
 
-  /* 2. 모든 [data-fmt-*] span 확인 및 정리 */
-  var fmtSpans = el.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]');
-
-  /* 같은 타입의 nested span 통합 (바깥쪽만 유지, 안쪽 제거) */
-  Array.from(fmtSpans).forEach(function(span) {
-    var parent = span.parentElement;
-    if (!parent) return;
-
-    /* 부모가 같은 타입의 data-fmt-* span이면 이 span은 unwrap */
-    var sameType = parent.dataset.fmtFont ? 'fmtFont' :
-                   parent.dataset.fmtWeight ? 'fmtWeight' :
-                   parent.dataset.fmtSize ? 'fmtSize' : null;
-    var thisType = span.dataset.fmtFont ? 'fmtFont' :
-                   span.dataset.fmtWeight ? 'fmtWeight' :
-                   span.dataset.fmtSize ? 'fmtSize' : null;
-
-    if (sameType && sameType === thisType) {
-      /* 같은 타입 nested: 안쪽 span unwrap */
-      while (span.firstChild) {
-        span.parentNode.insertBefore(span.firstChild, span);
-      }
-      span.parentNode.removeChild(span);
-    }
-  });
-
-  /* 3. 비어있는 span 제거 */
-  el.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]').forEach(function(span) {
+  /* 2. 비어있는 data-fmt-unified span 제거 */
+  el.querySelectorAll('[data-fmt-unified]').forEach(function(span) {
     if (!span.textContent.trim() && !span.querySelector('img')) {
       while (span.firstChild) {
         span.parentNode.insertBefore(span.firstChild, span);
@@ -2264,7 +2273,7 @@ function cleanupFormattingInElement(el) {
     }
   });
 
-  /* 4. contenteditable 요소 자체의 폰트 리셋 (자식 요소들이 부모 폰트를 상속받지 않도록) */
+  /* 3. contenteditable 요소 자체: 부모 스타일 상속 방지 */
   el.style.fontFamily = 'inherit';
   el.style.fontWeight = 'normal';
   el.style.fontSize = 'inherit';
@@ -2295,124 +2304,19 @@ function execFmtLink() {
 
 function execFmtFontName(name) {
   if (!name) return;
-  var doc = getPreviewDoc();
-  if (!doc) return;
-
-  var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
-  if (!selection.rangeCount) return;
-  var range = selection.getRangeAt(0);
-
-  /* 선택 범위가 없으면 리턴 */
-  if (range.collapsed) return;
-
-  /* 선택된 범위 추출 */
-  var contents = range.extractContents();
-
-  /* 기존의 모든 nested formatting span 제거 (unwrap) */
-  var fmtSpans = contents.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]');
-  Array.from(fmtSpans).forEach(function(span) {
-    while (span.firstChild) {
-      span.parentNode.insertBefore(span.firstChild, span);
-    }
-    span.parentNode.removeChild(span);
-  });
-
-  /* 새로운 formatting span 생성 (기존 HTML 구조는 보존) */
-  var span = doc.createElement('span');
-  span.style.setProperty('font-family', name, 'important');
-  span.setAttribute('data-fmt-font', name);
-  while (contents.firstChild) {
-    span.appendChild(contents.firstChild);
-  }
-
-  range.insertNode(span);
-  selection.removeAllRanges();
-
-  /* 포맷팅 정리 (contenteditable 전체) */
-  var editEl = doc.querySelector('[data-builder-section="section_visual"][contenteditable]');
-  if (editEl) cleanupFormattingInElement(editEl);
+  applyUnifiedFormatting('fontFamily', name);
 }
 
 function execFmtFontSize(px) {
   px = parseInt(px, 10);
   if (!px || px < 1) return;
-  var doc = getPreviewDoc();
-  if (!doc) return;
-
-  var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
-  if (!selection.rangeCount) return;
-  var range = selection.getRangeAt(0);
-
-  /* 선택 범위가 없으면 리턴 */
-  if (range.collapsed) return;
-
-  /* 선택된 범위 추출 */
-  var contents = range.extractContents();
-
-  /* 기존의 모든 nested formatting span 제거 (unwrap) */
-  var fmtSpans = contents.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]');
-  Array.from(fmtSpans).forEach(function(span) {
-    while (span.firstChild) {
-      span.parentNode.insertBefore(span.firstChild, span);
-    }
-    span.parentNode.removeChild(span);
-  });
-
-  /* 새로운 formatting span 생성 (기존 HTML 구조는 보존) */
-  var span = doc.createElement('span');
-  span.style.setProperty('font-size', px + 'px', 'important');
-  span.setAttribute('data-fmt-size', px);
-  while (contents.firstChild) {
-    span.appendChild(contents.firstChild);
-  }
-
-  range.insertNode(span);
-  selection.removeAllRanges();
-
-  /* 포맷팅 정리 (contenteditable 전체) */
-  var editEl = doc.querySelector('[data-builder-section="section_visual"][contenteditable]');
-  if (editEl) cleanupFormattingInElement(editEl);
+  applyUnifiedFormatting('fontSize', px + 'px');
 }
 
-/* 메인 비주얼: 폰트 굵기 적용 (선택된 부분만, !important) */
+/* 메인 비주얼: 폰트 굵기 적용 (선택된 부분만) */
 function execFmtFontWeight(weight) {
   if (!weight) return;
-  var doc = getPreviewDoc();
-  if (!doc) return;
-
-  var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
-  if (!selection.rangeCount) return;
-  var range = selection.getRangeAt(0);
-
-  /* 선택 범위가 없으면 리턴 */
-  if (range.collapsed) return;
-
-  /* 선택된 범위 추출 */
-  var contents = range.extractContents();
-
-  /* 기존의 모든 nested formatting span 제거 (unwrap) */
-  var fmtSpans = contents.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]');
-  Array.from(fmtSpans).forEach(function(span) {
-    while (span.firstChild) {
-      span.parentNode.insertBefore(span.firstChild, span);
-    }
-    span.parentNode.removeChild(span);
-  });
-
-  /* 새로운 formatting span 생성 (기존 HTML 구조는 보존) */
-  var span = doc.createElement('span');
-  span.style.setProperty('font-weight', weight, 'important');
-  span.setAttribute('data-fmt-weight', weight);
-  while (contents.firstChild) {
-    span.appendChild(contents.firstChild);
-  }
-
-  range.insertNode(span);
-  selection.removeAllRanges();
-
-  /* 포맷팅 정리 (contenteditable 전체) */
-  var editEl = doc.querySelector('[data-builder-section="section_visual"][contenteditable]');
-  if (editEl) cleanupFormattingInElement(editEl);
+  applyUnifiedFormatting('fontWeight', weight);
 }
 
 /* 포맷팅 툴바: 폰트별 굵기 옵션 동적 업데이트 */
@@ -2440,15 +2344,7 @@ function updateFmtWeightOptions() {
 function execFmtLineHeight(lh) {
   lh = parseFloat(lh);
   if (!lh) return;
-  var doc = getPreviewDoc();
-  if (!doc) return;
-  var sel = doc.getSelection();
-  if (!sel || !sel.rangeCount) return;
-  var node = sel.getRangeAt(0).commonAncestorContainer;
-  if (node.nodeType === 3) node = node.parentElement;
-  var BLOCK = { P:1, DIV:1, H1:1, H2:1, H3:1, H4:1, H5:1, H6:1, LI:1, DT:1, DD:1, SECTION:1, ARTICLE:1 };
-  while (node && !BLOCK[node.tagName] && !node.dataset.builderSection) node = node.parentElement;
-  if (node && !node.dataset.builderSection) node.style.lineHeight = lh;
+  applyUnifiedFormatting('lineHeight', lh);
 }
 
 function insertElement(tag) {
@@ -2955,11 +2851,9 @@ function injectEditModeCSS(doc) {
   var s = doc.createElement('style');
   s.id = 'builder-edit-css';
   s.textContent =
-    /* 포맷팅 span 스타일 보호: inline style이 CSS 규칙을 override하도록 강제 */
-    '[data-fmt-font]{font-family:inherit!important;}[data-fmt-font] *{font-family:inherit!important;}' +
-    '[data-fmt-size]{font-size:inherit!important;}[data-fmt-size] *{font-size:inherit!important;}' +
-    '[data-fmt-weight]{font-weight:inherit!important;}[data-fmt-weight] *{font-weight:inherit!important;}' +
-    /* contenteditable 요소 자체: 폰트 리셋 */
+    /* 통합 포맷팅 span: inline style 보호 */
+    '[data-fmt-unified]{display:inline;white-space:normal;}' +
+    /* contenteditable: 부모 스타일 상속 방지 */
     '[data-builder-section="section_visual"][contenteditable]{font-family:inherit!important;font-weight:normal!important;}' +
     '.builder-edit-mode [data-editable]{' +
       'outline:2px dashed rgba(0,102,204,.45)!important;' +
