@@ -2217,6 +2217,54 @@ function restoreIframeSelection() {
   sel.addRange(_savedRange);
 }
 
+/* contenteditable 포맷팅 정리: <font> 태그 제거 + nested span unwrap + 비어있는 span 제거 */
+function cleanupFormattingInElement(el) {
+  if (!el) return;
+
+  /* 1. <font> 태그 제거 (span으로 변환 또는 unwrap) */
+  el.querySelectorAll('font').forEach(function(font) {
+    while (font.firstChild) {
+      font.parentNode.insertBefore(font.firstChild, font);
+    }
+    font.parentNode.removeChild(font);
+  });
+
+  /* 2. 모든 [data-fmt-*] span 확인 및 정리 */
+  var fmtSpans = el.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]');
+
+  /* 같은 타입의 nested span 통합 (바깥쪽만 유지, 안쪽 제거) */
+  Array.from(fmtSpans).forEach(function(span) {
+    var parent = span.parentElement;
+    if (!parent) return;
+
+    /* 부모가 같은 타입의 data-fmt-* span이면 이 span은 unwrap */
+    var sameType = parent.dataset.fmtFont ? 'fmtFont' :
+                   parent.dataset.fmtWeight ? 'fmtWeight' :
+                   parent.dataset.fmtSize ? 'fmtSize' : null;
+    var thisType = span.dataset.fmtFont ? 'fmtFont' :
+                   span.dataset.fmtWeight ? 'fmtWeight' :
+                   span.dataset.fmtSize ? 'fmtSize' : null;
+
+    if (sameType && sameType === thisType) {
+      /* 같은 타입 nested: 안쪽 span unwrap */
+      while (span.firstChild) {
+        span.parentNode.insertBefore(span.firstChild, span);
+      }
+      span.parentNode.removeChild(span);
+    }
+  });
+
+  /* 3. 비어있는 span 제거 */
+  el.querySelectorAll('[data-fmt-font], [data-fmt-weight], [data-fmt-size]').forEach(function(span) {
+    if (!span.textContent.trim() && !span.querySelector('img')) {
+      while (span.firstChild) {
+        span.parentNode.insertBefore(span.firstChild, span);
+      }
+      span.parentNode.removeChild(span);
+    }
+  });
+}
+
 function execFmt(cmd, value) {
   var doc = getPreviewDoc();
   if (!doc) return;
@@ -2274,6 +2322,10 @@ function execFmtFontName(name) {
 
   range.insertNode(span);
   selection.removeAllRanges();
+
+  /* 포맷팅 정리 (contenteditable 전체) */
+  var editEl = doc.querySelector('[data-builder-section="section_visual"][contenteditable]');
+  if (editEl) cleanupFormattingInElement(editEl);
 }
 
 function execFmtFontSize(px) {
@@ -2311,6 +2363,10 @@ function execFmtFontSize(px) {
 
   range.insertNode(span);
   selection.removeAllRanges();
+
+  /* 포맷팅 정리 (contenteditable 전체) */
+  var editEl = doc.querySelector('[data-builder-section="section_visual"][contenteditable]');
+  if (editEl) cleanupFormattingInElement(editEl);
 }
 
 /* 메인 비주얼: 폰트 굵기 적용 (선택된 부분만, !important) */
@@ -2348,6 +2404,10 @@ function execFmtFontWeight(weight) {
 
   range.insertNode(span);
   selection.removeAllRanges();
+
+  /* 포맷팅 정리 (contenteditable 전체) */
+  var editEl = doc.querySelector('[data-builder-section="section_visual"][contenteditable]');
+  if (editEl) cleanupFormattingInElement(editEl);
 }
 
 /* 포맷팅 툴바: 폰트별 굵기 옵션 동적 업데이트 */
@@ -3199,6 +3259,12 @@ function onEditableBlur(e) {
   var field = el.dataset.builderField;
   var prop  = el.dataset.builderProp;
   if (!sId || !field) return;
+
+  /* 포맷팅 정리 (font 태그 제거 + nested span unwrap) */
+  if (prop === 'innerHTML') {
+    cleanupFormattingInElement(el);
+  }
+
   var val = prop === 'textContent' ? el.textContent.trim() : el.innerHTML;
   if (field.startsWith('_el:')) {
     if (!sectionData[sId]) sectionData[sId] = {};
@@ -3216,6 +3282,12 @@ function collectEditableValues(doc) {
     var field = el.dataset.builderField;
     var prop  = el.dataset.builderProp;
     if (!sId || !field) return;
+
+    /* 포맷팅 정리 (font 태그 제거 + nested span unwrap) */
+    if (prop === 'innerHTML') {
+      cleanupFormattingInElement(el);
+    }
+
     var val = prop === 'textContent' ? el.textContent.trim() : el.innerHTML;
     if (field.startsWith('_el:')) {
       if (!sectionData[sId]) sectionData[sId] = {};
