@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.11</span>
+  <span id="ver-badge" title="배포 버전">v0.15.12</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2235,12 +2235,9 @@ function applyUnifiedFormatting(styleProp, styleValue) {
 
   /* 기존 span이 있고 선택이 완전히 그 안에 있으면: style만 업데이트 */
   if (existingSpan && existingSpan.contains(range.startContainer) && existingSpan.contains(range.endContainer)) {
-    /* fontFamily/fontWeight/fontSize는 !important 필수 (전역 * !important 규칙 대응) */
-    if (/fontFamily|fontWeight|fontSize/.test(styleProp)) {
-      existingSpan.style.setProperty(styleProp.replace(/([A-Z])/g, '-$1').toLowerCase(), styleValue, 'important');
-    } else {
-      existingSpan.style[styleProp] = styleValue;
-    }
+    /* 모든 포맷팅 스타일은 !important 필수 (전역 * !important 규칙 대응) */
+    var cssProp = styleProp.replace(/([A-Z])/g, '-$1').toLowerCase();
+    existingSpan.style.setProperty(cssProp, styleValue, 'important');
     selection.removeAllRanges();
     return;
   }
@@ -2249,12 +2246,9 @@ function applyUnifiedFormatting(styleProp, styleValue) {
   var contents = range.extractContents();
   var span = doc.createElement('span');
   span.setAttribute('data-fmt-unified', 'true');
-  /* fontFamily/fontWeight/fontSize는 !important 필수 (전역 * !important 규칙 대응) */
-  if (/fontFamily|fontWeight|fontSize/.test(styleProp)) {
-    span.style.setProperty(styleProp.replace(/([A-Z])/g, '-$1').toLowerCase(), styleValue, 'important');
-  } else {
-    span.style[styleProp] = styleValue;
-  }
+  /* 모든 포맷팅 스타일은 !important 필수 (전역 * !important 규칙 대응) */
+  var cssProp = styleProp.replace(/([A-Z])/g, '-$1').toLowerCase();
+  span.style.setProperty(cssProp, styleValue, 'important');
   span.appendChild(contents);
 
   range.insertNode(span);
@@ -3604,6 +3598,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 14:05 (v0.15.12)',
+    items: [
+      '<strong>[v0.15.12]</strong> 포맷팅 !important 범위 확대: 모든 스타일 속성에 적용',
+      '<strong>[v0.15.12]</strong> applyUnifiedFormatting: color/backgroundColor/lineHeight 등 모든 속성도 !important 처리',
+      '<strong>[v0.15.12]</strong> 코드 단순화: setProperty 조건 제거 → 모든 속성 동일하게 setProperty로 처리',
+      '<strong>[v0.15.12]</strong> 결과: 폰트 + 색상 + 배경 + 행간 + 굵기 모두 전역 CSS 규칙 압도 가능',
+    ]
+  },
   {
     date: '2026.04.24 14:04 (v0.15.11)',
     items: [
