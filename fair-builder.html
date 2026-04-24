@@ -601,7 +601,9 @@ var sectionData = {
       {
         index: 1,
         pcText: '2025 동대문구 온·오프 취업박람회',
+        pcHtml: '',  /* 포맷팅 포함된 HTML 저장 (blur 이벤트로 자동 저장) */
         mText: '2025 동대문구<br>온·오프<br>취업박람회',
+        mHtml: '',   /* 포맷팅 포함된 HTML 저장 (blur 이벤트로 자동 저장) */
         fontFamily: 'inherit',
         fontWeight: '400',
         /* Step 3: 여백 설정 */
@@ -1638,7 +1640,9 @@ function addVisualText() {
   sectionData.section_visual.mvisual_texts.push({
     index: newIdx + 1,
     pcText: '새로운 제목 ' + (newIdx + 1),
+    pcHtml: '',  /* 포맷팅 포함 HTML */
     mText: '새로운 제목<br>' + (newIdx + 1),
+    mHtml: '',   /* 포맷팅 포함 HTML */
     fontFamily: 'inherit',
     fontWeight: '400',
     /* Step 3: 여백 기본값 */
@@ -1697,8 +1701,10 @@ function updateVisualText(idx, type, val) {
 
   if (type === 'pc') {
     texts[idx].pcText = val;
+    texts[idx].pcHtml = '';  /* 좌측 패널 수정 시 HTML 초기화 (포맷팅 리셋) */
   } else if (type === 'm') {
     texts[idx].mText = val;
+    texts[idx].mHtml = '';   /* 좌측 패널 수정 시 HTML 초기화 (포맷팅 리셋) */
   }
   renderVisualTexts();
   saveState();
@@ -1731,19 +1737,27 @@ function renderVisualTexts() {
 
     var pcDiv = doc.createElement('div');
     pcDiv.className = 'mvisual-text-pc d-xxs-none d-lg-block';
-    pcDiv.setAttribute('contenteditable', 'true');
-    pcDiv.setAttribute('data-builder-field', 'mvisual_text_' + (i+1) + '_pc');
-    pcDiv.textContent = textData.pcText || '';
+    pcDiv.setAttribute('data-builder-section', 'section_visual');
+    pcDiv.setAttribute('data-builder-field', 'mvisual_texts.' + i + '.pcHtml');
+    pcDiv.setAttribute('data-builder-prop', 'innerHTML');
+    /* 포맷팅이 저장된 HTML이 있으면 사용, 아니면 텍스트 fallback */
+    pcDiv.innerHTML = textData.pcHtml || textData.pcText || '';
     if (textData.fontFamily) pcDiv.style.fontFamily = textData.fontFamily;
     if (textData.fontWeight) pcDiv.style.fontWeight = textData.fontWeight;
+    /* 편집 모드 중이면 즉시 blur 리스너 attach */
+    if (editMode) makeEditable(pcDiv, 'section_visual', 'mvisual_texts.' + i + '.pcHtml', 'innerHTML');
 
     var mDiv = doc.createElement('div');
     mDiv.className = 'mvisual-text-m d-xxs-block d-lg-none';
-    mDiv.setAttribute('contenteditable', 'true');
-    mDiv.setAttribute('data-builder-field', 'mvisual_text_' + (i+1) + '_m');
-    mDiv.innerHTML = textData.mText || '';
+    mDiv.setAttribute('data-builder-section', 'section_visual');
+    mDiv.setAttribute('data-builder-field', 'mvisual_texts.' + i + '.mHtml');
+    mDiv.setAttribute('data-builder-prop', 'innerHTML');
+    /* 포맷팅이 저장된 HTML이 있으면 사용, 아니면 텍스트 fallback */
+    mDiv.innerHTML = textData.mHtml || textData.mText || '';
     if (textData.fontFamily) mDiv.style.fontFamily = textData.fontFamily;
     if (textData.fontWeight) mDiv.style.fontWeight = textData.fontWeight;
+    /* 편집 모드 중이면 즉시 blur 리스너 attach */
+    if (editMode) makeEditable(mDiv, 'section_visual', 'mvisual_texts.' + i + '.mHtml', 'innerHTML');
 
     div.appendChild(pcDiv);
     div.appendChild(mDiv);
