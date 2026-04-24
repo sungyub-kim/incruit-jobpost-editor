@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.7</span>
+  <span id="ver-badge" title="배포 버전">v0.15.8</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3694,6 +3694,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 13:53 (v0.15.8)',
+    items: [
+      '<strong>[v0.15.8]</strong> 메인 비주얼 포맷팅 정리 완성: <font> 태그 제거 + nested span 완전 제거',
+      '<strong>[v0.15.8]</strong> cleanupFormattingInElement: 새로운 정리 함수 추가 — font 태그 unwrap + nested [data-fmt-*] span 통합',
+      '<strong>[v0.15.8]</strong> onEditableBlur: blur 시점에 정리 함수 호출 → 저장되는 HTML은 항상 깔끔함',
+      '<strong>[v0.15.8]</strong> collectEditableValues: 값 수집 전 정리 함수 호출 → 내보내기 시에도 깔끔한 HTML',
+      '<strong>[v0.15.8]</strong> execFmtFontName/Weight/Size: 포맷팅 직후 정리 함수 호출 → 즉시 반복 포맷팅 가능',
+      '<strong>[v0.15.8]</strong> 결과: font 태그 완전 제거, 같은 속성 반복 생성 안됨, 모든 시점에서 HTML 정리됨',
+    ]
+  },
   {
     date: '2026.04.24 13:41 (v0.15.7)',
     items: [
