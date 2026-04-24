@@ -375,7 +375,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.2</span>
+  <span id="ver-badge" title="배포 버전">v0.15.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3432,6 +3432,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 12:59 (v0.15.3)',
+    items: [
+      '<strong>[v0.15.3]</strong> 메인 비주얼 Step 3–요소 여백 설정: margin/padding 상하좌우 독립 설정',
+      '<strong>[v0.15.3]</strong> updateVisualElementSpacing: margin/padding top/bottom/left/right 값 업데이트',
+      '<strong>[v0.15.3]</strong> renderVisualTexts: 여백 값을 div inline style로 적용',
+      '<strong>[v0.15.3]</strong> 편집 패널: margin 섹션 + padding 섹션 (각 4개 입력 필드)',
+    ]
+  },
   {
     date: '2026.04.24 12:57 (v0.15.2)',
     items: [
