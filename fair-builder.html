@@ -136,7 +136,11 @@
     .ep-hover-sub { padding-left: 10px; border-left: 2px solid #2e3a52; margin-top: 6px; }
     .ep-textarea { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 7px; resize: vertical; outline: none; box-sizing: border-box; min-height: 76px; }
     .ep-textarea:focus { border-color: #0066cc; }
-    .ep-repeater-label { font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 4px 0; }
+    .ep-repeater-label { font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 4px 0; display: flex; justify-content: space-between; align-items: center; }
+    .ep-add-btn { background: #059669; color: #fff; border: none; border-radius: 4px; font-size: 10px; padding: 3px 8px; cursor: pointer; transition: background .15s; }
+    .ep-add-btn:hover { background: #047857; }
+    .ep-remove-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; padding: 0; margin-left: 4px; transition: color .15s; }
+    .ep-remove-btn:hover { color: #dc2626; }
 
     /* 버튼 설정 패널 */
     #btn-settings-panel .bsp-input { width: 100%; background: #0d1117; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 8px; outline: none; box-sizing: border-box; }
@@ -1106,6 +1110,53 @@ function updateField(sectionId, path, val) {
   applyFieldsToPreview(sectionId);
 }
 
+/* S3: Repeater 아이템 추가 */
+function addRepeaterItem(sectionId, fieldKey) {
+  if (!sectionData[sectionId]) sectionData[sectionId] = {};
+  if (!sectionData[sectionId][fieldKey]) sectionData[sectionId][fieldKey] = [];
+  var arr = sectionData[sectionId][fieldKey];
+  var schema = FAIR_BUILDER_SCHEMA[sectionId];
+  var field = schema ? schema.fields[fieldKey] : null;
+  if (!field || field.type !== 'repeater') return;
+  if (arr.length >= field.maxItems) return; // maxItems 체크
+
+  // 새 아이템 객체 생성 (기본값 적용)
+  var newItem = {};
+  Object.keys(field.fields).forEach(function(sfk) {
+    newItem[sfk] = field.fields[sfk].default || '';
+  });
+  arr.push(newItem);
+  saveState();
+  applyFieldsToPreview(sectionId);
+  // 드로어 갱신
+  if (openEditPanelId === sectionId) {
+    var body = document.getElementById('edit-drawer-body');
+    if (body) {
+      loadFieldsFromPreview(sectionId);
+      body.innerHTML = buildSectionPanel(sectionId);
+      body.scrollTop = body.scrollHeight;
+    }
+  }
+}
+
+/* S3: Repeater 아이템 제거 */
+function removeRepeaterItem(sectionId, fieldKey, itemIndex) {
+  if (!sectionData[sectionId] || !sectionData[sectionId][fieldKey]) return;
+  var arr = sectionData[sectionId][fieldKey];
+  if (arr.length <= 1) return; // 최소 1개 유지
+  arr.splice(itemIndex, 1);
+  saveState();
+  applyFieldsToPreview(sectionId);
+  // 드로어 갱신
+  if (openEditPanelId === sectionId) {
+    var body = document.getElementById('edit-drawer-body');
+    if (body) {
+      loadFieldsFromPreview(sectionId);
+      body.innerHTML = buildSectionPanel(sectionId);
+    }
+  }
+}
+
 /* ── 섹션 편집 폼 빌더 ── */
 function buildSectionPanel(sectionId) {
   var schema = FAIR_BUILDER_SCHEMA[sectionId];
@@ -1119,9 +1170,17 @@ function buildSectionPanel(sectionId) {
     if (!map[fk]) return; // DOM_MAP에 없는 필드는 폼에서 제외
     if (field.type === 'repeater') {
       var items = data[fk] || [];
-      h += '<div class="ep-repeater-label">' + field.label + '</div>';
+      h += '<div class="ep-repeater-label">' + field.label;
+      if (items.length < field.maxItems) {
+        h += ' <button class="ep-add-btn" onclick="addRepeaterItem(\'' + sectionId + '\',\'' + fk + '\')">+ 추가</button>';
+      }
+      h += '</div>';
       items.forEach(function(item, i) {
-        h += '<div class="ep-btn-card"><div class="ep-btn-header">' + field.itemLabel + ' ' + (i + 1) + '</div>';
+        h += '<div class="ep-btn-card"><div class="ep-btn-header">' + field.itemLabel + ' ' + (i + 1);
+        if (items.length > 1) {
+          h += ' <button class="ep-remove-btn" onclick="event.stopPropagation();removeRepeaterItem(\'' + sectionId + '\',\'' + fk + '\',' + i + ')">✕</button>';
+        }
+        h += '</div>';
         Object.keys(field.fields).forEach(function(sfk) {
           if (field.fields[sfk].type === 'repeater') return;
           if (!map[fk]._repeater || !map[fk].fields || !map[fk].fields[sfk]) return; // 리피터 내 미매핑 필드 제외
