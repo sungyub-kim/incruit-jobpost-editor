@@ -2263,6 +2263,11 @@ function cleanupFormattingInElement(el) {
       span.parentNode.removeChild(span);
     }
   });
+
+  /* 4. contenteditable 요소 자체의 폰트 리셋 (자식 요소들이 부모 폰트를 상속받지 않도록) */
+  el.style.fontFamily = 'inherit';
+  el.style.fontWeight = 'normal';
+  el.style.fontSize = 'inherit';
 }
 
 function execFmt(cmd, value) {
@@ -2950,6 +2955,12 @@ function injectEditModeCSS(doc) {
   var s = doc.createElement('style');
   s.id = 'builder-edit-css';
   s.textContent =
+    /* 포맷팅 span 스타일 보호: inline style이 CSS 규칙을 override하도록 강제 */
+    '[data-fmt-font]{font-family:inherit!important;}[data-fmt-font] *{font-family:inherit!important;}' +
+    '[data-fmt-size]{font-size:inherit!important;}[data-fmt-size] *{font-size:inherit!important;}' +
+    '[data-fmt-weight]{font-weight:inherit!important;}[data-fmt-weight] *{font-weight:inherit!important;}' +
+    /* contenteditable 요소 자체: 폰트 리셋 */
+    '[data-builder-section="section_visual"][contenteditable]{font-family:inherit!important;font-weight:normal!important;}' +
     '.builder-edit-mode [data-editable]{' +
       'outline:2px dashed rgba(0,102,204,.45)!important;' +
       'outline-offset:2px;cursor:text;border-radius:2px;' +
