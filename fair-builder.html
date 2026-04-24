@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.12</span>
+  <span id="ver-badge" title="배포 버전">v0.15.13</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -499,7 +499,7 @@
       <div class="fmt-divider"></div>
       <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="서식 전체 제거" onmousedown="event.preventDefault()" onclick="execFmt('removeFormat')">서식제거</button>
       <div class="fmt-divider"></div>
-      <select id="fmt-font" class="fmt-select" title="폰트" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontName(this.value)">
+      <select id="fmt-font" class="fmt-select" title="폰트" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontName(this.value);updateFmtWeightOptions()">
         <option value="">폰트</option>
         <option value="'Noto Sans KR','Noto Sans',sans-serif">나눔고딕</option>
         <option value="'Noto Serif KR','Noto Serif',serif">나눔명조</option>
@@ -511,6 +511,18 @@
         <option value="'Malgun Gothic',sans-serif">맑은 고딕</option>
         <option value="Arial,sans-serif">Arial</option>
         <option value="Georgia,serif">Georgia</option>
+      </select>
+      <select id="fmt-weight" class="fmt-select" title="굵기" onmousedown="saveIframeSelection()" onchange="restoreIframeSelection();execFmtFontWeight(this.value)">
+        <option value="">굵기</option>
+        <option value="100">100</option>
+        <option value="200">200</option>
+        <option value="300">300</option>
+        <option value="400" selected>400</option>
+        <option value="500">500</option>
+        <option value="600">600</option>
+        <option value="700">700</option>
+        <option value="800">800</option>
+        <option value="900">900</option>
       </select>
       <input id="fmt-size" class="fmt-input-num" type="number" min="8" max="200" value="16" title="폰트 크기(px)"
         onmousedown="saveIframeSelection()"
@@ -2228,34 +2240,74 @@ function applyUnifiedFormatting(styleProp, styleValue) {
 
   if (range.collapsed) return;
 
-  /* 선택된 범위 내에서 data-fmt-unified span 찾기 */
-  var commonAncestor = range.commonAncestorContainer;
-  var ancestorElement = commonAncestor.nodeType === 3 ? commonAncestor.parentElement : commonAncestor;
-  var existingSpan = ancestorElement ? ancestorElement.closest('[data-fmt-unified]') : null;
+  var cssProp = styleProp.replace(/([A-Z])/g, '-$1').toLowerCase();
 
-  /* 기존 span이 있고 선택이 완전히 그 안에 있으면: style만 업데이트 */
-  if (existingSpan && existingSpan.contains(range.startContainer) && existingSpan.contains(range.endContainer)) {
-    /* 모든 포맷팅 스타일은 !important 필수 (전역 * !important 규칙 대응) */
-    var cssProp = styleProp.replace(/([A-Z])/g, '-$1').toLowerCase();
-    existingSpan.style.setProperty(cssProp, styleValue, 'important');
+  /* 양쪽 끝에서 조상 [data-fmt-unified] span 찾기 */
+  var startEl = range.startContainer.nodeType === 3
+    ? range.startContainer.parentElement
+    : range.startContainer;
+  var endEl = range.endContainer.nodeType === 3
+    ? range.endContainer.parentElement
+    : range.endContainer;
+  var startSpan = startEl ? startEl.closest('[data-fmt-unified]') : null;
+  var endSpan = endEl ? endEl.closest('[data-fmt-unified]') : null;
+
+  /* 케이스 1: 선택이 같은 data-fmt-unified span 내부에 있음 → style만 업데이트 */
+  if (startSpan && startSpan === endSpan) {
+    startSpan.style.setProperty(cssProp, styleValue, 'important');
+    /* selection을 span 전체로 확장 + _savedRange 업데이트 (다음 호출에서 유지) */
+    var keepRange = doc.createRange();
+    keepRange.selectNodeContents(startSpan);
     selection.removeAllRanges();
+    selection.addRange(keepRange);
+    _savedRange = keepRange.cloneRange();
     return;
   }
 
-  /* 새로운 span 생성 (처음 한 번만) */
+  /* 케이스 2: 새 span 생성 — range 내 nested span의 style을 병합 */
   var contents = range.extractContents();
+
+  /* 추출된 콘텐츠에 이미 [data-fmt-unified] span이 있으면 unwrap + style 병합 */
+  var inheritedStyles = {};
+  if (contents.querySelectorAll) {
+    var nestedList = contents.querySelectorAll('[data-fmt-unified]');
+    Array.prototype.forEach.call(nestedList, function(nested) {
+      for (var i = 0; i < nested.style.length; i++) {
+        var prop = nested.style[i];
+        /* 덮어쓰기 아닌 보존: 기존에 없으면 채움 */
+        if (!(prop in inheritedStyles)) {
+          inheritedStyles[prop] = nested.style.getPropertyValue(prop);
+        }
+      }
+      /* nested unwrap */
+      while (nested.firstChild) {
+        nested.parentNode.insertBefore(nested.firstChild, nested);
+      }
+      nested.parentNode.removeChild(nested);
+    });
+  }
+
   var span = doc.createElement('span');
   span.setAttribute('data-fmt-unified', 'true');
-  /* 모든 포맷팅 스타일은 !important 필수 (전역 * !important 규칙 대응) */
-  var cssProp = styleProp.replace(/([A-Z])/g, '-$1').toLowerCase();
+  /* 기존 스타일 먼저 복원 */
+  Object.keys(inheritedStyles).forEach(function(prop) {
+    span.style.setProperty(prop, inheritedStyles[prop], 'important');
+  });
+  /* 이번 호출의 속성으로 덮어쓰기 */
   span.style.setProperty(cssProp, styleValue, 'important');
   span.appendChild(contents);
 
   range.insertNode(span);
+
+  /* selection을 새 span 내부로 업데이트 + _savedRange 동기화 */
+  var newRange = doc.createRange();
+  newRange.selectNodeContents(span);
   selection.removeAllRanges();
+  selection.addRange(newRange);
+  _savedRange = newRange.cloneRange();
 }
 
-/* contenteditable 포맷팅 정리: <font> 태그만 제거 (data-fmt-unified는 유지) */
+/* contenteditable 포맷팅 정리: <font> 태그 제거 + nested [data-fmt-unified] 병합 + 빈 span 제거 */
 function cleanupFormattingInElement(el) {
   if (!el) return;
 
@@ -2267,7 +2319,26 @@ function cleanupFormattingInElement(el) {
     font.parentNode.removeChild(font);
   });
 
-  /* 2. 비어있는 data-fmt-unified span 제거 */
+  /* 2. nested [data-fmt-unified] 병합: 부모 span에 없는 style만 자식에서 옮기고 자식은 unwrap */
+  /* 안쪽부터 처리하기 위해 뒤집음 — 가장 깊은 nested부터 바깥쪽으로 정리 */
+  var nestedSelector = '[data-fmt-unified] [data-fmt-unified]';
+  var nestedList = Array.prototype.slice.call(el.querySelectorAll(nestedSelector));
+  nestedList.reverse().forEach(function(inner) {
+    var outer = inner.parentElement.closest('[data-fmt-unified]');
+    if (!outer) return;
+    /* 자식(inner)의 style을 부모(outer)에 반영 — 자식 스타일이 더 우선(나중에 적용된 것) */
+    for (var i = 0; i < inner.style.length; i++) {
+      var prop = inner.style[i];
+      outer.style.setProperty(prop, inner.style.getPropertyValue(prop), 'important');
+    }
+    /* inner unwrap */
+    while (inner.firstChild) {
+      inner.parentNode.insertBefore(inner.firstChild, inner);
+    }
+    inner.parentNode.removeChild(inner);
+  });
+
+  /* 3. 비어있는 data-fmt-unified span 제거 */
   el.querySelectorAll('[data-fmt-unified]').forEach(function(span) {
     if (!span.textContent.trim() && !span.querySelector('img')) {
       while (span.firstChild) {
@@ -3598,6 +3669,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 14:31 (v0.15.13)',
+    items: [
+      '<strong>[v0.15.13]</strong> 포맷팅 3가지 핵심 문제 해결',
+      '<strong>[v0.15.13]</strong> 굵기 UI 복원: 툴바에 `&lt;select id="fmt-weight"&gt;` 복원 + fmt-font onchange에 updateFmtWeightOptions() 호출 복원 (과거 be05aea 커밋에서 실수로 삭제됨)',
+      '<strong>[v0.15.13]</strong> 무한 span 증식 해결: applyUnifiedFormatting 종료 시 selection을 새 span 내부로 업데이트 + _savedRange 동기화 → color picker 연속 oninput에서도 기존 span 재사용',
+      '<strong>[v0.15.13]</strong> nested span 병합: applyUnifiedFormatting이 추출된 콘텐츠의 nested span style을 흡수하여 단일 span으로 통합',
+      '<strong>[v0.15.13]</strong> cleanupFormattingInElement 강화: nested [data-fmt-unified] 자동 병합(안쪽 스타일 바깥으로 이동 후 unwrap) + 빈 span 제거',
+      '<strong>[v0.15.13]</strong> 결과: 색상/배경/행간 반복 변경 시 span 1개 유지, 굵기 기능 복원, 색상 올바르게 적용',
+    ]
+  },
   {
     date: '2026.04.24 14:05 (v0.15.12)',
     items: [
