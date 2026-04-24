@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.14</span>
+  <span id="ver-badge" title="배포 버전">v0.15.15</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2938,8 +2938,6 @@ function injectEditModeCSS(doc) {
   s.textContent =
     /* 통합 포맷팅 span: inline style 보호 */
     '[data-fmt-unified]{display:inline;white-space:normal;}' +
-    /* contenteditable: 부모 스타일 상속 방지 */
-    '[data-builder-section="section_visual"][contenteditable]{font-family:inherit!important;font-weight:normal!important;}' +
     '.builder-edit-mode [data-editable]{' +
       'outline:2px dashed rgba(0,102,204,.45)!important;' +
       'outline-offset:2px;cursor:text;border-radius:2px;' +
@@ -3684,6 +3682,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.24 14:44 (v0.15.15)',
+    items: [
+      '<strong>[v0.15.15]</strong> injectEditModeCSS에서 불필요한 CSS 규칙 제거',
+      '<strong>[v0.15.15]</strong> 제거된 규칙: `[data-builder-section="section_visual"][contenteditable] { font-family:inherit!important; font-weight:normal!important; }`',
+      '<strong>[v0.15.15]</strong> 이유: v0.15.11+에서 inline span에 직접 !important를 주는 방식으로 전환되어 이 CSS는 더 이상 필요 없고, contenteditable 요소의 폰트를 강제로 inherit/normal로 만들어 포맷팅과 충돌',
+      '<strong>[v0.15.15]</strong> 결과: DevTools에서 `font-family: inherit !important` 규칙 사라짐 확인 가능',
+    ]
+  },
   {
     date: '2026.04.24 14:37 (v0.15.14)',
     items: [
