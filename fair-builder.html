@@ -233,6 +233,11 @@
     .ep-adv-row select:focus { border-color: #3b82f6; outline: none; }
     .ep-adv-value { color: #6b7280; font-size: 10px; }
 
+    /* Adv: 템플릿 저장/적용 */
+    .ep-template-group { margin-top: 14px; padding-top: 12px; border-top: 1px solid #2e3a52; display: flex; gap: 6px; }
+    .ep-template-btn { flex: 1; background: #1e3a8a; border: 1px solid #3b82f6; color: #93c5fd; font-size: 11px; padding: 8px 10px; border-radius: 4px; cursor: pointer; transition: all .2s; }
+    .ep-template-btn:hover { background: #1e40af; border-color: #60a5fa; }
+
     /* M1: 프로젝트 패널 */
     #top-bar .btn-project { background: transparent; border: 1px solid #2e3a52; color: #93c5fd; font-size: 11px; padding: 3px 10px; }
     #top-bar .btn-project:hover { border-color: #93c5fd; background: rgba(147,197,253,.08); }
@@ -533,6 +538,7 @@ var sectionBgColors = {};
 var sectionBgImages = {};  /* ST2: 섹션 배경 이미지 URL */
 var sectionSpacing = {};   /* ST1: { sId: { pt, pb, mpt, mpb } } */
 var sectionAdvancedStyles = {};  /* ST4: { sId: { borderColor, borderWidth, borderStyle, shadowColor, shadowBlur, shadowSpread, shadowX, shadowY, opacity } } */
+var sectionTemplates = {};  /* Adv: { templateId: { sectionId, sectionData, bgColor, bgImage, spacing, advancedStyles, buttonStyles, timestamp, name } } */
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
@@ -643,6 +649,7 @@ function saveState() {
     sectionData:    sectionData,
     posterConfig:   posterConfig,
     previewBreakpoint: previewBreakpoint,
+    sectionTemplates: sectionTemplates,
     navLinks:       navLinks,
     joblistTabs:    joblistTabs
   }));
@@ -709,6 +716,7 @@ function loadState() {
     if (s.logoImages)      { logoImages = Object.assign({ logo1:'', logo2:'' }, s.logoImages); }
     if (s.exportSettings)  { exportSettings = Object.assign({ imgBasePath:'/ui/static/image/specialty/', fairName:'' }, s.exportSettings); }
     if (s.previewBreakpoint) { setPreviewBreakpoint(s.previewBreakpoint); }
+    if (s.sectionTemplates) { sectionTemplates = s.sectionTemplates; }
   } catch(e) {}
 }
 
@@ -929,6 +937,66 @@ function setPreviewBreakpoint(bp) {
     btn.classList.toggle('active', btn.dataset.bp === bp);
   });
   saveState();
+}
+
+/* Adv: 컴포넌트 템플릿 저장/로드 */
+function saveSectionTemplate(sectionId) {
+  var name = prompt('템플릿 이름을 입력하세요 (예: "포스터 스타일 1"):', sectionId + '_' + new Date().getTime());
+  if (!name) return;
+
+  var templateId = 'template_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  sectionTemplates[templateId] = {
+    sectionId: sectionId,
+    sectionData: JSON.parse(JSON.stringify(sectionData[sectionId] || {})),
+    bgColor: sectionBgColors[sectionId] || '',
+    bgImage: sectionBgImages[sectionId] || '',
+    spacing: JSON.parse(JSON.stringify(sectionSpacing[sectionId] || {})),
+    advancedStyles: JSON.parse(JSON.stringify(sectionAdvancedStyles[sectionId] || {})),
+    buttonStyles: sectionId === 'section_gradient' ? JSON.parse(JSON.stringify(buttonStyles || [])) : [],
+    timestamp: new Date().toLocaleString('ko-KR'),
+    name: name
+  };
+
+  saveState();
+  alert('템플릿이 저장되었습니다: ' + name);
+}
+
+function applySectionTemplate(sectionId) {
+  if (!Object.keys(sectionTemplates).length) {
+    alert('저장된 템플릿이 없습니다. 먼저 다른 섹션에서 템플릿을 저장하세요.');
+    return;
+  }
+
+  var opts = Object.keys(sectionTemplates).map(function(tId) {
+    var t = sectionTemplates[tId];
+    return '[' + t.sectionId + '] ' + t.name + ' (' + t.timestamp + ')';
+  }).join('\n');
+
+  var idx = prompt('적용할 템플릿을 선택하세요 (0부터 시작):\n\n' + opts + '\n\n번호를 입력:');
+  if (idx === null) return;
+
+  var keys = Object.keys(sectionTemplates);
+  var templateId = keys[parseInt(idx, 10)];
+  if (!templateId || !sectionTemplates[templateId]) {
+    alert('유효하지 않은 선택입니다.');
+    return;
+  }
+
+  var template = sectionTemplates[templateId];
+  sectionData[sectionId] = JSON.parse(JSON.stringify(template.sectionData));
+  sectionBgColors[sectionId] = template.bgColor;
+  sectionBgImages[sectionId] = template.bgImage;
+  sectionSpacing[sectionId] = JSON.parse(JSON.stringify(template.spacing));
+  sectionAdvancedStyles[sectionId] = JSON.parse(JSON.stringify(template.advancedStyles));
+
+  if (sectionId === 'section_gradient' && template.buttonStyles.length) {
+    buttonStyles = JSON.parse(JSON.stringify(template.buttonStyles));
+  }
+
+  saveState();
+  applyToPreview();
+  closeEditDrawer();
+  alert('템플릿이 적용되었습니다: ' + template.name);
 }
 
 function toggleSection(id, val) {
@@ -1267,6 +1335,11 @@ function buildSectionPanel(sectionId) {
   h += buildColorPanel(sectionId);
   h += buildSpacingPanel(sectionId);
   h += buildAdvancedStylePanel(sectionId);
+  /* Adv: 템플릿 저장/적용 버튼 */
+  h += '<div class="ep-template-group">' +
+    '<button class="ep-template-btn" onclick="saveSectionTemplate(\'' + sectionId + '\')" title="현재 섹션의 필드+스타일을 템플릿으로 저장">💾 템플릿 저장</button>' +
+    '<button class="ep-template-btn" onclick="applySectionTemplate(\'' + sectionId + '\')" title="저장된 템플릿을 이 섹션에 적용">📋 템플릿 적용</button>' +
+  '</div>';
   return h;
 }
 
