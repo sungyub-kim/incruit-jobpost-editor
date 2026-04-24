@@ -1140,10 +1140,27 @@ function buildSectionPanel(sectionId) {
 function buildFieldInput(sectionId, path, field, val) {
   val = val !== undefined ? String(val) : (field.default || '');
   var cb = 'updateField(\'' + sectionId + '\',\'' + path + '\',this.value)';
-  var hint = (field.type === 'image') ? ' <span class="ep-hint">(경로)</span>' : (field.type === 'link') ? ' <span class="ep-hint">(URL)</span>' : '';
-  var label = '<label>' + field.label + hint + '</label>';
+  var label = '<label>' + field.label + '</label>';
+  var inputId = 'field-' + sectionId + '-' + path.replace(/\./g, '-');
+
   if (field.type === 'textarea') {
     return '<div class="ep-field">' + label + '<textarea class="ep-textarea" oninput="' + cb + '">' + esc(val) + '</textarea></div>';
+  } else if (field.type === 'image') {
+    var thumbId = 'thumb-' + inputId;
+    return '<div class="ep-field">' + label +
+      '<span class="ep-hint" style="display:block;margin-bottom:4px;">(이미지 경로 또는 파일 업로드)</span>' +
+      '<div class="ep-bgimg-row">' +
+        '<input type="text" class="ep-bgimg-input" id="' + inputId + '" value="' + esc(val) + '" placeholder="URL" oninput="' + cb + '">' +
+        '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
+          '<input type="file" accept="image/*" style="display:none" onchange="onFieldImgFile(this,\'' + sectionId + '\',\'' + path + '\')">' +
+        '</label>' +
+      '</div>' +
+      (val ? '<img id="' + thumbId + '" class="ep-bgimg-thumb" src="' + esc(val) + '">'
+           : '<img id="' + thumbId + '" class="ep-bgimg-thumb" style="display:none">') +
+    '</div>';
+  } else if (field.type === 'link') {
+    return '<div class="ep-field">' + label + '<span class="ep-hint" style="display:block;margin-bottom:4px;">(URL)</span>' +
+      '<input type="text" value="' + esc(val) + '" placeholder="https://..." oninput="' + cb + '"></div>';
   }
   return '<div class="ep-field">' + label + '<input type="text" value="' + esc(val) + '" oninput="' + cb + '"></div>';
 }
@@ -1275,6 +1292,24 @@ window.onVisualImgFile = function(input, idx) {
     var urlInput = document.getElementById('vi-url-' + idx);
     if (urlInput) urlInput.value = dataUrl;
     updateVisualImage(idx, dataUrl);
+  };
+  reader.readAsDataURL(file);
+};
+
+/* 2-3: 필드 이미지 파일 업로드 */
+window.onFieldImgFile = function(input, sectionId, path) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var dataUrl = ev.target.result;
+    var inputId = 'field-' + sectionId + '-' + path.replace(/\./g, '-');
+    var urlInput = document.getElementById(inputId);
+    if (urlInput) urlInput.value = dataUrl;
+    updateField(sectionId, path, dataUrl);
+    var thumbId = 'thumb-' + inputId;
+    var thumb = document.getElementById(thumbId);
+    if (thumb) { thumb.src = dataUrl; thumb.style.display = 'block'; }
   };
   reader.readAsDataURL(file);
 };
