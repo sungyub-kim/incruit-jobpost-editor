@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.21.5</span>
+  <span id="ver-badge" title="배포 버전">v0.21.6</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4118,6 +4118,26 @@ document.getElementById('preview-frame').addEventListener('load', function() {
     doc.querySelectorAll('.award-company-list').forEach(function(el) {
       if (el.parentNode) el.parentNode.removeChild(el);
     });
+    /* v0.21.6: 빈 sub-section을 광고형 마크업으로 자동 채움 (award-company-list 제거 후 잔여 컨테이너) */
+    doc.querySelectorAll('.sub-section').forEach(function(sub) {
+      var wr = sub.querySelector('.wr');
+      if (!wr) return;
+      /* 의미있는 자식 요소가 없으면 (빈 컨테이너) 채우기 */
+      var hasContent = false;
+      Array.prototype.forEach.call(wr.childNodes, function(n) {
+        if (n.nodeType === 1) hasContent = true;
+        else if (n.nodeType === 3 && n.textContent.trim()) hasContent = true;
+      });
+      if (hasContent) return;
+      /* 같은 iframe에서 광고형 reference 클론 */
+      var refAd = doc.querySelector('.n_job_list_new.highest');
+      if (refAd) {
+        var clone = refAd.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.style.removeProperty('display');
+        wr.appendChild(clone);
+      }
+    });
   } catch(e) {}
   applyToPreview();
   /* 저장된 CSS 색상 + 포스터 레이아웃 복원 */
@@ -4515,6 +4535,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 16:45 (v0.21.6)',
+    items: [
+      '<strong>[v0.21.6]</strong> 핫픽스: award-company-list 제거 후 빈 sub-section을 광고형 마크업으로 자동 채움',
+      '<strong>[v0.21.6]</strong> 사용자 보고: tt_cont1이 빈 컨테이너로 남아있음 → 광고형(.n_job_list_new.highest) reference 클론하여 채움',
+      '<strong>[v0.21.6]</strong> 빈 컨테이너 판정: 의미있는 자식 요소(text/element) 없을 때',
+      '<strong>[v0.21.6]</strong> 클론 시 id 제거(중복 방지) + display 강제 해제',
+    ]
+  },
   {
     date: '2026.04.27 16:35 (v0.21.5)',
     items: [
