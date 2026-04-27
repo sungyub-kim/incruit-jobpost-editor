@@ -673,14 +673,24 @@
       <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/18 (금)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행</div></div>
     </div>
 
-    <!-- W22 9/21~9/25: 오픈 베타 마무리 + 출시 -->
+    <!-- W22 9/21~9/25: 오픈 베타 마무리 + 출시 + 추석 휴일 -->
     <div class="ts-row">
       <div class="ts-week"><div class="w-num">W22</div><div class="w-date">9/21~9/25</div></div>
       <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/21 (월)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 6일차</div></div>
       <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/22 (화)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 종료 + 최종 피드백</div></div>
       <div class="ts-cell milestone"><div class="date">9/23 (수)</div><span class="badge b-ms">MS</span><div class="task"><strong>2차 정식 출시 v2.0.0</strong></div></div>
-      <div class="ts-cell"><div class="date">9/24 (목)</div><span class="badge b-se">정리</span><div class="task">출시 후 모니터링</div></div>
-      <div class="ts-cell"><div class="date">9/25 (금)</div><span class="badge b-se">정리</span><div class="task">프로젝트 종료 회고</div></div>
+      <div class="ts-cell holiday"><div class="date">9/24 (목)</div><div class="task">추석 전날<br>휴무</div></div>
+      <div class="ts-cell holiday"><div class="date">9/25 (금)</div><div class="task">추석 당일<br>휴무</div></div>
+    </div>
+
+    <!-- W23 9/28~10/2: 추석 후 출시 모니터링 + 회고 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W23</div><div class="w-date">9/28~10/2</div></div>
+      <div class="ts-cell"><div class="date">9/28 (월)</div><span class="badge b-se">정리</span><div class="task">출시 후 모니터링 (추석 연휴 후)</div></div>
+      <div class="ts-cell"><div class="date">9/29 (화)</div><span class="badge b-se">정리</span><div class="task">출시 후 안정화</div></div>
+      <div class="ts-cell"><div class="date">9/30 (수)</div><span class="badge b-se">정리</span><div class="task">사용자 피드백 수집</div></div>
+      <div class="ts-cell"><div class="date">10/1 (목)</div><span class="badge b-se">정리</span><div class="task">개선 사항 정리</div></div>
+      <div class="ts-cell"><div class="date">10/2 (금)</div><span class="badge b-se">정리</span><div class="task"><strong>프로젝트 종료 회고</strong></div></div>
     </div>
   </div>
 
@@ -927,6 +937,35 @@
 </section>
 
 <script>
+/* ============================================================
+ * 휴일/연차 데이터 — 변경 시 이 배열만 수정하면 됨
+ * 한국 공휴일은 자동 반영, 개인 연차는 추가/제거 자유
+ * ============================================================ */
+var KOREAN_HOLIDAYS_2026 = [
+  { date: '2026-05-01', name: '근로자의 날' },
+  { date: '2026-05-05', name: '어린이날' },
+  { date: '2026-05-25', name: '부처님오신날 대체공휴일' },  // 5/24(일) 대체
+  { date: '2026-06-06', name: '현충일' },                   // 토요일, 영업일 영향 X
+  { date: '2026-08-15', name: '광복절' },                   // 토요일, 영업일 영향 X
+  { date: '2026-09-24', name: '추석 전날' },
+  { date: '2026-09-25', name: '추석 당일' },
+  { date: '2026-09-26', name: '추석 다음날' }               // 토요일, 영업일 영향 X
+];
+
+var PERSONAL_LEAVE_2026 = [
+  { date: '2026-05-04', name: '연휴 연차', tag: '연차' },   // 어린이날 연결
+  { date: '2026-05-28', name: '연차', tag: '연차' },
+  { date: '2026-05-29', name: '연차', tag: '연차' },
+  { date: '2026-06-03', name: '휴가', tag: '휴가' },
+  { date: '2026-06-04', name: '연차', tag: '연차' }
+];
+
+/* 헬퍼: 평일 영업일만 카운트 (휴일/연차 제외) */
+function isHoliday(dateStr) {
+  return KOREAN_HOLIDAYS_2026.some(function(h) { return h.date === dateStr; })
+      || PERSONAL_LEAVE_2026.some(function(l) { return l.date === dateStr; });
+}
+
 (function() {
   if (typeof Chart === 'undefined') return;
   Chart.defaults.font.family = "'Pretendard', sans-serif";

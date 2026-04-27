@@ -8,54 +8,59 @@
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1f2937; line-height: 1.6; padding: 24px; }
-  .container { max-width: 1200px; margin: 0 auto; }
-  header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: #fff; padding: 28px 36px; border-radius: 12px 12px 0 0; box-shadow: 0 4px 6px rgba(0,0,0,0.07); position: relative; }
-  header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; padding-right: 200px; }
-  header .meta { font-size: 13px; opacity: 0.9; }
-  .nav-link { position: absolute; top: 24px; right: 28px; display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #1e40af; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,0.18); transition: transform .15s; }
+  .container { max-width: 1100px; margin: 0 auto; }
+
+  /* Header */
+  header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: #fff; padding: 26px 36px; border-radius: 12px 12px 0 0; box-shadow: 0 4px 6px rgba(0,0,0,0.07); position: relative; }
+  header h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; padding-right: 130px; }
+  header .meta { font-size: 12px; opacity: 0.85; }
+  .nav-link { position: absolute; top: 22px; right: 28px; display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #1e40af; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,0.18); transition: transform .15s; }
   .nav-link:hover { transform: translateY(-1px); }
   .nav-link::after { content: "↗"; }
 
-  .week-card { background: #fff; padding: 24px 36px; border-bottom: 1px solid #e5e7eb; }
+  /* Week card */
+  .week-card { background: #fff; padding: 28px 36px; border-bottom: 1px solid #e5e7eb; }
   .week-card:last-of-type { border-radius: 0 0 12px 12px; border-bottom: none; }
-  .week-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #1e40af; }
-  .week-head h2 { font-size: 22px; font-weight: 700; color: #111827; }
-  .week-head .badges { display: flex; gap: 8px; }
-  .badge { background: #1e40af; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
-  .badge.green { background: #059669; }
-  .badge.amber { background: #d97706; }
-  .badge.gray { background: #6b7280; }
 
-  .summary { background: #ecfdf5; border-left: 3px solid #059669; padding: 14px 18px; margin-bottom: 16px; font-size: 14px; color: #065f46; }
-  .summary strong { color: #064e3b; }
+  .week-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 18px; }
+  .week-head h2 { font-size: 26px; font-weight: 800; color: #0f172a; letter-spacing: -0.5px; }
+  .week-head .ver-tag { font-size: 12px; color: #047857; background: #d1fae5; padding: 4px 10px; border-radius: 12px; font-weight: 600; }
 
-  .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin: 12px 0; }
-  .kpi { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; text-align: center; }
-  .kpi .label { font-size: 11px; color: #6b7280; }
-  .kpi .value { font-size: 22px; font-weight: 700; color: #1e40af; margin-top: 2px; }
-  .kpi .sub { font-size: 10px; color: #9ca3af; margin-top: 2px; }
-  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
-  .chart-box { background: #fafbfc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }
-  .chart-box .chart-title { font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 8px; text-align: center; }
-  .chart-box canvas { max-height: 240px; }
-  .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+  /* TL;DR */
+  .tldr { background: linear-gradient(135deg, #ecfdf5 0%, #f0fdf4 100%); border-left: 4px solid #059669; padding: 16px 20px; border-radius: 6px; margin-bottom: 20px; }
+  .tldr .tldr-label { font-size: 11px; color: #065f46; font-weight: 700; letter-spacing: 1px; margin-bottom: 4px; }
+  .tldr .tldr-text { font-size: 15px; color: #064e3b; font-weight: 500; line-height: 1.5; }
 
-  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
-  thead th { background: #f3f4f6; color: #374151; font-weight: 600; text-align: left; padding: 10px 12px; border-bottom: 2px solid #d1d5db; }
-  tbody td { padding: 10px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
-  tbody td.center { text-align: center; }
-  .progress { display: inline-block; min-width: 50px; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; text-align: center; }
-  .progress.done { background: #d1fae5; color: #065f46; }
-  .progress.partial { background: #fef3c7; color: #92400e; }
-  .progress.todo { background: #f3f4f6; color: #6b7280; }
+  /* KPI */
+  .kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 20px; }
+  .kpi { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 10px; padding: 16px 14px; text-align: center; }
+  .kpi.highlight { background: linear-gradient(180deg, #fef3c7 0%, #fff 100%); border-color: #fcd34d; }
+  .kpi .label { font-size: 11px; color: #6b7280; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; }
+  .kpi .value { font-size: 28px; font-weight: 800; color: #0f172a; margin-top: 4px; line-height: 1; }
+  .kpi .sub { font-size: 11px; color: #9ca3af; margin-top: 4px; }
+  .kpi.highlight .value { color: #b45309; }
 
-  h3 { font-size: 15px; font-weight: 600; color: #1f2937; margin: 18px 0 8px; padding-bottom: 6px; border-bottom: 1px solid #e5e7eb; }
-  ul { padding-left: 22px; line-height: 1.7; font-size: 13px; color: #374151; }
+  /* 진척률 큰 차트 */
+  .progress-section { display: grid; grid-template-columns: 2fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .chart-wrap { background: #fafbfc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 20px; }
+  .chart-wrap .chart-title { font-size: 13px; font-weight: 600; color: #4b5563; margin-bottom: 10px; }
+  .chart-wrap canvas { max-height: 200px; }
 
-  .alert { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 6px; padding: 12px 14px; font-size: 13px; color: #991b1b; margin-top: 12px; }
-  .alert strong { color: #7f1d1d; }
-  .next { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px 14px; font-size: 13px; color: #92400e; margin-top: 14px; }
-  .next strong { color: #78350f; }
+  /* 핵심 산출물 + 다음 주 — 2 컬럼 박스 */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 20px; }
+  .panel { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px 18px; }
+  .panel .panel-title { font-size: 13px; font-weight: 700; color: #1f2937; margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid #e5e7eb; }
+  .panel ul { list-style: none; padding-left: 0; }
+  .panel li { font-size: 13px; color: #374151; padding: 5px 0 5px 18px; position: relative; line-height: 1.5; }
+  .panel li:before { content: "▸"; position: absolute; left: 4px; color: #2563eb; font-weight: 700; }
+  .panel.next li:before { color: #d97706; }
+  .panel.next { background: linear-gradient(135deg, #fffbeb 0%, #fff 100%); border-color: #fcd34d; }
+  .panel.next .panel-title { color: #92400e; border-bottom-color: #fde68a; }
+
+  /* 이슈 */
+  .issue-box { background: #fef2f2; border: 1px solid #fca5a5; border-radius: 8px; padding: 14px 18px; margin-bottom: 16px; }
+  .issue-box .issue-title { font-size: 12px; font-weight: 700; color: #991b1b; margin-bottom: 6px; letter-spacing: 0.5px; }
+  .issue-box .issue-text { font-size: 13px; color: #7f1d1d; line-height: 1.6; }
 
   footer { text-align: center; padding: 14px; color: #9ca3af; font-size: 11px; }
 </style>
@@ -65,107 +70,86 @@
 
 <header>
   <a href="fair-roadmap.html" class="nav-link" target="_blank" rel="noopener">로드맵</a>
-  <h1>박람회 빌더 ─ 주간 업무 보고</h1>
-  <div class="meta">담당: 김성엽 · 최신 주가 상단 / 요청 시 업데이트</div>
+  <h1>주간 업무 보고</h1>
+  <div class="meta">담당: 김성엽 · 박람회 비주얼 빌더 · 최신 주가 상단</div>
 </header>
 
 <!-- ====================================================================== -->
-<!-- W1: 2026-04-27 (월) ~ 2026-05-01 (금) -->
+<!-- W1: 2026-04-27 ~ 04-30 -->
 <!-- ====================================================================== -->
 <div class="week-card">
   <div class="week-head">
-    <h2>W1 — 2026-04-27 ~ 04-30</h2>
-    <div class="badges">
-      <span class="badge green">진척 200%+</span>
-      <span class="badge">v0.16.0 → v0.20.1</span>
-      <span class="badge gray">14개 commit</span>
+    <h2>W1 — 04월 27일 ~ 04월 30일</h2>
+    <span class="ver-tag">달성률 270%</span>
+  </div>
+
+  <div class="tldr">
+    <div class="tldr-label">이번 주 핵심</div>
+    <div class="tldr-text">계획된 W1 일정에 더해 W2 + W3 nav까지 완료. 1차 빌더형 약 27% 진척. 자율 워크플로우 정착 + 글로벌 링크 정책 신설로 후속 작업 효율 상승 기대.</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="label">배포 버전</div>
+      <div class="value">14</div>
+      <div class="sub">개</div>
+    </div>
+    <div class="kpi">
+      <div class="label">기능 / 핫픽스</div>
+      <div class="value">9 / 5</div>
+      <div class="sub">건</div>
+    </div>
+    <div class="kpi highlight">
+      <div class="label">계획 대비</div>
+      <div class="value">270%</div>
+      <div class="sub">8건 → 22건</div>
+    </div>
+    <div class="kpi">
+      <div class="label">1차 진척</div>
+      <div class="value">27%</div>
+      <div class="sub">~7/8 출시</div>
     </div>
   </div>
 
-  <div class="summary">
-    <strong>이번 주 요약:</strong> W1 일정에 더해 W2 대부분 + W3 nav 작업까지 완료. 1차 빌더형 8주 일정 중 약 2~3주치 작업이 첫 주에 압축 처리됨. 자율 워크플로우 정착 + 글로벌 링크 정책 신설.
-  </div>
-
-  <div class="kpi-grid">
-    <div class="kpi"><div class="label">계획 영업일</div><div class="value">4일</div><div class="sub">5/1 휴무</div></div>
-    <div class="kpi"><div class="label">실제 진행일</div><div class="value">1일</div><div class="sub">4/27 압축</div></div>
-    <div class="kpi"><div class="label">배포 버전</div><div class="value">14개</div></div>
-    <div class="kpi"><div class="label">기능/핫픽스</div><div class="value">9 / 5</div></div>
-    <div class="kpi"><div class="label">달성률</div><div class="value">~270%</div><div class="sub">vs W1 계획</div></div>
-  </div>
-
-  <div class="chart-grid-3">
-    <div class="chart-box">
-      <div class="chart-title">계획 일정 진척률 (W1)</div>
-      <canvas id="chart-w20260427-progress"></canvas>
+  <div class="progress-section">
+    <div class="chart-wrap">
+      <div class="chart-title">계획 대비 실제 진행 (W1)</div>
+      <canvas id="chart-w1-progress"></canvas>
     </div>
-    <div class="chart-box">
+    <div class="chart-wrap">
       <div class="chart-title">분류별 비중</div>
-      <canvas id="chart-w20260427-pie"></canvas>
-    </div>
-    <div class="chart-box">
-      <div class="chart-title">작업 영역별 버전</div>
-      <canvas id="chart-w20260427-area"></canvas>
+      <canvas id="chart-w1-pie"></canvas>
     </div>
   </div>
 
-  <h3>일정 대비 진척</h3>
-  <table>
-    <thead>
-      <tr><th style="width:120px;">원래 일정</th><th>계획 작업</th><th style="width:90px;">진척</th><th>비고</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>W1 4/27~4/30</td><td>메인비주얼 텍스트 전환 + 웹폰트 + 섹션 추가/삭제 + AOS 설계</td><td class="center"><span class="progress done">완료</span></td><td>v0.16.0~0.17.1</td></tr>
-      <tr><td>W2 5/6~5/8</td><td>AOS 개별화 + 에디터 툴바 정비 + 행사안내 포스터 버그</td><td class="center"><span class="progress done">완료</span></td><td>v0.17.2~0.18.1</td></tr>
-      <tr><td>W3 5/11~5/13</td><td>nav 항목 관리 + hover + 클릭→편집</td><td class="center"><span class="progress done">완료</span></td><td>v0.19.0~0.20.0</td></tr>
-      <tr><td>W3 5/14~5/15</td><td>박람회 개요 (4순위)</td><td class="center"><span class="progress todo">보류</span></td><td>큰 리팩토링, 별도 결정</td></tr>
-      <tr><td>(추가)</td><td>글로벌 링크 target 정책 — nav + section_gradient 적용</td><td class="center"><span class="progress done">완료</span></td><td>v0.20.0~0.20.1</td></tr>
-    </tbody>
-  </table>
-
-  <h3>주요 산출물</h3>
-  <ul>
-    <li><strong>메인비주얼 강화</strong>: 이미지↔텍스트 전환, 웹폰트 5종 추가, AOS 16종 효과 개별 적용</li>
-    <li><strong>섹션 관리</strong>: 완전 제거 + 사용 가능한 풀 + 섹션명 양방향 동기화</li>
-    <li><strong>에디터 툴바 정비</strong>: 정렬 L/C/R 추가, ul/ol 제거, 메인비주얼 폰트 패널 정리</li>
-    <li><strong>repeater 자동 클론</strong>: +추가 클릭 시 5개 섹션 모두 새 DOM 자동 생성 (포스터/링크/탭/성공사례/참여기관)</li>
-    <li><strong>네비게이션 4건 일괄</strong>: 항목 추가/삭제, hover 색상 편집, # anchor 새창 차단, 편집모드 클릭→자동 포커스</li>
-    <li><strong>로드맵 보고서 + 빌더 링크 버튼</strong>: fair-roadmap.html 신규</li>
-    <li><strong>일일/주간 보고서 자동화</strong>: fair-daily-report.html, fair-weekly-report.html 신규</li>
-  </ul>
-
-  <h3>의사결정</h3>
-  <ul>
-    <li><strong>자율 워크플로우 도입</strong> — 1차 완료(6/19)까지 검수자/기획자/개발자 역할을 자체 순환. 사용자는 일괄 검수.</li>
-    <li><strong>링크 target 글로벌 정책</strong> — 모든 링크 입력 UI에 _self/_blank 옵션 필수.</li>
-    <li><strong>박람회 개요(4순위) 보류</strong> — PC/M 분리 + 요소 동적 등 큰 리팩토링이라 별도 결정 후 진행.</li>
-    <li><strong>채용관(5순위) 새 스펙</strong> — 기존 요구사항 폐기, on/off 토글 위주.</li>
-  </ul>
-
-  <h3>이슈 및 대응</h3>
-  <table>
-    <thead>
-      <tr><th style="width:80px;">코드</th><th>증상</th><th style="width:140px;">상태</th></tr>
-    </thead>
-    <tbody>
-      <tr><td>B-1</td><td>[data-fmt-unified] span 내부 부분 드래그 시 색상/배경이 span 전체 적용</td><td class="center"><span class="progress todo">미해결 (별도 Stage)</span></td></tr>
-      <tr><td>—</td><td>4/27 검수 회귀 5건 (select 가독성, 섹션 제거 시 영상 위치, 텍스트 재편집, nav navigation, 섹션명 동기화)</td><td class="center"><span class="progress done">v0.18.1 해결</span></td></tr>
-      <tr><td>—</td><td>4/27 검수 회귀 추가 2건 (텍스트 모드 이미지 미숨김, 토글 시각 강조)</td><td class="center"><span class="progress done">v0.17.4 해결</span></td></tr>
-    </tbody>
-  </table>
-
-  <div class="alert">
-    <strong>진척 우수, 단 검증 부족 위험:</strong> 14개 버전을 하루에 배포 → 자체 검수만 거침. 사용자 일괄 검수(1차 완료 시점)에서 누락 회귀가 발견될 수 있음. 다음 주부터 진행 속도를 살짝 늦추고 자체 검수 강화 권장.
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">🎯 핵심 산출물</div>
+      <ul>
+        <li>메인비주얼 강화 (이미지↔텍스트, 웹폰트 5종, AOS 효과)</li>
+        <li>섹션 관리 (제거/추가 풀, 섹션명 양방향 동기화)</li>
+        <li>에디터 툴바 정비 + repeater 자동 클론 5섹션</li>
+        <li>네비게이션 4건 일괄 (추가/삭제, hover, 편집)</li>
+        <li>로드맵 + 일일/주간 보고 + 자동화 정책 신설</li>
+      </ul>
+    </div>
+    <div class="panel next">
+      <div class="panel-title">📌 다음 주 (W2: 5/6~5/8)</div>
+      <ul>
+        <li>5/4(월), 5/5(화) 휴무 — 가용 영업일 3일</li>
+        <li>P4 W4 채용관 5순위 Stage 1 (1뎁스 탭 on/off)</li>
+        <li>또는 4/29 Stage 2 섹션 복제 (UUID 도입)</li>
+        <li>또는 W2 5/6 AOS Stage 2 (.poster-box 등 확장)</li>
+      </ul>
+    </div>
   </div>
 
-  <div class="next">
-    <strong>다음 주 계획 (W2: 5/2~5/8)</strong>
-    <ul style="margin-top:6px;color:#92400e;">
-      <li>5/4(월), 5/5(화) 휴무 (어린이날 연휴) — 가용 영업일 3일 (5/6~5/8)</li>
-      <li>P4 W4 채용관 5순위 Stage 1: 1뎁스 탭 on/off — 마크업 복잡, 종일급</li>
-      <li>또는 4/29 Stage 2 섹션 복제 (UUID 도입) — 종일급</li>
-      <li>또는 W2 5/6 AOS Stage 2: .poster-box 등 다른 섹션으로 AOS 확장</li>
-    </ul>
+  <div class="issue-box">
+    <div class="issue-title">⚠️ 위험 요소</div>
+    <div class="issue-text">
+      14개 버전을 하루에 배포 → 자체 검수만 거침. 사용자 일괄 검수(1차 완료 시점)에서 누락 회귀가 발견될 수 있음. 다음 주부터 진행 속도 조정 + 자체 검수 강화 권장.<br>
+      <strong>미해결 이슈</strong>: B-1 (컬러/배경이 span 전체 적용) — 큰 포맷팅 시스템 변경 필요, 별도 Stage.
+    </div>
   </div>
 </div>
 
@@ -178,72 +162,54 @@
   Chart.defaults.font.size = 11;
   Chart.defaults.color = '#374151';
 
-  /* W1 (2026-04-27): 계획 vs 실제 진척 */
-  var pEl = document.getElementById('chart-w20260427-progress');
+  /* W1 진척 */
+  var pEl = document.getElementById('chart-w1-progress');
   if (pEl) {
     new Chart(pEl, {
       type: 'bar',
       data: {
-        labels: ['W1 계획', 'W1 실제'],
+        labels: ['계획', '실제'],
         datasets: [{
-          label: '작업 항목 수',
           data: [8, 22],
-          backgroundColor: ['#9ca3af', '#059669'],
-          borderRadius: 4,
-          borderWidth: 0
+          backgroundColor: ['#cbd5e1', '#059669'],
+          borderRadius: 6,
+          borderWidth: 0,
+          barPercentage: 0.5
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true } }
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: function(ctx) { return ctx.parsed.y + '건'; } } }
+        },
+        scales: {
+          y: { beginAtZero: true, ticks: { callback: function(v) { return v + '건'; } } },
+          x: { grid: { display: false } }
+        }
       }
     });
   }
 
-  /* W1: 기능/핫픽스/정책 비중 */
-  var piEl = document.getElementById('chart-w20260427-pie');
-  if (piEl) {
-    new Chart(piEl, {
+  /* W1 분류별 도넛 */
+  var dEl = document.getElementById('chart-w1-pie');
+  if (dEl) {
+    new Chart(dEl, {
       type: 'doughnut',
       data: {
         labels: ['신규 기능', '검수 핫픽스', '정책/문서'],
         datasets: [{
           data: [9, 5, 3],
-          backgroundColor: ['#2563eb', '#f59e0b', '#10b981'],
+          backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
           borderWidth: 0
         }]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: { legend: { position: 'bottom' } },
-        cutout: '55%'
-      }
-    });
-  }
-
-  /* W1: 작업 영역별 막대 */
-  var aEl = document.getElementById('chart-w20260427-area');
-  if (aEl) {
-    new Chart(aEl, {
-      type: 'bar',
-      data: {
-        labels: ['메인비주얼', '섹션', '툴바', '네비', '정책'],
-        datasets: [{
-          label: '버전 수',
-          data: [3, 2, 2, 2, 2],
-          backgroundColor: ['#2563eb','#0891b2','#059669','#9333ea','#be185d'],
-          borderRadius: 4,
-          borderWidth: 0
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: { legend: { display: false } },
-        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 10, padding: 6, font: { size: 10 } } } },
+        cutout: '60%'
       }
     });
   }
