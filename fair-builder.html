@@ -390,7 +390,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.17.1</span>
+  <span id="ver-badge" title="배포 버전">v0.17.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -560,10 +560,13 @@
         onkeydown="if(event.key==='Enter'){event.preventDefault();restoreIframeSelection();execFmtLineHeight(this.value)}"
         onchange="restoreIframeSelection();execFmtLineHeight(this.value)">
       <div class="fmt-divider"></div>
+      <span class="fmt-label">정렬</span>
+      <button class="fmt-btn" style="font-size:10px;font-weight:600;" title="왼쪽 정렬" onmousedown="event.preventDefault()" onclick="execFmt('justifyLeft')">L</button>
+      <button class="fmt-btn" style="font-size:10px;font-weight:600;" title="가운데 정렬" onmousedown="event.preventDefault()" onclick="execFmt('justifyCenter')">C</button>
+      <button class="fmt-btn" style="font-size:10px;font-weight:600;" title="오른쪽 정렬" onmousedown="event.preventDefault()" onclick="execFmt('justifyRight')">R</button>
+      <div class="fmt-divider"></div>
       <span class="fmt-label">삽입</span>
       <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="단락(p) 삽입" onmousedown="event.preventDefault()" onclick="insertElement('p')">P</button>
-      <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="목록(ul/li) 삽입" onmousedown="event.preventDefault()" onclick="execFmt('insertUnorderedList')">• ul</button>
-      <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="번호 목록(ol/li) 삽입" onmousedown="event.preventDefault()" onclick="execFmt('insertOrderedList')">1. ol</button>
       <button class="fmt-btn" title="굵은 텍스트(&lt;strong&gt;)" onmousedown="event.preventDefault()" onclick="insertInlineEl('strong')"><strong style="font-size:11px;">str</strong></button>
       <button class="fmt-btn" title="강조 텍스트(&lt;em&gt;)" onmousedown="event.preventDefault()" onclick="insertInlineEl('em')"><em style="font-size:11px;">em</em></button>
       <button class="fmt-btn" style="font-size:10px;font-weight:400;" title="구분선(&lt;hr&gt;) 삽입" onmousedown="event.preventDefault()" onclick="execFmt('insertHorizontalRule')">hr</button>
@@ -1700,20 +1703,7 @@ function buildVisualPanel() {
     h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(' + activeIdx + ',\'pc\',this.value)"></div>';
     h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(' + activeIdx + ',\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
 
-    /* 폰트 선택 */
-    var fontFamily = activeText.fontFamily || 'inherit';
-    var fontWeight = activeText.fontWeight || '400';
-    h += '<div class="ep-field"><label>폰트</label>' +
-      '<select id="visual-font-select-' + activeIdx + '" onchange="updateVisualFontStyle(' + activeIdx + ')">' +
-        WEBFONTS.map(function(f) { return '<option value="' + f.family + '" ' + (fontFamily === f.family ? 'selected' : '') + '>' + f.name + '</option>'; }).join('') +
-      '</select></div>' +
-      '<div class="ep-field"><label>굵기</label>' +
-      '<select id="visual-weight-select-' + activeIdx + '" onchange="updateVisualFontStyle(' + activeIdx + ')">' +
-        (function() {
-          var currentFont = WEBFONTS.find(f => f.family === fontFamily) || WEBFONTS[0];
-          return currentFont.weights.map(function(w) { return '<option value="' + w + '" ' + (fontWeight === String(w) ? 'selected' : '') + '>' + w + '</option>'; }).join('');
-        })() +
-      '</select></div>';
+    /* v0.17.2: 폰트/굵기 패널 제거 — 에디터 툴바에서만 제어. 여기는 텍스트/여백만 */
 
     /* Step 3: 여백 설정 */
     h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #2e3a52;">' +
@@ -1806,12 +1796,21 @@ function buildVisualPanel() {
   return h;
 }
 
-/* Step 3: 요소 여백 업데이트 */
+/* Step 3: 요소 여백 업데이트
+ * v0.17.2: renderVisualTexts() 재호출 대신 해당 div의 style만 업데이트
+ *          → 미리보기에서 편집 중인 inline 포맷팅(아직 blur 미캡처)이 사라지지 않음
+ */
 function updateVisualElementSpacing(idx, prop, val) {
   var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
   if (!texts[idx]) return;
   texts[idx][prop] = val;
-  renderVisualTexts();
+
+  /* iframe 내 해당 .mvisual-text-N div의 style만 직접 업데이트 */
+  var doc = getPreviewDoc();
+  if (doc) {
+    var div = doc.querySelector('.mvisual-texts-container > .mvisual-text-' + (idx + 1));
+    if (div) div.style[prop] = val ? (val + 'px') : '';
+  }
   saveState();
 }
 
@@ -3956,6 +3955,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 12:20 (v0.17.2)',
+    items: [
+      '<strong>[v0.17.2]</strong> P1 W2 조기 진입: 에디터 툴바 정비 + 메인비주얼 패널 정리 + 여백 버그 수정',
+      '<strong>[v0.17.2]</strong> 에디터 툴바: 정렬 L / C / R 추가 (justifyLeft/Center/Right)',
+      '<strong>[v0.17.2]</strong> 에디터 툴바: ul / ol 버튼 제거 (박람회 페이지 디자인에서 의미 없음)',
+      '<strong>[v0.17.2]</strong> 메인비주얼 편집(PC): 폰트/굵기 패널 제거 → 에디터 툴바에서만 제어 (중복 UI 정리)',
+      '<strong>[v0.17.2]</strong> 여백 입력 시 인라인 포맷팅 사라짐 버그 수정: renderVisualTexts 재호출 대신 해당 div의 style만 직접 업데이트',
+    ]
+  },
   {
     date: '2026.04.27 12:06 (v0.17.1)',
     items: [
