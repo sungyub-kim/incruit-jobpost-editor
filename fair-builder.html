@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.21.3</span>
+  <span id="ver-badge" title="배포 버전">v0.21.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -834,7 +834,11 @@ function loadState() {
     if (s.joblistTabs) {
       joblistTabs = s.joblistTabs;
       /* v0.21.0: enabled 마이그레이션 — 기존 데이터에 없으면 true */
-      joblistTabs.forEach(function(t) { if (t.enabled === undefined) t.enabled = true; });
+      joblistTabs.forEach(function(t) {
+        if (t.enabled === undefined) t.enabled = true;
+        /* v0.21.4: boardType 마이그레이션 — 'list' (리스트형) 기본 */
+        if (t.boardType === undefined) t.boardType = 'list';
+      });
     }
     if (s.aosEnabled !== undefined)         aosEnabled         = s.aosEnabled;
     if (s.visualRightVisible !== undefined) visualRightVisible = s.visualRightVisible;
@@ -1045,9 +1049,10 @@ function readTabsFromPreview() {
   var labels = doc.querySelectorAll('[data-builder-section="section_joblist"] label.tab_item');
   if (!labels.length) return;
   joblistTabs = [];
-  labels.forEach(function(label) {
-    /* v0.21.0: enabled 기본 true */
-    joblistTabs.push({ name: label.textContent.trim(), enabled: true });
+  labels.forEach(function(label, i) {
+    /* v0.21.0: enabled 기본 true / v0.21.4: boardType 기본 list */
+    /* 첫 탭은 광고형(ad) 기본 — 기존 마크업 t_cont1 안에 광고형 있음 */
+    joblistTabs.push({ name: label.textContent.trim(), enabled: true, boardType: i === 0 ? 'ad' : 'list' });
   });
 }
 
@@ -1060,6 +1065,7 @@ function renderTabPanel() {
   } else {
     html = joblistTabs.map(function(tab, i) {
       var isActive = tab.enabled !== false;
+      var boardType = tab.boardType || 'list';
       return '<div class="logo-input-wrap" style="padding:6px 8px;position:relative;background:' + (isActive ? '' : '#0d1117') + ';opacity:' + (isActive ? '1' : '0.55') + ';">' +
         /* v0.21.0: 제거 버튼 (최소 2개 유지) */
         (joblistTabs.length > JOBLIST_TAB_MIN
@@ -1071,6 +1077,12 @@ function renderTabPanel() {
           '<label class="toggle" style="margin-left:auto;margin-right:24px;"><input type="checkbox" ' + (isActive ? 'checked' : '') + ' onchange="toggleJoblistTab(' + i + ',this.checked)"><span class="toggle-slider"></span></label>' +
         '</label>' +
         '<input type="text" value="' + esc(tab.name) + '" oninput="updateJoblistTab(' + i + ',this.value)">' +
+        /* v0.21.4: 게시판 타입 선택 (광고형 / 리스트형) */
+        '<label style="margin-top:6px;font-size:10px;color:#9ca3af;">게시판 형식</label>' +
+        '<div style="display:flex;gap:4px;margin-top:2px;">' +
+          '<button onclick="setJoblistBoardType(' + i + ',\'ad\')" style="flex:1;padding:5px;background:' + (boardType === 'ad' ? '#2563eb' : '#0f172a') + ';color:' + (boardType === 'ad' ? '#fff' : '#64748b') + ';border:1px solid ' + (boardType === 'ad' ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + (boardType === 'ad' ? '700' : '400') + ';">' + (boardType === 'ad' ? '✓ ' : '') + '🎯 광고형</button>' +
+          '<button onclick="setJoblistBoardType(' + i + ',\'list\')" style="flex:1;padding:5px;background:' + (boardType === 'list' ? '#2563eb' : '#0f172a') + ';color:' + (boardType === 'list' ? '#fff' : '#64748b') + ';border:1px solid ' + (boardType === 'list' ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + (boardType === 'list' ? '700' : '400') + ';">' + (boardType === 'list' ? '✓ ' : '') + '📋 리스트형</button>' +
+        '</div>' +
       '</div>';
     }).join('');
   }
@@ -1090,6 +1102,15 @@ function updateJoblistTab(i, val) {
   saveState();
 }
 
+/* v0.21.4: 탭별 게시판 형식 설정 (광고형 / 리스트형) */
+function setJoblistBoardType(i, type) {
+  if (!joblistTabs[i]) return;
+  joblistTabs[i].boardType = type;
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+
 /* v0.21.0: 탭 on/off 토글 */
 function toggleJoblistTab(i, enabled) {
   if (!joblistTabs[i]) return;
@@ -1103,7 +1124,7 @@ function toggleJoblistTab(i, enabled) {
 function addJoblistTab() {
   if (joblistTabs.length >= JOBLIST_TAB_MAX) { alert('최대 ' + JOBLIST_TAB_MAX + '개까지 추가 가능합니다.'); return; }
   var idx = joblistTabs.length + 1;
-  joblistTabs.push({ name: '탭 ' + idx, enabled: true });
+  joblistTabs.push({ name: '탭 ' + idx, enabled: true, boardType: 'list' });
   applyTabsToPreview();
   renderTabPanel();
   saveState();
@@ -1208,6 +1229,22 @@ function applyTabsToPreview() {
     inputs.forEach(function(inp) { inp.checked = false; });
     inputs[firstEnabledIdx].checked = true;
   }
+
+  /* v0.21.4: 탭별 게시판 형식 토글 — 각 tab_content 안의 광고형/리스트형 display 제어 */
+  joblistTabs.forEach(function(tab, i) {
+    if (!contents[i]) return;
+    var boardType = tab.boardType || 'list';
+    var adBoards   = contents[i].querySelectorAll('.n_job_list_new.highest');
+    var listBoards = contents[i].querySelectorAll('.cPrdlists_wrap');
+    adBoards.forEach(function(b) {
+      if (boardType === 'ad') b.style.removeProperty('display');
+      else b.style.setProperty('display', 'none', 'important');
+    });
+    listBoards.forEach(function(b) {
+      if (boardType === 'list') b.style.removeProperty('display');
+      else b.style.setProperty('display', 'none', 'important');
+    });
+  });
 }
 
 /* 공통: 고정 패널 토글 */
@@ -4466,6 +4503,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 16:30 (v0.21.4)',
+    items: [
+      '<strong>[v0.21.4]</strong> 채용관 5순위 Stage 4: 탭별 게시판 형식 선택 (광고형/리스트형)',
+      '<strong>[v0.21.4]</strong> joblistTabs 데이터 확장: boardType 추가 (default: 첫 탭 ad / 나머지 list) + 마이그레이션',
+      '<strong>[v0.21.4]</strong> 우측 드로어 탭 관리 UI: 각 탭에 🎯광고형 / 📋리스트형 토글 버튼 추가',
+      '<strong>[v0.21.4]</strong> applyTabsToPreview 확장: 각 tab_content 안의 .n_job_list_new.highest(광고형) / .cPrdlists_wrap(리스트형) display 토글',
+      '<strong>[v0.21.4]</strong> setJoblistBoardType(i, type) 함수 신규',
+      '<strong>[v0.21.4]</strong> 한계: 각 탭 마크업에 광고형/리스트형이 모두 있어야 토글 작동. 기존 t_cont2/3에는 리스트형만 있어 광고형 선택 시 표시 안 됨 (Stage 5에서 마크업 클론 처리 예정)',
+    ]
+  },
   {
     date: '2026.04.27 16:18 (v0.21.3)',
     items: [
