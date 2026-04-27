@@ -390,7 +390,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.17.4</span>
+  <span id="ver-badge" title="배포 버전">v0.18.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1670,6 +1670,41 @@ var WEBFONTS = [
   { name: '기본(상속)', family: "inherit", weights: [400] }
 ];
 
+/* v0.18.0: AOS 효과 옵션 (요소별 개별 적용용) */
+var AOS_EFFECTS = [
+  { value: '',              label: '(없음)' },
+  { value: 'fade',          label: 'Fade' },
+  { value: 'fade-up',       label: 'Fade ↑ 아래에서 위로' },
+  { value: 'fade-down',     label: 'Fade ↓ 위에서 아래로' },
+  { value: 'fade-left',     label: 'Fade ← 오른쪽에서' },
+  { value: 'fade-right',    label: 'Fade → 왼쪽에서' },
+  { value: 'zoom-in',       label: 'Zoom In (확대)' },
+  { value: 'zoom-out',      label: 'Zoom Out (축소)' },
+  { value: 'slide-up',      label: 'Slide ↑' },
+  { value: 'slide-down',    label: 'Slide ↓' },
+  { value: 'slide-left',    label: 'Slide ←' },
+  { value: 'slide-right',   label: 'Slide →' },
+  { value: 'flip-up',       label: 'Flip ↑' },
+  { value: 'flip-down',     label: 'Flip ↓' },
+  { value: 'flip-left',     label: 'Flip ←' },
+  { value: 'flip-right',    label: 'Flip →' }
+];
+
+/* v0.18.0: 요소에 data-aos-* 속성 적용 (effect 비어있으면 모두 제거) */
+function applyAosAttrs(el, data) {
+  if (data.aosEffect) {
+    el.setAttribute('data-aos', data.aosEffect);
+    if (data.aosDuration) el.setAttribute('data-aos-duration', data.aosDuration);
+    else el.removeAttribute('data-aos-duration');
+    if (data.aosDelay !== '' && data.aosDelay !== undefined && data.aosDelay !== null) el.setAttribute('data-aos-delay', data.aosDelay);
+    else el.removeAttribute('data-aos-delay');
+  } else {
+    el.removeAttribute('data-aos');
+    el.removeAttribute('data-aos-duration');
+    el.removeAttribute('data-aos-delay');
+  }
+}
+
 /* 비주얼 이미지 그룹 (PC/M 묶음, on/off 토글 지원) */
 var VISUAL_IMAGE_GROUPS = [
   {
@@ -1740,6 +1775,26 @@ function buildVisualPanel() {
     h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(' + activeIdx + ',\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
 
     /* v0.17.2: 폰트/굵기 패널 제거 — 에디터 툴바에서만 제어. 여기는 텍스트/여백만 */
+
+    /* v0.18.0: AOS 애니메이션 (요소별 개별 적용) */
+    h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #2e3a52;">' +
+      '<div class="ep-spacing-title">애니메이션 (AOS)</div>' +
+      '<div class="ep-field"><label>효과</label>' +
+        '<select onchange="updateVisualAos(' + activeIdx + ',\'aosEffect\',this.value)">' +
+          AOS_EFFECTS.map(function(e) { return '<option value="' + e.value + '" ' + ((activeText.aosEffect || '') === e.value ? 'selected' : '') + '>' + e.label + '</option>'; }).join('') +
+        '</select></div>' +
+      '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
+        '<label style="width:50px;font-size:10px;">Duration</label>' +
+        '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + (activeText.aosDuration || '') + '" placeholder="800" oninput="updateVisualAos(' + activeIdx + ',\'aosDuration\',this.value)">' +
+        '<span style="font-size:10px;color:#6b7280;">ms</span>' +
+      '</div>' +
+      '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
+        '<label style="width:50px;font-size:10px;">Delay</label>' +
+        '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + (activeText.aosDelay || '') + '" placeholder="0" oninput="updateVisualAos(' + activeIdx + ',\'aosDelay\',this.value)">' +
+        '<span style="font-size:10px;color:#6b7280;">ms</span>' +
+      '</div>' +
+      '<div style="font-size:10px;color:#6b7280;margin-top:4px;">※ 변경 후 미리보기에서 즉시 보려면 페이지 새로고침</div>' +
+    '</div>';
 
     /* Step 3: 여백 설정 */
     h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #2e3a52;">' +
@@ -1834,6 +1889,28 @@ function buildVisualPanel() {
   return h;
 }
 
+/* v0.18.0: AOS 속성 업데이트 (DOM 속성만 갱신, div 재생성 없음) */
+function updateVisualAos(idx, prop, val) {
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  if (!texts[idx]) return;
+  texts[idx][prop] = val;
+  /* iframe DOM의 PC/M div 모두 속성 갱신 */
+  var doc = getPreviewDoc();
+  if (doc) {
+    var container = doc.querySelector('.mvisual-texts-container');
+    if (container) {
+      var wrap = container.querySelector('.mvisual-text-' + (idx + 1));
+      if (wrap) {
+        var pcDiv = wrap.querySelector('.mvisual-text-pc');
+        var mDiv = wrap.querySelector('.mvisual-text-m');
+        if (pcDiv) applyAosAttrs(pcDiv, texts[idx]);
+        if (mDiv) applyAosAttrs(mDiv, texts[idx]);
+      }
+    }
+  }
+  saveState();
+}
+
 /* Step 3: 요소 여백 업데이트
  * v0.17.2: renderVisualTexts() 재호출 대신 해당 div의 style만 업데이트
  *          → 미리보기에서 편집 중인 inline 포맷팅(아직 blur 미캡처)이 사라지지 않음
@@ -1870,7 +1947,9 @@ function addVisualText() {
     fontWeight: '',
     /* Step 3: 여백 기본값 */
     marginTop: '', marginBottom: '', marginLeft: '', marginRight: '',
-    paddingTop: '', paddingBottom: '', paddingLeft: '', paddingRight: ''
+    paddingTop: '', paddingBottom: '', paddingLeft: '', paddingRight: '',
+    /* v0.18.0: AOS 기본값 (빈 effect = AOS 미적용) */
+    aosEffect: '', aosDuration: '', aosDelay: ''
   });
 
   window.visualTextActiveIdx = newIdx;
@@ -2070,6 +2149,8 @@ function renderVisualTexts() {
     /* 'inherit'/'400'/'normal'은 실질적 의미 없는 기본값 → inline style 주입 생략 */
     if (textData.fontFamily && textData.fontFamily !== 'inherit') pcDiv.style.fontFamily = textData.fontFamily;
     if (textData.fontWeight && textData.fontWeight !== '400' && textData.fontWeight !== 'normal') pcDiv.style.fontWeight = textData.fontWeight;
+    /* v0.18.0: AOS 속성 적용 (effect 비어있으면 속성 자체 생략) */
+    applyAosAttrs(pcDiv, textData);
     /* 편집 모드 중이면 즉시 blur 리스너 attach */
     if (editMode) makeEditable(pcDiv, 'section_visual', 'mvisual_texts.' + i + '.pcHtml', 'innerHTML');
 
@@ -2082,6 +2163,8 @@ function renderVisualTexts() {
     mDiv.innerHTML = textData.mHtml || textData.mText || '';
     if (textData.fontFamily && textData.fontFamily !== 'inherit') mDiv.style.fontFamily = textData.fontFamily;
     if (textData.fontWeight && textData.fontWeight !== '400' && textData.fontWeight !== 'normal') mDiv.style.fontWeight = textData.fontWeight;
+    /* v0.18.0: AOS 속성 적용 */
+    applyAosAttrs(mDiv, textData);
     /* 편집 모드 중이면 즉시 blur 리스너 attach */
     if (editMode) makeEditable(mDiv, 'section_visual', 'mvisual_texts.' + i + '.mHtml', 'innerHTML');
 
@@ -3994,6 +4077,18 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 12:50 (v0.18.0)',
+    items: [
+      '<strong>[v0.18.0]</strong> P1 W2 5/6 Stage 1: AOS 개별 적용 시작 — 메인비주얼 mvisual_texts 요소별 effect/duration/delay',
+      '<strong>[v0.18.0]</strong> AOS_EFFECTS 16종 + 없음(미적용): fade/zoom/slide/flip 4계열 × 방향',
+      '<strong>[v0.18.0]</strong> applyAosAttrs(el, data): effect 비어있으면 data-aos* 모두 제거, 있으면 setAttribute로 적용',
+      '<strong>[v0.18.0]</strong> mvisual_texts 데이터에 aosEffect/aosDuration/aosDelay 신규 필드 + addVisualText 기본값',
+      '<strong>[v0.18.0]</strong> updateVisualAos: DOM 속성만 갱신 (renderVisualTexts 재호출 X) → 편집 중 inline 포맷팅 보존',
+      '<strong>[v0.18.0]</strong> 변경 후 즉시 효과 보려면 미리보기 새로고침 필요 (AOS init은 페이지 로드 시 1회)',
+      '<strong>[v0.18.0]</strong> Stage 2(다른 섹션 확장) / Stage 3(AOS 실시간 재실행) / Stage 4(전역 토글 정리)는 별도 진행',
+    ]
+  },
   {
     date: '2026.04.27 12:25 (v0.17.4)',
     items: [
