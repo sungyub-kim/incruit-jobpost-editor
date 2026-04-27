@@ -24,28 +24,35 @@
     box-shadow: 0 4px 6px rgba(0,0,0,0.07);
   }
   header { position: relative; }
-  header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; padding-right: 180px; }
+  header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; padding-right: 360px; }
   header .meta { display: flex; gap: 24px; font-size: 14px; opacity: 0.9; flex-wrap: wrap; }
   header .meta strong { font-weight: 600; }
-  .builder-link {
+  .header-links {
     position: absolute;
     top: 28px;
     right: 32px;
+    display: flex;
+    gap: 8px;
+  }
+  .header-link {
     display: inline-flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     background: #fff;
     color: #1e40af;
-    padding: 10px 18px;
-    border-radius: 8px;
-    font-size: 14px;
+    padding: 8px 14px;
+    border-radius: 6px;
+    font-size: 13px;
     font-weight: 600;
     text-decoration: none;
     box-shadow: 0 2px 6px rgba(0,0,0,0.18);
     transition: transform .15s, box-shadow .15s;
   }
-  .builder-link:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
-  .builder-link::after { content: "↗"; font-size: 16px; }
+  .header-link:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
+  .header-link::after { content: "↗"; font-size: 14px; }
+  .header-link.builder { background: #fbbf24; color: #78350f; }
+  .header-link.daily { background: #dbeafe; color: #1e3a8a; }
+  .header-link.weekly { background: #d1fae5; color: #065f46; }
 
   /* Section */
   section {
@@ -290,7 +297,11 @@
 <div class="container">
 
 <header>
-  <a href="fair-builder.html" target="_blank" rel="noopener" class="builder-link" title="빌더 새 창에서 열기">빌더 열기</a>
+  <div class="header-links">
+    <a href="fair-builder.html" target="_blank" rel="noopener" class="header-link builder" title="빌더 새 창에서 열기">빌더 열기</a>
+    <a href="fair-daily-report.html" target="_blank" rel="noopener" class="header-link daily" title="일일 업무 보고">일일 보고</a>
+    <a href="fair-weekly-report.html" target="_blank" rel="noopener" class="header-link weekly" title="주간 업무 보고">주간 보고</a>
+  </div>
   <h1>박람회 비주얼 빌더 ─ 1차 + 2차 통합 로드맵</h1>
   <div class="meta">
     <span><strong>보고일자:</strong> 2026-04-27 (월)</span>

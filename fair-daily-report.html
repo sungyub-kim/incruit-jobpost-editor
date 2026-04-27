@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>박람회 빌더 ─ 일일 업무 보고</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1f2937; line-height: 1.6; padding: 24px; }
+  .container { max-width: 1200px; margin: 0 auto; }
+  header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); color: #fff; padding: 28px 36px; border-radius: 12px 12px 0 0; box-shadow: 0 4px 6px rgba(0,0,0,0.07); position: relative; }
+  header h1 { font-size: 24px; font-weight: 700; margin-bottom: 6px; padding-right: 200px; }
+  header .meta { font-size: 13px; opacity: 0.9; }
+  .nav-link { position: absolute; top: 24px; right: 28px; display: inline-flex; align-items: center; gap: 6px; background: #fff; color: #1e40af; padding: 8px 14px; border-radius: 6px; font-size: 13px; font-weight: 600; text-decoration: none; box-shadow: 0 2px 6px rgba(0,0,0,0.18); transition: transform .15s; }
+  .nav-link:hover { transform: translateY(-1px); }
+  .nav-link::after { content: "↗"; }
+
+  .day-card { background: #fff; padding: 24px 36px; border-bottom: 1px solid #e5e7eb; }
+  .day-card:last-of-type { border-radius: 0 0 12px 12px; border-bottom: none; }
+  .day-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; padding-bottom: 10px; border-bottom: 2px solid #1e40af; }
+  .day-head h2 { font-size: 20px; font-weight: 700; color: #111827; }
+  .day-head .badges { display: flex; gap: 8px; }
+  .badge { background: #1e40af; color: #fff; padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; }
+  .badge.green { background: #059669; }
+  .badge.amber { background: #d97706; }
+  .badge.gray { background: #6b7280; }
+
+  .summary { background: #f0f9ff; border-left: 3px solid #0284c7; padding: 12px 16px; margin-bottom: 16px; font-size: 14px; color: #075985; }
+  .summary strong { color: #0c4a6e; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; margin-top: 8px; }
+  thead th { background: #f3f4f6; color: #374151; font-weight: 600; text-align: left; padding: 9px 12px; border-bottom: 2px solid #d1d5db; }
+  tbody td { padding: 9px 12px; border-bottom: 1px solid #e5e7eb; vertical-align: top; }
+  tbody td.center { text-align: center; }
+  tbody tr:hover { background: #fafbfc; }
+
+  h3 { font-size: 14px; font-weight: 600; color: #1f2937; margin: 16px 0 8px; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 12px 0; }
+  .kpi { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; text-align: center; }
+  .kpi .label { font-size: 11px; color: #6b7280; }
+  .kpi .value { font-size: 20px; font-weight: 700; color: #1e40af; margin-top: 2px; }
+
+  .next { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px 14px; font-size: 13px; color: #92400e; margin-top: 14px; }
+  .next strong { color: #78350f; }
+
+  footer { text-align: center; padding: 14px; color: #9ca3af; font-size: 11px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <a href="fair-roadmap.html" class="nav-link" target="_blank" rel="noopener" title="로드맵으로">로드맵</a>
+  <h1>박람회 빌더 ─ 일일 업무 보고</h1>
+  <div class="meta">담당: 김성엽 · 최신 일자가 상단 / 자동 누적</div>
+</header>
+
+<!-- ====================================================================== -->
+<!-- 2026-04-27 (월) -->
+<!-- ====================================================================== -->
+<div class="day-card">
+  <div class="day-head">
+    <h2>2026-04-27 (월)</h2>
+    <div class="badges">
+      <span class="badge green">완료 13건</span>
+      <span class="badge amber">핫픽스 4건</span>
+      <span class="badge">v0.16.0 → v0.20.1</span>
+    </div>
+  </div>
+
+  <div class="summary">
+    <strong>오늘 요약:</strong> 1차 빌더형 일정상 W1+W2+W3에 해당하는 작업을 하루에 압축 진행. 메인비주얼 / 웹폰트 / 섹션 관리 / 에디터 툴바 / repeater 자동 클론 / AOS 개별 적용 / 네비게이션 4건 + 글로벌 링크 정책 신설까지 마무리.
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi"><div class="label">배포 버전</div><div class="value">13개</div></div>
+    <div class="kpi"><div class="label">신규 기능</div><div class="value">9개</div></div>
+    <div class="kpi"><div class="label">검수 핫픽스</div><div class="value">4개</div></div>
+    <div class="kpi"><div class="label">일정 진척</div><div class="value">+8일치</div></div>
+  </div>
+
+  <h3>주요 작업 (시간 순)</h3>
+  <table>
+    <thead>
+      <tr><th style="width:75px;">버전</th><th style="width:80px;">시각</th><th>핵심 변경</th><th style="width:80px;">분류</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>v0.16.0</td><td>11:13</td><td>메인비주얼 영역(온라인/오프라인/우측) 이미지 ↔ 텍스트 모드 전환</td><td class="center">기능</td></tr>
+      <tr><td>v0.16.1</td><td>11:22</td><td>웹폰트 5종(카페24·배민·검은고딕·본명조·마포금빛나루) + 편집 드로어 미리보기 클릭 새창 + 편집모드 링크 차단</td><td class="center">기능</td></tr>
+      <tr><td>v0.16.2</td><td>11:29</td><td>링크 차단 부작용 핫픽스 — a 안 img 편집 모달 정상 동작 복원 (161건 자동 해결)</td><td class="center">핫픽스</td></tr>
+      <tr><td>v0.17.0</td><td>11:38</td><td>섹션 ✕ 제거 + 사용 가능한 섹션 풀 (재추가, 데이터 보존)</td><td class="center">기능</td></tr>
+      <tr><td>v0.17.1</td><td>12:06</td><td>좌측 패널 섹션명 ↔ 미리보기 .sec_tit 양방향 동기화</td><td class="center">기능</td></tr>
+      <tr><td>v0.17.2</td><td>12:13</td><td>에디터 툴바 정렬 L/C/R + ul/ol 제거 + 메인비주얼 폰트/굵기 패널 정리 + 여백 입력 시 포맷팅 보존</td><td class="center">기능</td></tr>
+      <tr><td>v0.17.3</td><td>12:16</td><td>repeater +추가 무동작 버그 수정 — 5개 섹션 자동 수혜 (포스터/링크/탭/성공사례/참여기관)</td><td class="center">기능</td></tr>
+      <tr><td>v0.17.4</td><td>12:25</td><td>텍스트 모드 시 이미지 미숨김 + 토글 활성 시각 강조 핫픽스</td><td class="center">핫픽스</td></tr>
+      <tr><td>v0.18.0</td><td>12:30</td><td>메인비주얼 텍스트 요소별 AOS 효과/Duration/Delay (16종 효과)</td><td class="center">기능</td></tr>
+      <tr><td>v0.18.1</td><td>12:58</td><td>검수 핫픽스 5건: select 가독성 / 섹션 제거 시 영상 위치 / 텍스트 재편집 / nav navigation / 섹션명 양방향</td><td class="center">핫픽스</td></tr>
+      <tr><td>v0.19.0</td><td>13:06</td><td>네비게이션 4건: 항목 추가/삭제 + hover 효과 + # anchor 새창 차단 + 클릭→편집 자동 포커스</td><td class="center">기능</td></tr>
+      <tr><td>v0.19.1</td><td>13:09</td><td>.main-visual-left 하단 여백 추가 (5.555% 0 0 0 → 5.5555% 0)</td><td class="center">핫픽스</td></tr>
+      <tr><td>v0.20.0</td><td>13:14</td><td>nav 링크 target 옵션 (현재창/새창) — 글로벌 정책 첫 적용</td><td class="center">기능</td></tr>
+      <tr><td>v0.20.1</td><td>13:17</td><td>section_gradient 버튼 target 옵션 — 글로벌 정책 두 번째 적용</td><td class="center">기능</td></tr>
+    </tbody>
+  </table>
+
+  <h3>의사결정 / 정책 변경</h3>
+  <ul style="font-size:13px;color:#374151;padding-left:18px;line-height:1.8;">
+    <li><strong>자율 워크플로우</strong>: 1차 완료(6/19)까지 검수자/기획자/개발자 역할을 자체 순환. 사용자는 1차 완료 후 일괄 검수.</li>
+    <li><strong>링크 target 글로벌 정책</strong>: 모든 링크 입력 UI에 _self(현재창) / _blank(새창) 옵션 필수. nav + section_gradient 버튼 적용 완료. 박람회 개요/채용관 작업 시 추가 적용.</li>
+    <li><strong>박람회 포스터(4순위) 보류</strong>: PC/M 분리 + 요소 추가/제거 등 큰 리팩토링 → 별도 진행.</li>
+    <li><strong>채용관 5순위 새 스펙</strong>: 기존 요구사항 폐기. on/off 토글 위주로 단순화.</li>
+  </ul>
+
+  <h3>알려진 미해결 이슈</h3>
+  <table>
+    <thead>
+      <tr><th style="width:80px;">코드</th><th>증상</th><th style="width:160px;">처리 방향</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>B-1</td><td>[data-fmt-unified] span 내부 부분 드래그 시 컬러/배경이 span 전체 적용</td><td>span split 로직 (큰 변경, 별도 Stage)</td></tr>
+    </tbody>
+  </table>
+
+  <div class="next">
+    <strong>다음 작업 (다음 세션):</strong>
+    <ol style="margin-left:22px;margin-top:6px;line-height:1.7;">
+      <li>P4 W4 채용관 5순위 Stage 1: 1뎁스 탭 on/off (2~5개) — 마크업 복잡, 종일급</li>
+      <li>또는 4/29 Stage 2 섹션 복제 (UUID 도입) — 종일급</li>
+      <li>또는 W2 5/6 AOS Stage 2: 다른 섹션(.poster-box 등)으로 확장</li>
+    </ol>
+    <strong>안전 마진</strong>: 토큰 사용 누적이 큼. 새 세션에서 진입 권장.
+  </div>
+</div>
+
+</div>
+
+<footer>© 2026 인크루트 박람회 자동화 프로젝트 — 일일 업무 보고서</footer>
+</body>
+</html>
