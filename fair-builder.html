@@ -216,6 +216,15 @@
     .sec-move-group { display: flex; flex-direction: column; gap: 2px; flex-shrink: 0; opacity: 0; transition: opacity .15s; }
     .section-item:hover .sec-move-group,
     .section-item.editing .sec-move-group { opacity: 1; }
+    /* v0.17.0: 섹션 제거 버튼 + 사용 가능한 섹션 풀 */
+    .sec-remove-btn { background: none; border: 1px solid #2e3a52; border-radius: 3px; color: #6b7280; font-size: 11px; width: 18px; height: 18px; cursor: pointer; line-height: 16px; text-align: center; padding: 0; flex-shrink: 0; opacity: 0; transition: opacity .15s, color .15s, border-color .15s; margin-left: 4px; }
+    .section-item:hover .sec-remove-btn { opacity: 1; }
+    .sec-remove-btn:hover { color: #f87171; border-color: #f87171; background: rgba(239,68,68,.08); }
+    #available-sections-pool { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 0; min-height: 24px; }
+    .pool-add-btn { background: rgba(5,150,105,.12); border: 1px dashed #047857; border-radius: 4px; color: #34d399; font-size: 11px; padding: 4px 10px; cursor: pointer; transition: all .15s; display: inline-flex; align-items: center; gap: 4px; }
+    .pool-add-btn:hover { background: rgba(5,150,105,.28); color: #6ee7b7; border-color: #34d399; }
+    .pool-add-plus { font-weight: 700; }
+    .pool-empty { font-size: 11px; color: #4b5563; padding: 4px 0; font-style: italic; }
 
     /* E4: 섹션 이름 클릭 → 스크롤 */
     .section-name { cursor: pointer; }
@@ -381,7 +390,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.16.2</span>
+  <span id="ver-badge" title="배포 버전">v0.17.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -460,6 +469,9 @@
         <div id="section-list">
           <!-- JS로 렌더링 -->
         </div>
+        <!-- v0.17.0: 사용 가능한 섹션 풀 -->
+        <div class="p-section-header" style="margin-top:12px;">+ 섹션 추가 <span style="color:#4b5563;font-weight:400;">(제거된 섹션 또는 미사용)</span></div>
+        <div id="available-sections-pool"><!-- JS로 렌더링 --></div>
       </div>
 
       <!-- 스타일 탭 -->
@@ -969,7 +981,9 @@ function renderSectionList() {
           '<input type="checkbox" ' + (enabled ? 'checked' : '') + ' onchange="toggleSection(\'' + id + '\', this.checked)">' +
           '<span class="toggle-slider"></span>' +
         '</label>' +
-      '</div>';
+      '</div>' +
+      /* v0.17.0: 섹션 완전 제거 버튼 (데이터 보존, 풀에서 재추가 가능) */
+      '<button class="sec-remove-btn" title="섹션 제거 (데이터는 보존됨)" onclick="event.stopPropagation();removeSectionFromOrder(\'' + id + '\')">✕</button>';
     /* Shift+클릭 시 스크롤 */
     var nameBtn = item.querySelector('.sec-name-btn');
     if (nameBtn) {
@@ -980,6 +994,56 @@ function renderSectionList() {
     list.appendChild(item);
   });
   initDragDrop();
+  renderAvailableSectionsPool();  /* v0.17.0: 사용 가능한 섹션 풀 */
+}
+
+/* v0.17.0: sectionOrder에 없는 default 섹션을 풀로 표시 */
+function renderAvailableSectionsPool() {
+  var pool = document.getElementById('available-sections-pool');
+  if (!pool) return;
+  var available = FAIR_BUILDER_DEFAULT_ORDER.filter(function(id) {
+    var sch = FAIR_BUILDER_SCHEMA[id];
+    if (sch && sch.hideFromPanel) return false;
+    return sectionOrder.indexOf(id) === -1;
+  });
+  if (!available.length) {
+    pool.innerHTML = '<div class="pool-empty">모든 섹션이 사용 중입니다.</div>';
+    return;
+  }
+  pool.innerHTML = available.map(function(id) {
+    var sch = FAIR_BUILDER_SCHEMA[id];
+    return '<button class="pool-add-btn" onclick="addSectionToOrder(\'' + id + '\')" title="섹션 추가">' +
+      '<span class="pool-add-plus">+</span>' + esc(sch.name) +
+    '</button>';
+  }).join('');
+}
+
+/* v0.17.0: 섹션을 sectionOrder에서 제거 (sectionData 보존) */
+function removeSectionFromOrder(id) {
+  var sch = FAIR_BUILDER_SCHEMA[id];
+  if (!sch) return;
+  if (!confirm('"' + sch.name + '" 섹션을 제거하시겠습니까?\n(설정/데이터는 보존되며, 하단 풀에서 다시 추가할 수 있습니다.)')) return;
+  var idx = sectionOrder.indexOf(id);
+  if (idx === -1) return;
+  sectionOrder.splice(idx, 1);
+  if (openEditPanelId === id) closeEditDrawer();
+  saveState();
+  applyToPreview();
+  renderSectionList();
+}
+
+/* v0.17.0: sectionOrder 끝에 섹션 추가 (보존된 sectionData 자동 복원) */
+function addSectionToOrder(id) {
+  if (!FAIR_BUILDER_SCHEMA[id]) return;
+  if (sectionOrder.indexOf(id) !== -1) return;
+  sectionOrder.push(id);
+  /* enabled 기본값 보강 */
+  if (sectionEnabled[id] === undefined) {
+    sectionEnabled[id] = FAIR_BUILDER_SCHEMA[id].enabled !== false;
+  }
+  saveState();
+  applyToPreview();
+  renderSectionList();
 }
 
 /* ── E3: 섹션 ▲▼ 이동 ── */
@@ -3887,6 +3951,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 12:00 (v0.17.0)',
+    items: [
+      '<strong>[v0.17.0]</strong> P1 4/29 Stage 1: 섹션 완전 제거 + 사용 가능한 섹션 풀 (다시 추가)',
+      '<strong>[v0.17.0]</strong> 각 섹션 행에 ✕ 제거 버튼 (hover 시 표시). 클릭 → confirm → sectionOrder에서 제거',
+      '<strong>[v0.17.0]</strong> 섹션 제거 시 sectionData/sectionEnabled/sectionBgColors 등 모든 설정 보존 → 다시 추가하면 그대로 복원',
+      '<strong>[v0.17.0]</strong> 패널 하단 "+ 섹션 추가" 영역: sectionOrder에 없는 default 섹션을 풀로 표시, 클릭 시 끝에 추가',
+      '<strong>[v0.17.0]</strong> 데이터 구조 변경 없음: sectionOrder는 여전히 string[] (Stage 2 복제 기능은 추후 별도 진행)',
+    ]
+  },
   {
     date: '2026.04.27 11:29 (v0.16.2)',
     items: [
