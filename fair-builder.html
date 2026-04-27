@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.21.4</span>
+  <span id="ver-badge" title="배포 버전">v0.21.5</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -650,6 +650,7 @@ var SECTION_DOM_MAP = {
       period:     { sel: 'dl:first-of-type .poster-box__items__dd p', prop: 'textContent' },
       contact:    { sel: 'dl:last-of-type .poster-box__items__dd p',  prop: 'textContent' },
       apply_link: { sel: '.btn-biz-apply',                           prop: 'href' },
+      apply_target: { sel: '.btn-biz-apply',                         prop: 'target' },  /* v0.21.5: 글로벌 정책 */
     }}
   },
   section_greetings: {
@@ -1748,11 +1749,16 @@ function applyFieldsToPreview(sectionId) {
         Object.keys(m.fields).forEach(function(sfk) {
           var fm = m.fields[sfk];
           if (val[i][sfk] === undefined) return;
+          /* v0.21.5: target='_self'면 attribute 제거 (글로벌 정책 일관성) */
+          var setVal = function(el) {
+            if (fm.prop === 'target' && val[i][sfk] === '_self') el.removeAttribute('target');
+            else el[fm.prop] = val[i][sfk];
+          };
           if (fm.multi) {
-            node.querySelectorAll(fm.sel).forEach(function(e) { e[fm.prop] = val[i][sfk]; });
+            node.querySelectorAll(fm.sel).forEach(setVal);
           } else {
             var el = fm.sel ? node.querySelector(fm.sel) : node;
-            if (el) el[fm.prop] = val[i][sfk];
+            if (el) setVal(el);
           }
         });
       });
@@ -1907,6 +1913,12 @@ function buildFieldInput(sectionId, path, field, val) {
   } else if (field.type === 'link') {
     return '<div class="ep-field">' + label + '<span class="ep-hint" style="display:block;margin-bottom:4px;">(URL)</span>' +
       '<input type="text" value="' + esc(val) + '" placeholder="https://..." oninput="' + cb + '"></div>';
+  } else if (field.type === 'select') {
+    /* v0.21.5: select 필드 타입 (예: target 옵션) */
+    var opts = (field.options || []).map(function(o) {
+      return '<option value="' + esc(o.value) + '" ' + (val === o.value ? 'selected' : '') + '>' + esc(o.label) + '</option>';
+    }).join('');
+    return '<div class="ep-field">' + label + '<select onchange="' + cb + '">' + opts + '</select></div>';
   }
   return '<div class="ep-field">' + label + '<input type="text" value="' + esc(val) + '" oninput="' + cb + '"></div>';
 }
@@ -4503,6 +4515,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 16:35 (v0.21.5)',
+    items: [
+      '<strong>[v0.21.5]</strong> 글로벌 정책 3번째 적용: 박람회 개요 신청 버튼(btn-biz-apply)에 target 옵션',
+      '<strong>[v0.21.5]</strong> schema에 apply_target 필드 추가 (type:select, options:[_blank,_self])',
+      '<strong>[v0.21.5]</strong> SECTION_DOM_MAP의 posters에 apply_target 매핑 (sel:.btn-biz-apply, prop:target)',
+      '<strong>[v0.21.5]</strong> buildFieldInput에 type:select 처리 추가 — 자동 패널에서 select 렌더링',
+      '<strong>[v0.21.5]</strong> applyFieldsToPreview의 repeater 처리: target=_self면 removeAttribute (마크업 깔끔)',
+    ]
+  },
   {
     date: '2026.04.27 16:25 (v0.21.4)',
     items: [

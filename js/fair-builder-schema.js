@@ -89,6 +89,8 @@ const FAIR_BUILDER_SCHEMA = {
           programs:  { type: 'textarea', label: '프로그램 목록 (줄바꿈 구분)', default: '' },
           contact:   { type: 'text',  label: '문의처', default: '' },
           apply_link:{ type: 'link',  label: '신청 버튼 링크', default: '' },
+          apply_target:{ type: 'select', label: '신청 버튼 열기 방식', default: '_blank',
+            options: [{ value: '_blank', label: '새창 (_blank)' }, { value: '_self', label: '현재창 (_self)' }] },
           logos: {
             type: 'repeater',
             label: '로고 이미지',
