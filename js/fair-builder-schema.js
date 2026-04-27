@@ -166,7 +166,7 @@ const FAIR_BUILDER_SCHEMA = {
         type: 'repeater',
         label: '탭 목록',
         itemLabel: '탭',
-        maxItems: 3,
+        maxItems: 5,  /* v0.21.0: 채용관 5순위 — 2~5개 제한 */
         fields: {
           name: { type: 'text', label: '탭 이름', default: '' },
         }

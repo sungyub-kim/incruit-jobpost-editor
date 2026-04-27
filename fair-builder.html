@@ -394,7 +394,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.20.2</span>
+  <span id="ver-badge" title="배포 버전">v0.21.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -638,7 +638,9 @@ var previewBreakpoint = 'desktop';  /* R3: 반응형 미리보기 선택 breakpo
 var posterConfig = 'both'; /* 'both' | 'online' | 'offline' */
 var navLinks    = [];  /* S2: 네비게이션 링크 [{text,href}] */
 var navHoverStyle = { color: '', bgColor: '' };  /* v0.19.0: nav 호버 색상/배경 */
-var joblistTabs = [];  /* S1: 채용공고 탭 [{name}] */
+var joblistTabs = [];  /* S1: 채용공고 탭 [{name, enabled}] (v0.21.0: enabled 추가) */
+var JOBLIST_TAB_MAX = 5;
+var JOBLIST_TAB_MIN = 2;
 
 /* ── 섹션 DOM 매핑 테이블 ── */
 var SECTION_DOM_MAP = {
@@ -834,7 +836,11 @@ function loadState() {
       });
     }
     if (s.navHoverStyle) navHoverStyle = Object.assign({ color:'', bgColor:'' }, s.navHoverStyle);
-    if (s.joblistTabs)   joblistTabs   = s.joblistTabs;
+    if (s.joblistTabs) {
+      joblistTabs = s.joblistTabs;
+      /* v0.21.0: enabled 마이그레이션 — 기존 데이터에 없으면 true */
+      joblistTabs.forEach(function(t) { if (t.enabled === undefined) t.enabled = true; });
+    }
     if (s.aosEnabled !== undefined)         aosEnabled         = s.aosEnabled;
     if (s.visualRightVisible !== undefined) visualRightVisible = s.visualRightVisible;
     if (s.logoImages)      { logoImages = Object.assign({ logo1:'', logo2:'' }, s.logoImages); }
@@ -1045,20 +1051,41 @@ function readTabsFromPreview() {
   if (!labels.length) return;
   joblistTabs = [];
   labels.forEach(function(label) {
-    joblistTabs.push({ name: label.textContent.trim() });
+    /* v0.21.0: enabled 기본 true */
+    joblistTabs.push({ name: label.textContent.trim(), enabled: true });
   });
 }
 
 function renderTabPanel() {
   var el = document.getElementById('joblist-tab-list');
   if (!el) return;
-  if (!joblistTabs.length) { el.innerHTML = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>'; return; }
-  el.innerHTML = joblistTabs.map(function(tab, i) {
-    return '<div class="logo-input-wrap" style="padding:6px 8px;">' +
-      '<label>탭 ' + (i+1) + '</label>' +
-      '<input type="text" value="' + esc(tab.name) + '" oninput="updateJoblistTab(' + i + ',this.value)">' +
+  var html = '';
+  if (!joblistTabs.length) {
+    html = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>';
+  } else {
+    html = joblistTabs.map(function(tab, i) {
+      var isActive = tab.enabled !== false;
+      return '<div class="logo-input-wrap" style="padding:6px 8px;position:relative;background:' + (isActive ? '' : '#0d1117') + ';opacity:' + (isActive ? '1' : '0.55') + ';">' +
+        /* v0.21.0: 제거 버튼 (최소 2개 유지) */
+        (joblistTabs.length > JOBLIST_TAB_MIN
+          ? '<button class="nav-link-remove" title="이 탭 제거" onclick="removeJoblistTab(' + i + ')" style="position:absolute;top:4px;right:4px;background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:18px;padding:0;">✕</button>'
+          : '') +
+        '<label style="display:flex;align-items:center;gap:6px;">' +
+          '<span>탭 ' + (i+1) + '</span>' +
+          /* v0.21.0: on/off 토글 */
+          '<label class="toggle" style="margin-left:auto;margin-right:24px;"><input type="checkbox" ' + (isActive ? 'checked' : '') + ' onchange="toggleJoblistTab(' + i + ',this.checked)"><span class="toggle-slider"></span></label>' +
+        '</label>' +
+        '<input type="text" value="' + esc(tab.name) + '" oninput="updateJoblistTab(' + i + ',this.value)">' +
       '</div>';
-  }).join('');
+    }).join('');
+  }
+  /* v0.21.0: 추가 버튼 (최대 5개) */
+  if (joblistTabs.length < JOBLIST_TAB_MAX) {
+    html += '<button class="ep-add-btn" style="width:100%;background:#059669;color:#fff;border:none;border-radius:4px;padding:6px;margin-top:6px;cursor:pointer;font-size:11px;font-weight:600;" onclick="addJoblistTab()">+ 탭 추가 (' + joblistTabs.length + '/' + JOBLIST_TAB_MAX + ')</button>';
+  } else {
+    html += '<div style="font-size:11px;color:#6b7280;padding:6px;text-align:center;">최대 ' + JOBLIST_TAB_MAX + '개까지 추가 가능</div>';
+  }
+  el.innerHTML = html;
 }
 
 function updateJoblistTab(i, val) {
@@ -1068,13 +1095,124 @@ function updateJoblistTab(i, val) {
   saveState();
 }
 
+/* v0.21.0: 탭 on/off 토글 */
+function toggleJoblistTab(i, enabled) {
+  if (!joblistTabs[i]) return;
+  joblistTabs[i].enabled = enabled;
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+
+/* v0.21.0: 탭 추가 (마지막 탭 + tab_content 클론) */
+function addJoblistTab() {
+  if (joblistTabs.length >= JOBLIST_TAB_MAX) { alert('최대 ' + JOBLIST_TAB_MAX + '개까지 추가 가능합니다.'); return; }
+  var idx = joblistTabs.length + 1;
+  joblistTabs.push({ name: '탭 ' + idx, enabled: true });
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+
+/* v0.21.0: 탭 제거 (DOM도 동기) */
+function removeJoblistTab(i) {
+  if (!joblistTabs[i]) return;
+  if (joblistTabs.length <= JOBLIST_TAB_MIN) { alert('최소 ' + JOBLIST_TAB_MIN + '개 탭은 유지해야 합니다.'); return; }
+  if (!confirm('"' + (joblistTabs[i].name || '탭 ' + (i+1)) + '" 탭을 제거하시겠습니까?')) return;
+  joblistTabs.splice(i, 1);
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+
+/* v0.21.0: 채용관 탭 동기 — 텍스트 + on/off + DOM 추가/제거 */
 function applyTabsToPreview() {
   var doc = getPreviewDoc();
   if (!doc || !joblistTabs.length) return;
-  var labels = doc.querySelectorAll('[data-builder-section="section_joblist"] label.tab_item');
-  joblistTabs.forEach(function(tab, i) {
-    if (labels[i]) labels[i].textContent = tab.name;
+  var sec = doc.querySelector('[data-builder-section="section_joblist"]');
+  if (!sec) return;
+  var tabsWrap = sec.querySelector('.tabs > .wr');           /* input + label 컨테이너 */
+  var tabsContainer = sec.querySelector('.tabs');             /* tab_content들의 부모 */
+  if (!tabsWrap || !tabsContainer) return;
+
+  /* 현재 DOM의 라디오/라벨/컨텐츠 수집 */
+  var inputs = Array.prototype.slice.call(tabsWrap.querySelectorAll('input[type=radio]'));
+  var labels = Array.prototype.slice.call(tabsWrap.querySelectorAll('label.tab_item'));
+  var contents = Array.prototype.slice.call(tabsContainer.querySelectorAll(':scope > .tab_content'));
+
+  /* DOM 개수 < 데이터 개수: 마지막 input/label/content 클론하여 추가 */
+  while (inputs.length < joblistTabs.length) {
+    var newIdx = inputs.length + 1;
+    var newId = 'cont' + newIdx;
+    var newContId = 't_cont' + newIdx;
+    /* input 클론 */
+    var inpClone = inputs[inputs.length - 1].cloneNode(false);
+    inpClone.id = newId;
+    inpClone.checked = false;
+    /* label 클론 */
+    var lblClone = labels[labels.length - 1].cloneNode(true);
+    lblClone.setAttribute('for', newId);
+    lblClone.classList.remove('last');
+    /* tab_content 클론 (마지막 것 — 동일 구조) */
+    var contClone = null;
+    if (contents.length) {
+      contClone = contents[contents.length - 1].cloneNode(true);
+      contClone.id = newContId;
+      contClone.style.display = 'none';
+    }
+    /* 마지막 label 뒤에 input + label 추가 */
+    var lastLabel = labels[labels.length - 1];
+    lastLabel.parentNode.insertBefore(inpClone, lastLabel.nextSibling);
+    inpClone.parentNode.insertBefore(lblClone, inpClone.nextSibling);
+    /* 마지막 tab_content 뒤에 content 추가 */
+    if (contClone) {
+      var lastCont = contents[contents.length - 1];
+      lastCont.parentNode.insertBefore(contClone, lastCont.nextSibling);
+      contents.push(contClone);
+    }
+    inputs.push(inpClone);
+    labels.push(lblClone);
+  }
+
+  /* DOM 개수 > 데이터 개수: 초과분 제거 */
+  while (inputs.length > joblistTabs.length) {
+    var rmInp = inputs.pop();
+    var rmLbl = labels.pop();
+    if (rmInp && rmInp.parentNode) rmInp.parentNode.removeChild(rmInp);
+    if (rmLbl && rmLbl.parentNode) rmLbl.parentNode.removeChild(rmLbl);
+    if (contents.length > inputs.length) {
+      var rmCont = contents.pop();
+      if (rmCont && rmCont.parentNode) rmCont.parentNode.removeChild(rmCont);
+    }
+  }
+
+  /* 마지막 라벨에만 .last 클래스 적용 */
+  labels.forEach(function(lbl, i) {
+    if (i === labels.length - 1) lbl.classList.add('last');
+    else lbl.classList.remove('last');
   });
+
+  /* 텍스트 + on/off 동기 */
+  joblistTabs.forEach(function(tab, i) {
+    var enabled = tab.enabled !== false;
+    if (labels[i]) labels[i].textContent = tab.name;
+    if (inputs[i]) inputs[i].style.display = enabled ? '' : 'none';
+    if (labels[i]) labels[i].style.display = enabled ? '' : 'none';
+    if (contents[i]) {
+      if (!enabled) contents[i].style.setProperty('display', 'none', 'important');
+      /* enabled면 라디오 :checked CSS가 결정 — 강제 display 해제 */
+      else if (contents[i].style.getPropertyPriority('display') === 'important') {
+        contents[i].style.removeProperty('display');
+      }
+    }
+  });
+
+  /* 첫 활성화 탭을 자동 checked */
+  var firstEnabledIdx = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
+  if (firstEnabledIdx >= 0 && inputs[firstEnabledIdx]) {
+    inputs.forEach(function(inp) { inp.checked = false; });
+    inputs[firstEnabledIdx].checked = true;
+  }
 }
 
 /* 공통: 고정 패널 토글 */
@@ -4323,6 +4461,19 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 14:30 (v0.21.0)',
+    items: [
+      '<strong>[v0.21.0]</strong> P4 W4 채용관 5순위 Stage 1: 1뎁스 탭 on/off + 추가/삭제 (2~5개 제한)',
+      '<strong>[v0.21.0]</strong> joblistTabs 데이터 확장: { name, enabled } + loadState 마이그레이션',
+      '<strong>[v0.21.0]</strong> renderTabPanel 재작성: 토글 + ✕ 제거 + 추가(N/5) 버튼',
+      '<strong>[v0.21.0]</strong> applyTabsToPreview 확장: input + label + tab_content DOM 자동 클론/제거 + 마지막 라벨 .last 자동 부여',
+      '<strong>[v0.21.0]</strong> on/off: input/label/content 모두 display:none (content는 :checked CSS 우회 위해 !important)',
+      '<strong>[v0.21.0]</strong> 첫 활성화 탭 자동 checked',
+      '<strong>[v0.21.0]</strong> SECTION_DOM_MAP의 joblist.tabs maxItems 3 → 5 동기',
+      '<strong>[v0.21.0]</strong> Stage 2~5 (2뎁스 탭, 검색 토글, 게시판 타입, 탭별 독립 설정)는 별도 진행',
+    ]
+  },
   {
     date: '2026.04.27 14:00 (v0.20.2)',
     items: [
