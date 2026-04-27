@@ -311,7 +311,8 @@
     .ep-bgimg-upload:hover { background: #3b4f6b; }
     .ep-bgimg-clear { background: #4b1c1c; border: none; color: #f87171; border-radius: 4px; width: 26px; height: 26px; cursor: pointer; font-size: 11px; flex-shrink: 0; }
     .ep-bgimg-clear:hover { background: #7f1d1d; }
-    .ep-bgimg-thumb { width: 100%; max-height: 60px; object-fit: cover; border-radius: 4px; margin-top: 5px; border: 1px solid #2e3a52; }
+    .ep-bgimg-thumb { display: block; max-width: 100%; max-height: 120px; width: auto; height: auto; margin: 5px auto 0; border-radius: 4px; border: 1px solid #2e3a52; cursor: zoom-in; background: #0d1117; }
+    .ep-bgimg-thumb:hover { border-color: #3b82f6; }
 
     /* 편집 모드 버튼 & 뱃지 */
     #edit-mode-btn { font-size: 11px; font-weight: 600; padding: 4px 12px; border-radius: 4px; border: 1px solid #2e3a52; background: none; color: #9ca3af; cursor: pointer; transition: all .15s; flex-shrink: 0; }
@@ -380,7 +381,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.16.0</span>
+  <span id="ver-badge" title="배포 버전">v0.16.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1517,15 +1518,49 @@ function renderExportSettings() {
 }
 
 /* ── V1/V2: 메인 비주얼 편집 ── */
-/* 웹폰트 목록 (weight: 100~900) */
+/* 웹폰트 목록 (weight: 100~900)
+ * faces: 동적 @font-face 주입용 (없으면 system/이미 로드된 것으로 간주)
+ * static@font-face 정의된 폰트(Paperozi/GMarketSans/Pretendard/Yeogi)는 faces 생략
+ */
 var WEBFONTS = [
-  { name: '나눔고딕', family: "'Noto Sans KR', 'Noto Sans', sans-serif", weights: [400, 700] },
-  { name: '나눔명조', family: "'Noto Serif KR', 'Noto Serif', serif", weights: [400, 700] },
-  { name: '페이퍼로지', family: "'Paperozi'", weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
-  { name: 'G마켓', family: "'GMarketSans'", weights: [300, 500, 700] },
+  /* === 정적 폰트 (temp.html에 @font-face 이미 정의) === */
+  { name: '페이퍼로지',  family: "'Paperozi'",          weights: [100,200,300,400,500,600,700,800,900] },
+  { name: '프리텐다드',  family: "'Pretendard'",        weights: [100,200,300,400,500,600,700,800,900] },
+  { name: 'G마켓',      family: "'GMarketSans'",       weights: [300, 500, 700] },
   { name: '여기어때잘난체', family: "'YeogiOttaeJalnan'", weights: [400] },
-  { name: '프리텐다드', family: "'Pretendard'", weights: [100, 200, 300, 400, 500, 600, 700, 800, 900] },
-  { name: '너비고딕', family: "system-ui, -apple-system, sans-serif", weights: [400, 700] },
+
+  /* === 동적 주입 폰트 (눈누 CDN) === */
+  { name: '카페24 단정해', family: "'Cafe24Ssurround'", weights: [400, 700],
+    faces: [
+      { weight: 400, url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24Ssurround.woff', format: 'woff' },
+      { weight: 700, url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2105_2@1.0/Cafe24SsurroundAir.woff', format: 'woff' }
+    ]
+  },
+  { name: '배민한나',  family: "'BMHANNAPro'", weights: [400],
+    faces: [
+      { weight: 400, url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_twelve@1.0/BMHANNAPro.woff', format: 'woff' }
+    ]
+  },
+  { name: '검은고딕',  family: "'BlackHanSans'", weights: [400],
+    faces: [
+      { weight: 400, url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_one@1.0/BlackHanSans.woff', format: 'woff' }
+    ]
+  },
+  { name: '본명조',    family: "'NotoSerifKR'", weights: [400, 700],
+    faces: [
+      { weight: 400, url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/NotoSerifKR-Regular.woff', format: 'woff' },
+      { weight: 700, url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001@1.1/NotoSerifKR-Bold.woff', format: 'woff' }
+    ]
+  },
+  { name: '마포금빛나루', family: "'MapoGoldenPier'", weights: [400],
+    faces: [
+      { weight: 400, url: 'https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2001hs@1.1/Mapo금빛나루.woff', format: 'woff' }
+    ]
+  },
+
+  /* === 시스템/상속 === */
+  { name: '나눔고딕',  family: "'Noto Sans KR', 'Noto Sans', sans-serif", weights: [400, 700] },
+  { name: '너비고딕',  family: "system-ui, -apple-system, sans-serif",     weights: [400, 700] },
   { name: '기본(상속)', family: "inherit", weights: [400] }
 ];
 
@@ -3050,6 +3085,34 @@ function exitEditMode() {
   document.getElementById('format-toolbar').classList.remove('show');
 }
 
+/* v0.16.1: WEBFONTS의 faces 정보로 iframe에 @font-face 동적 주입 */
+function injectWebfontsCSS(doc) {
+  if (!doc) return;
+  var existing = doc.getElementById('builder-webfonts-css');
+  if (existing) existing.parentNode.removeChild(existing);
+
+  var rules = [];
+  WEBFONTS.forEach(function(font) {
+    if (!font.faces || !font.faces.length) return;
+    /* family에서 따옴표 제거: "'BMHANNAPro'" → "BMHANNAPro" */
+    var familyName = font.family.replace(/['"]/g, '').split(',')[0].trim();
+    font.faces.forEach(function(face) {
+      rules.push(
+        "@font-face{font-family:'" + familyName + "';" +
+        "src:url('" + face.url + "') format('" + face.format + "');" +
+        "font-weight:" + face.weight + ";" +
+        "font-display:swap;}"
+      );
+    });
+  });
+
+  if (!rules.length) return;
+  var s = doc.createElement('style');
+  s.id = 'builder-webfonts-css';
+  s.textContent = rules.join('');
+  doc.head.appendChild(s);
+}
+
 function injectEditModeCSS(doc) {
   if (doc.getElementById('builder-edit-css')) return;
   var s = doc.createElement('style');
@@ -3079,6 +3142,8 @@ function injectEditModeCSS(doc) {
     '}' +
     /* H3: YouTube/영상 iframe 클릭 차단 */
     '.builder-edit-mode [data-builder-section] iframe{pointer-events:none!important;}' +
+    /* v0.16.1: 편집모드에서 모든 링크 클릭 차단 (contenteditable 안 링크는 편집 의도이므로 차단해도 무방) */
+    '.builder-edit-mode [data-builder-section] a{pointer-events:none!important;}' +
     /* H4: 네이티브 이미지/링크 드래그 방지 */
     '.builder-edit-mode [data-builder-section] img,' +
     '.builder-edit-mode [data-builder-section] a{-webkit-user-drag:none;user-drag:none;}' +
@@ -3424,6 +3489,8 @@ var previewReady = false;
 
 document.getElementById('preview-frame').addEventListener('load', function() {
   previewReady = true;
+  /* v0.16.1: 동적 웹폰트 주입 (가장 먼저 — 다른 렌더링이 폰트를 참조하기 전에) */
+  try { injectWebfontsCSS(this.contentDocument); } catch(e) {}
   /* 모든 링크 새 탭으로 */
   try {
     var doc = this.contentDocument;
@@ -3802,6 +3869,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 11:30 (v0.16.1)',
+    items: [
+      '<strong>[v0.16.1]</strong> WEBFONTS 확장 + @font-face 동적 주입 시스템 추가',
+      '<strong>[v0.16.1]</strong> WEBFONTS 항목에 faces: [{weight,url,format}] 신규 필드 → 정의된 폰트는 iframe load 시 자동 @font-face 주입',
+      '<strong>[v0.16.1]</strong> 추가 폰트 5종: 카페24 단정해 / 배민한나 / 검은고딕 / 본명조 / 마포금빛나루 (눈누 CDN)',
+      '<strong>[v0.16.1]</strong> injectWebfontsCSS(doc): builder-webfonts-css 단일 style 태그로 일괄 주입 (iframe-css-injection 규칙 준수)',
+      '<strong>[v0.16.1]</strong> 편집모드: [data-builder-section] a { pointer-events:none } — 모든 링크 클릭 차단',
+      '<strong>[v0.16.1]</strong> 편집 드로어 이미지 미리보기: max-width/max-height 100% + 클릭 시 새창 (이벤트 위임)',
+    ]
+  },
   {
     date: '2026.04.27 11:13 (v0.16.0)',
     items: [
@@ -4264,6 +4342,15 @@ function togglePatchNotes() {
 loadState();
 renderSectionList();
 renderColorList();
+
+/* v0.16.1: 편집 드로어 이미지 미리보기 클릭 → 새창 (이벤트 위임) */
+document.addEventListener('click', function(e) {
+  var t = e.target;
+  if (t && t.classList && t.classList.contains('ep-bgimg-thumb')) {
+    var src = t.getAttribute('src') || '';
+    if (src && src !== 'about:blank') window.open(src, '_blank', 'noopener');
+  }
+});
 /* X1/X2 초기 UI 복원 */
 (function() {
   if (logoImages.logo1) { var el=document.getElementById('logo-url-logo1'); if(el) el.value=logoImages.logo1; var t=document.getElementById('logo-thumb-logo1'); if(t){t.src=logoImages.logo1;t.style.display='block';} }
