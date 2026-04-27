@@ -390,7 +390,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.17.2</span>
+  <span id="ver-badge" title="배포 버전">v0.17.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1358,7 +1358,43 @@ function applyFieldsToPreview(sectionId) {
     if (val === undefined) return;
     if (m._repeater) {
       var nodes = sEl.querySelectorAll(m.container);
-      nodes.forEach(function(node, i) {
+      var nodesArr = Array.prototype.slice.call(nodes);
+
+      /* v0.17.3: DOM 개수 < 데이터 개수 → 마지막 노드 클론하여 추가 */
+      if (nodesArr.length > 0 && Array.isArray(val) && val.length > nodesArr.length) {
+        var lastNode = nodesArr[nodesArr.length - 1];
+        var parent = lastNode.parentNode;
+        while (nodesArr.length < val.length) {
+          var clone = lastNode.cloneNode(true);
+          /* 클론에서 편집 모드 흔적 정리 (편집 모드일 때만 의미) */
+          clone.querySelectorAll('[data-editable]').forEach(function(el) {
+            el.removeAttribute('contenteditable');
+            el.removeAttribute('data-editable');
+            el.removeAttribute('data-builder-section');
+            el.removeAttribute('data-builder-field');
+            el.removeAttribute('data-builder-prop');
+          });
+          clone.querySelectorAll('[data-img-edit-bound]').forEach(function(el) {
+            el.removeAttribute('data-img-edit-bound');
+          });
+          parent.appendChild(clone);
+          nodesArr.push(clone);
+        }
+        /* 편집 모드 중이라면 새 노드에 편집 리스너 재부착 */
+        if (typeof editMode !== 'undefined' && editMode) {
+          try { applyEditableAttr(doc); } catch(e) {}
+          try { applyImageEditListeners(doc); } catch(e) {}
+        }
+      }
+      /* v0.17.3: DOM 개수 > 데이터 개수 → 초과 노드 제거 */
+      else if (Array.isArray(val) && val.length < nodesArr.length) {
+        for (var rmI = nodesArr.length - 1; rmI >= val.length; rmI--) {
+          nodesArr[rmI].parentNode.removeChild(nodesArr[rmI]);
+        }
+        nodesArr.length = val.length;
+      }
+
+      nodesArr.forEach(function(node, i) {
         if (!val[i]) return;
         Object.keys(m.fields).forEach(function(sfk) {
           var fm = m.fields[sfk];
@@ -3955,6 +3991,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 12:25 (v0.17.3)',
+    items: [
+      '<strong>[v0.17.3]</strong> P1 W2 5/8: repeater +추가 버튼 무동작 버그 수정',
+      '<strong>[v0.17.3]</strong> 원인: applyFieldsToPreview가 기존 DOM에만 데이터 채움 → 새 아이템은 DOM이 없어 화면에 안 보임',
+      '<strong>[v0.17.3]</strong> 해결: nodes.length < val.length면 마지막 노드 cloneNode + 편집 모드 흔적 정리 후 추가, 반대면 초과 노드 제거',
+      '<strong>[v0.17.3]</strong> 영향: posters / intro_links.items / joblist.tabs / success.items / organizations.items 5개 repeater 자동 수혜',
+      '<strong>[v0.17.3]</strong> 편집 모드 중 추가 시 applyEditableAttr/applyImageEditListeners 재부착',
+    ]
+  },
   {
     date: '2026.04.27 12:13 (v0.17.2)',
     items: [
