@@ -380,7 +380,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.15.16</span>
+  <span id="ver-badge" title="배포 버전">v0.16.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -783,6 +783,14 @@ function loadState() {
           if (t.fontWeight === '400' || t.fontWeight === 'normal') t.fontWeight = '';
         });
       }
+      /* v0.16.0: mediaModes 기본값 보강 (없는 그룹은 image 모드로) */
+      if (!sectionData.section_visual) sectionData.section_visual = {};
+      if (!sectionData.section_visual.mediaModes) sectionData.section_visual.mediaModes = {};
+      Object.keys(DEFAULT_VISUAL_MEDIA_MODES).forEach(function(g) {
+        if (!sectionData.section_visual.mediaModes[g]) {
+          sectionData.section_visual.mediaModes[g] = Object.assign({}, DEFAULT_VISUAL_MEDIA_MODES[g]);
+        }
+      });
     }
     if (s.posterConfig)  posterConfig  = s.posterConfig;
     if (s.navLinks)      navLinks      = s.navLinks;
@@ -1555,6 +1563,13 @@ var visualImageToggle = {
   rightvisual: true
 };
 
+/* 비주얼 영역별 미디어 모드 (image | text). 텍스트 모드 시 alt → 초기값 자동 채움 */
+var DEFAULT_VISUAL_MEDIA_MODES = {
+  online:      { mode: 'image', textPc: '', textM: '' },
+  offline:     { mode: 'image', textPc: '', textM: '' },
+  rightvisual: { mode: 'image', textPc: '', textM: '' }
+};
+
 function buildVisualPanel() {
   var doc = getPreviewDoc();
   var sEl = doc ? doc.querySelector('[data-builder-section="section_visual"]') : null;
@@ -1636,8 +1651,10 @@ function buildVisualPanel() {
   h += '<div class="ep-spacing-title">비주얼 이미지 교체</div>';
 
   /* 그룹별 on/off 토글 */
+  var modes = (sectionData.section_visual && sectionData.section_visual.mediaModes) || {};
   VISUAL_IMAGE_GROUPS.forEach(function(group, gIdx) {
     var isActive = visualImageToggle[group.groupId];
+    var mediaMode = (modes[group.groupId] && modes[group.groupId].mode) || 'image';
     h += '<div style="margin-bottom:12px;border:1px solid #334155;border-radius:4px;padding:8px;background:#1e293b;">' +
       '<button style="width:100%;padding:8px;background:' + (isActive ? '#059669' : '#666') + ';color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;" ' +
         'onclick="toggleVisualImageGroup(\'' + group.groupId + '\')">' +
@@ -1645,23 +1662,41 @@ function buildVisualPanel() {
       '</button>';
 
     if (isActive) {
-      group.images.forEach(function(imgDef, iIdx) {
-        var imgIdx = (gIdx * 10) + iIdx;
-        var curSrc = '';
-        if (sEl) { var img = sEl.querySelector(imgDef.sel); if (img) curSrc = img.getAttribute('src') || ''; }
-        h += '<div class="ep-field" style="margin-top:8px;">' +
-          '<label style="font-size:11px;">' + (imgDef.label ? '- ' + imgDef.label : group.label) + '</label>' +
-          '<div class="ep-bgimg-row">' +
-            '<input type="text" class="ep-bgimg-input" id="vi-url-' + imgIdx + '" value="' + esc(curSrc) + '" placeholder="URL" oninput="updateVisualImage(' + gIdx + ',' + iIdx + ',this.value)">' +
-            '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
-              '<input type="file" accept="image/*" style="display:none" onchange="onVisualImgFile(this,' + gIdx + ',' + iIdx + ')">' +
-            '</label>' +
-          '</div>' +
-          (curSrc
-            ? '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" src="' + esc(curSrc) + '">'
-            : '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" style="display:none">') +
-        '</div>';
-      });
+      /* v0.16.0: 이미지/텍스트 모드 전환 */
+      h += '<div style="display:flex;gap:4px;margin-top:8px;">' +
+        '<button style="flex:1;padding:5px;background:' + (mediaMode === 'image' ? '#1e40af' : '#1e293b') + ';color:' + (mediaMode === 'image' ? '#fff' : '#94a3b8') + ';border:1px solid #334155;border-radius:3px;cursor:pointer;font-size:10px;" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'image\')">🖼 이미지</button>' +
+        '<button style="flex:1;padding:5px;background:' + (mediaMode === 'text' ? '#1e40af' : '#1e293b') + ';color:' + (mediaMode === 'text' ? '#fff' : '#94a3b8') + ';border:1px solid #334155;border-radius:3px;cursor:pointer;font-size:10px;" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'text\')">T 텍스트</button>' +
+      '</div>';
+
+      if (mediaMode === 'image') {
+        group.images.forEach(function(imgDef, iIdx) {
+          var imgIdx = (gIdx * 10) + iIdx;
+          var curSrc = '';
+          if (sEl) { var img = sEl.querySelector(imgDef.sel); if (img) curSrc = img.getAttribute('src') || ''; }
+          h += '<div class="ep-field" style="margin-top:8px;">' +
+            '<label style="font-size:11px;">' + (imgDef.label ? '- ' + imgDef.label : group.label) + '</label>' +
+            '<div class="ep-bgimg-row">' +
+              '<input type="text" class="ep-bgimg-input" id="vi-url-' + imgIdx + '" value="' + esc(curSrc) + '" placeholder="URL" oninput="updateVisualImage(' + gIdx + ',' + iIdx + ',this.value)">' +
+              '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
+                '<input type="file" accept="image/*" style="display:none" onchange="onVisualImgFile(this,' + gIdx + ',' + iIdx + ')">' +
+              '</label>' +
+            '</div>' +
+            (curSrc
+              ? '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" src="' + esc(curSrc) + '">'
+              : '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" style="display:none">') +
+          '</div>';
+        });
+      } else {
+        /* 텍스트 모드: PC/M 분리 입력 (rightvisual은 PC 1개) */
+        var modeData = modes[group.groupId] || { textPc: '', textM: '' };
+        var hasMobile = group.images.some(function(im) { return im.label === 'M'; });
+        h += '<div class="ep-field" style="margin-top:8px;"><label style="font-size:11px;">' + (hasMobile ? 'PC 텍스트' : '텍스트') + '</label>' +
+          '<input type="text" value="' + esc(modeData.textPc || '') + '" oninput="updateVisualMediaText(\'' + group.groupId + '\',\'pc\',this.value)" placeholder="텍스트 입력"></div>';
+        if (hasMobile) {
+          h += '<div class="ep-field" style="margin-top:6px;"><label style="font-size:11px;">모바일 텍스트 (줄바꿈은 &lt;br&gt;)</label>' +
+            '<textarea class="ep-textarea" oninput="updateVisualMediaText(\'' + group.groupId + '\',\'m\',this.value)" placeholder="모바일 텍스트">' + esc(modeData.textM || '') + '</textarea></div>';
+        }
+      }
     }
     h += '</div>';
   });
@@ -1755,6 +1790,93 @@ function updateVisualImage(gIdx, iIdx, url) {
 function toggleVisualImageGroup(groupId) {
   visualImageToggle[groupId] = !visualImageToggle[groupId];
   openEditPanel('section_visual');  /* 패널 새로고침 */
+}
+
+/* v0.16.0: 비주얼 영역 미디어 모드 전환 (image | text) */
+function setVisualMediaMode(groupId, mode) {
+  if (!sectionData.section_visual) sectionData.section_visual = {};
+  if (!sectionData.section_visual.mediaModes) sectionData.section_visual.mediaModes = {};
+  if (!sectionData.section_visual.mediaModes[groupId]) {
+    sectionData.section_visual.mediaModes[groupId] = Object.assign({}, DEFAULT_VISUAL_MEDIA_MODES[groupId]);
+  }
+  var modeData = sectionData.section_visual.mediaModes[groupId];
+  modeData.mode = mode;
+
+  /* 텍스트 모드 첫 진입 시 alt 자동 채움 */
+  if (mode === 'text') {
+    var doc = getPreviewDoc();
+    var sEl = doc ? doc.querySelector('[data-builder-section="section_visual"]') : null;
+    var group = VISUAL_IMAGE_GROUPS.find(function(g) { return g.groupId === groupId; });
+    if (sEl && group) {
+      group.images.forEach(function(imgDef) {
+        var img = sEl.querySelector(imgDef.sel);
+        if (!img) return;
+        var isM = imgDef.label === 'M';
+        var key = isM ? 'textM' : 'textPc';
+        if (!modeData[key]) modeData[key] = img.getAttribute('alt') || '';
+      });
+    }
+  }
+
+  applyMediaModesToPreview();
+  saveState();
+  openEditPanel('section_visual');
+}
+
+/* 텍스트 모드 입력 업데이트 */
+function updateVisualMediaText(groupId, type, val) {
+  if (!sectionData.section_visual || !sectionData.section_visual.mediaModes) return;
+  var modeData = sectionData.section_visual.mediaModes[groupId];
+  if (!modeData) return;
+  if (type === 'pc') modeData.textPc = val;
+  else if (type === 'm') modeData.textM = val;
+  applyMediaModesToPreview();
+  saveState();
+}
+
+/* iframe DOM에 미디어 모드 반영 */
+function applyMediaModesToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sEl = doc.querySelector('[data-builder-section="section_visual"]');
+  if (!sEl) return;
+
+  if (!sectionData.section_visual) sectionData.section_visual = {};
+  if (!sectionData.section_visual.mediaModes) sectionData.section_visual.mediaModes = {};
+  var modes = sectionData.section_visual.mediaModes;
+
+  VISUAL_IMAGE_GROUPS.forEach(function(group) {
+    var modeData = modes[group.groupId] || Object.assign({}, DEFAULT_VISUAL_MEDIA_MODES[group.groupId]);
+
+    group.images.forEach(function(imgDef) {
+      var img = sEl.querySelector(imgDef.sel);
+      if (!img) return;
+      var isM = imgDef.label === 'M';
+      var marker = 'mm-' + group.groupId + '-' + (isM ? 'm' : 'pc');
+      var parent = img.parentNode;
+      var existing = parent.querySelector('[data-media-text="' + marker + '"]');
+
+      if (modeData.mode === 'text') {
+        var key = isM ? 'textM' : 'textPc';
+        var html = modeData[key] || '';
+        if (existing) {
+          if (existing.innerHTML !== html) existing.innerHTML = html;
+        } else {
+          var div = doc.createElement('div');
+          div.setAttribute('data-media-text', marker);
+          div.setAttribute('data-builder-section', 'section_visual');
+          div.className = img.className;  /* d-lg-block / d-lg-none 등 responsive 클래스 보존 */
+          div.innerHTML = html;
+          if (editMode) makeEditable(div, 'section_visual', 'mediaModes.' + group.groupId + '.' + key, 'innerHTML');
+          parent.insertBefore(div, img);
+        }
+        img.style.display = 'none';
+      } else {
+        if (existing) existing.remove();
+        img.style.display = '';
+      }
+    });
+  });
 }
 
 /* Step 1-2: 텍스트 업데이트 (인덱스 기반) */
@@ -2892,6 +3014,7 @@ function enterEditMode() {
   applyImageEditListeners(doc);   /* E1 */
   applyYoutubeEditListeners(doc); /* E2 */
   editMode = true;
+  applyMediaModesToPreview();     /* v0.16.0: 텍스트 모드 div에 makeEditable 부착 */
   document.getElementById('edit-mode-btn').classList.add('active');
   document.getElementById('edit-mode-btn').textContent = '✕ 편집 종료';
   document.getElementById('edit-mode-badge').classList.add('show');
@@ -3326,6 +3449,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyVisualRightToPreview();
   applyLogoImagesToPreview();
   renderVisualTexts();  /* Step 2: 메인 비주얼 텍스트 요소 렌더링 */
+  applyMediaModesToPreview();  /* v0.16.0: 비주얼 영역 이미지/텍스트 모드 복원 */
   renderNavPanel();
   renderTabPanel();
 });
@@ -3678,6 +3802,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 14:00 (v0.16.0)',
+    items: [
+      '<strong>[v0.16.0]</strong> 메인 비주얼: 이미지 영역 ↔ 텍스트 모드 전환 기능 추가 (online/offline/rightvisual 3영역)',
+      '<strong>[v0.16.0]</strong> 텍스트 모드 첫 진입 시 img alt 속성을 초기 텍스트로 자동 채움',
+      '<strong>[v0.16.0]</strong> 모드 전환 시 데이터 보존: 이미지로 복귀해도 텍스트 입력값 유지(다시 텍스트 모드 시 복원)',
+      '<strong>[v0.16.0]</strong> 텍스트 모드 div는 편집 모드에서 contenteditable + blur 자동 캡처 (mediaModes.{groupId}.textPc/textM 경로)',
+      '<strong>[v0.16.0]</strong> sectionData.section_visual.mediaModes 신규 상태 + loadState 마이그레이션',
+    ]
+  },
   {
     date: '2026.04.24 15:00 (v0.15.16)',
     items: [
