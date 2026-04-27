@@ -394,7 +394,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.20.0</span>
+  <span id="ver-badge" title="배포 버전">v0.20.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -701,8 +701,8 @@ var SECTION_DOM_MAP = {
 
 var buttonStyles = {
   section_gradient: [
-    { text: '취업특강 사전신청',             href: 'https://naver.me/GT6ePxU3',  width: '39.683%', bgColor: '#f46d80', shadowEnabled: true, shadowColor: '#D94E62', hoverEnabled: true, hoverBgColor: '#f78797', hoverShadowColor: '#bd3d50' },
-    { text: '이력서·자기소개서 첨삭 사전신청', href: 'https://naver.me/Gq9NKkAu', width: '39.683%', bgColor: '#c91be5', shadowEnabled: true, shadowColor: '#A612BE', hoverEnabled: true, hoverBgColor: '#de33fa', hoverShadowColor: '#910ca5' }
+    { text: '취업특강 사전신청',             href: 'https://naver.me/GT6ePxU3',  target: '_blank', width: '39.683%', bgColor: '#f46d80', shadowEnabled: true, shadowColor: '#D94E62', hoverEnabled: true, hoverBgColor: '#f78797', hoverShadowColor: '#bd3d50' },
+    { text: '이력서·자기소개서 첨삭 사전신청', href: 'https://naver.me/Gq9NKkAu', target: '_blank', width: '39.683%', bgColor: '#c91be5', shadowEnabled: true, shadowColor: '#A612BE', hoverEnabled: true, hoverBgColor: '#de33fa', hoverShadowColor: '#910ca5' }
   ]
 };
 
@@ -795,7 +795,16 @@ function loadState() {
         if (cssColors[v] === undefined) cssColors[v] = FAIR_BUILDER_COLORS[v].default;
       });
     }
-    if (s.buttonStyles)  buttonStyles  = s.buttonStyles;
+    if (s.buttonStyles) {
+      buttonStyles = s.buttonStyles;
+      /* v0.20.1: target 마이그레이션 — 기존 데이터에 target 없으면 _blank */
+      Object.keys(buttonStyles).forEach(function(secId) {
+        if (!Array.isArray(buttonStyles[secId])) return;
+        buttonStyles[secId].forEach(function(b) {
+          if (b.target === undefined) b.target = '_blank';
+        });
+      });
+    }
     if (s.sectionData) {
       sectionData = s.sectionData;
       /* 마이그레이션: mvisual_texts의 레거시 기본값('inherit'/'400') → '' (inline style 자동 주입 방지) */
@@ -2714,6 +2723,10 @@ function applyBtnStylesToPreview() {
     if (!s) return;
     el.textContent = s.text;
     el.href = s.href;
+    /* v0.20.1: target 옵션 적용 (글로벌 정책) */
+    var tgt = s.target || '_blank';
+    if (tgt === '_self') el.removeAttribute('target');
+    else el.setAttribute('target', tgt);
     el.style.width = s.width;
     el.style.backgroundColor = s.bgColor;
     el.style.boxShadow = s.shadowEnabled ? ('-5px -5px 4px 0 ' + s.shadowColor + ' inset') : 'none';
@@ -3231,6 +3244,14 @@ function buildBtnSettingsPanelHTML(idx, b) {
     '</div>';
   h += bspRow('버튼 텍스트', '<input type="text" class="bsp-input" value="' + esc(b.text) + '" oninput="updateBtnField(' + idx + ',\'text\',this.value)">');
   h += bspRow('링크 URL', '<input type="text" class="bsp-input" value="' + esc(b.href) + '" oninput="updateBtnField(' + idx + ',\'href\',this.value)">');
+  /* v0.20.1: target 옵션 (글로벌 정책) */
+  var tgt = b.target || '_blank';
+  h += bspRow('열기 방식',
+    '<select class="bsp-input" onchange="updateBtnField(' + idx + ',\'target\',this.value)">' +
+      '<option value="_blank" ' + (tgt === '_blank' ? 'selected' : '') + '>새창 (_blank)</option>' +
+      '<option value="_self" ' + (tgt === '_self' ? 'selected' : '') + '>현재창 (_self)</option>' +
+    '</select>'
+  );
   h += bspRow('너비', '<input type="text" class="bsp-input" value="' + esc(b.width) + '" placeholder="예: 40% / 320px" oninput="updateBtnField(' + idx + ',\'width\',this.value)">');
   h += bspColorRow(idx, 'bgColor', b.bgColor, '배경색');
   h += '<div style="display:flex;align-items:center;gap:8px;margin:6px 0;">' +
@@ -4291,6 +4312,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 13:30 (v0.20.1)',
+    items: [
+      '<strong>[v0.20.1]</strong> 글로벌 정책 두 번째 적용: section_gradient 버튼에 target 옵션 추가',
+      '<strong>[v0.20.1]</strong> buttonStyles default 데이터에 target 필드 (default _blank)',
+      '<strong>[v0.20.1]</strong> buildBtnSettingsPanelHTML: 링크 URL 다음에 "열기 방식" select 추가',
+      '<strong>[v0.20.1]</strong> applyBtnStylesToPreview: target도 동기 (_self는 removeAttribute, _blank는 setAttribute)',
+      '<strong>[v0.20.1]</strong> 검수: loadState 마이그레이션 누락 발견 → 기존 buttonStyles에 target 없으면 _blank 보강',
+    ]
+  },
   {
     date: '2026.04.27 13:14 (v0.20.0)',
     items: [
