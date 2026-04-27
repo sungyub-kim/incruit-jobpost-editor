@@ -394,7 +394,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.20.1</span>
+  <span id="ver-badge" title="배포 버전">v0.20.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4222,7 +4222,9 @@ function buildExportASP() {
   /* 1. 빌더 주입 스타일 태그 제거 */
   ['builder-edit-css','builder-spacing-css','builder-bgimage-css',
    'builder-aos-disable','builder-logo-css','builder-btn-styles',
-   'builder-poster-layout'].forEach(function(id) {
+   'builder-poster-layout',
+   /* v0.20.2: 새로 추가된 빌더 스타일 ID */
+   'builder-webfonts-css','builder-nav-hover-css'].forEach(function(id) {
     var el = clone.querySelector('#' + id);
     if (el) el.parentNode.removeChild(el);
   });
@@ -4231,10 +4233,19 @@ function buildExportASP() {
   clone.querySelectorAll('[data-builder-ui]').forEach(function(el) { el.parentNode.removeChild(el); });
   clone.querySelectorAll('[data-handle-for]').forEach(function(el) { el.parentNode.removeChild(el); });
 
+  /* v0.20.2: 편집모드 진입 시 백업한 a href 복원 (편집 종료 안 한 채 export 대비) */
+  clone.querySelectorAll('a[data-orig-href]').forEach(function(a) {
+    var orig = a.getAttribute('data-orig-href');
+    if (orig) a.setAttribute('href', orig);
+    a.removeAttribute('data-orig-href');
+  });
+
   /* 3. 편집 관련 속성/클래스 제거 */
   var editAttrs = ['contenteditable','data-editable','data-builder-field',
                    'data-builder-prop','data-img-edit-bound','data-yt-edit-bound',
-                   'data-edit-nav-blocked'];
+                   'data-edit-nav-blocked',
+                   /* v0.20.2: 새로 추가된 빌더 속성 */
+                   'data-orig-href','data-text-index','data-media-text'];
   clone.querySelectorAll('*').forEach(function(el) {
     editAttrs.forEach(function(a) { el.removeAttribute(a); });
     /* 편집 힌트 title 제거 */
@@ -4312,6 +4323,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 14:00 (v0.20.2)',
+    items: [
+      '<strong>[v0.20.2]</strong> 검수 핫픽스 — Export 정리 누락 3건',
+      '<strong>[v0.20.2]</strong> 빌더 주입 스타일 ID 누락 2개 추가: builder-webfonts-css(v0.16.1), builder-nav-hover-css(v0.19.0)',
+      '<strong>[v0.20.2]</strong> 빌더 속성 누락 3개 추가: data-orig-href(v0.18.1), data-text-index(v0.16.0), data-media-text(v0.16.0)',
+      '<strong>[v0.20.2]</strong> 편집모드 종료 안 한 채 export 대비: a[data-orig-href]는 href로 자동 복원 후 속성 제거',
+      '<strong>[v0.20.2]</strong> .claude/rules/builder-attrs.md 동기 갱신 (regression 방지)',
+    ]
+  },
   {
     date: '2026.04.27 13:17 (v0.20.1)',
     items: [
