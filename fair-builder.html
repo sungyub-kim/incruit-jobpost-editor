@@ -394,7 +394,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.21.0</span>
+  <span id="ver-badge" title="배포 버전">v0.21.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -454,13 +454,7 @@
           <div id="nav-link-list" style="display:flex;flex-direction:column;gap:4px;"></div>
         </div>
 
-        <!-- S1: 채용공고 탭 -->
-        <div class="p-section-header" style="margin-top:4px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleFixedPanel('tab-panel','tab-arrow')">
-          <span>📋 채용공고 탭</span><span id="tab-arrow" style="font-size:10px;">▶</span>
-        </div>
-        <div id="tab-panel" style="display:none;margin-bottom:8px;">
-          <div id="joblist-tab-list" style="display:flex;flex-direction:column;gap:4px;"></div>
-        </div>
+        <!-- v0.21.1: S1 채용공고 탭 패널은 우측 편집 드로어로 이동 -->
 
         <div class="p-section-header aos-toggle-row" style="margin-top:4px;">
           AOS 애니메이션
@@ -674,9 +668,7 @@ var SECTION_DOM_MAP = {
   },
   section_joblist: {
     sec_title: { sel: 'p.sec_tit.basic', prop: 'textContent' },
-    tabs: { _repeater: true, container: 'label.tab_item', fields: {
-      name: { sel: null, prop: 'textContent' },
-    }}
+    /* v0.21.1: tabs는 우측 드로어의 '📋 탭 메뉴 관리' UI(joblistTabs)에서 단일 관리 */
   },
   section_success: {
     sec_title: { sel: 'p.sec_tit.basic', prop: 'textContent' },
@@ -1538,6 +1530,12 @@ function openEditDrawer(id) {
   } else if (SECTION_DOM_MAP[id]) {
     loadFieldsFromPreview(id);
     body.innerHTML = buildSectionPanel(id);
+    /* v0.21.1: 채용관 탭 관리 UI를 우측 드로어에 통합 (좌측 패널에서 이동) */
+    if (id === 'section_joblist') {
+      body.innerHTML += '<div class="ep-title" style="margin-top:14px;">📋 탭 메뉴 관리</div>' +
+                       '<div id="joblist-tab-list" style="display:flex;flex-direction:column;gap:6px;"></div>';
+      renderTabPanel();
+    }
   } else {
     body.innerHTML = '<div class="ep-title" style="color:#4b5563;">편집 기능 준비 중</div>';
   }
@@ -4461,6 +4459,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 15:20 (v0.21.1)',
+    items: [
+      '<strong>[v0.21.1]</strong> 핫픽스 UX: 채용공고 탭 패널을 좌측 → 우측 편집 드로어로 이동',
+      '<strong>[v0.21.1]</strong> 원인: 좌측에서 탭 입력 클릭 시 미리보기 active 토글 → 우측 드로어 열렸다 닫혔다 반복',
+      '<strong>[v0.21.1]</strong> 좌측 "📋 채용공고 탭" 패널 제거, 우측 드로어(채용관 편집 시) 하단에 "📋 탭 메뉴 관리" 통합',
+      '<strong>[v0.21.1]</strong> SECTION_DOM_MAP의 joblist.tabs 제거 — joblistTabs로 단일 관리 (이중 입력 혼란 제거)',
+    ]
+  },
   {
     date: '2026.04.27 15:06 (v0.21.0)',
     items: [
