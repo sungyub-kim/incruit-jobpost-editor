@@ -85,28 +85,28 @@
 
   <div class="tldr">
     <div class="tldr-label">이번 주 핵심</div>
-    <div class="tldr-text">계획된 W1 일정에 더해 W2 + W3 nav까지 완료. 1차 빌더형 약 27% 진척. 자율 워크플로우 정착 + 글로벌 링크 정책 신설로 후속 작업 효율 상승 기대.</div>
+    <div class="tldr-text">W1+W2+W3 nav 완료 + W4 채용관 5순위 Stage 1·4 진입. 24개 버전 배포로 1차 빌더형 약 30% 진척. 자율 워크플로우 정착 + 글로벌 링크 정책(3곳 적용) + Mixed Content 보안 핫픽스.</div>
   </div>
 
   <div class="kpi-row">
     <div class="kpi">
       <div class="label">배포 버전</div>
-      <div class="value">15</div>
+      <div class="value">24</div>
       <div class="sub">개</div>
     </div>
     <div class="kpi">
       <div class="label">기능 / 핫픽스</div>
-      <div class="value">9 / 6</div>
+      <div class="value">12 / 9</div>
       <div class="sub">건</div>
     </div>
     <div class="kpi highlight">
       <div class="label">계획 대비</div>
-      <div class="value">270%</div>
-      <div class="sub">8건 → 22건</div>
+      <div class="value">340%</div>
+      <div class="sub">8건 → 27건</div>
     </div>
     <div class="kpi">
       <div class="label">1차 진척</div>
-      <div class="value">27%</div>
+      <div class="value">30%</div>
       <div class="sub">~7/8 출시</div>
     </div>
   </div>
@@ -126,10 +126,13 @@
     <div class="panel">
       <div class="panel-title">🎯 핵심 산출물</div>
       <ul>
-        <li>메인비주얼 강화 (이미지↔텍스트, 웹폰트 5종, AOS 효과)</li>
-        <li>섹션 관리 (제거/추가 풀, 섹션명 양방향 동기화)</li>
+        <li>메인비주얼 강화 (이미지↔텍스트, 웹폰트 5종, AOS 효과 16종)</li>
+        <li>섹션 관리 (제거/추가 풀, 섹션명 양방향, 좌측 패널 단순화)</li>
         <li>에디터 툴바 정비 + repeater 자동 클론 5섹션</li>
-        <li>네비게이션 4건 일괄 (추가/삭제, hover, 편집)</li>
+        <li>네비게이션 4건 일괄 + 채용관 1뎁스 탭 on/off+추가/삭제</li>
+        <li><strong>채용관 게시판 광고형/리스트형 토글</strong> (탭별)</li>
+        <li><strong>글로벌 링크 정책 3곳 적용</strong> (nav/section_gradient/박람회개요)</li>
+        <li>award-company-list 영구 제거 + sub-tab 정리</li>
         <li>로드맵 + 일일/주간 보고 + 자동화 정책 신설</li>
       </ul>
     </div>
@@ -137,9 +140,10 @@
       <div class="panel-title">📌 다음 주 (W2: 5/6~5/8)</div>
       <ul>
         <li>5/4(월), 5/5(화) 휴무 — 가용 영업일 3일</li>
-        <li>P4 W4 채용관 5순위 Stage 1 (1뎁스 탭 on/off)</li>
-        <li>또는 4/29 Stage 2 섹션 복제 (UUID 도입)</li>
-        <li>또는 W2 5/6 AOS Stage 2 (.poster-box 등 확장)</li>
+        <li>채용관 Stage 2 (2뎁스 sub-tab on/off)</li>
+        <li>채용관 Stage 3 (검색 직종/지역 토글)</li>
+        <li>P0-1 편집 드로어 탭 분리 (UI 인프라)</li>
+        <li>또는 박람회 개요 4순위 본격 작업</li>
       </ul>
     </div>
   </div>
@@ -147,8 +151,8 @@
   <div class="issue-box">
     <div class="issue-title">⚠️ 위험 요소</div>
     <div class="issue-text">
-      14개 버전을 하루에 배포 → 자체 검수만 거침. 사용자 일괄 검수(1차 완료 시점)에서 누락 회귀가 발견될 수 있음. 다음 주부터 진행 속도 조정 + 자체 검수 강화 권장.<br>
-      <strong>미해결 이슈</strong>: B-1 (컬러/배경이 span 전체 적용) — 큰 포맷팅 시스템 변경 필요, 별도 Stage.
+      24개 버전을 하루에 배포 → 자체 검수만 거침. 9건 핫픽스로 회귀 5건+UX 4건 처리하며 안정화 진행. 다음 주부터 진행 속도 조정 + 자체 검수 강화 권장.<br>
+      <strong>미해결 이슈</strong>: B-1 (컬러/배경이 span 전체 적용) — 포맷팅 시스템 큰 변경 필요, 별도 Stage. 채용관 Stage 5(탭별 마크업 클론) 잔존.
     </div>
   </div>
 </div>
@@ -170,7 +174,7 @@
       data: {
         labels: ['계획', '실제'],
         datasets: [{
-          data: [8, 22],
+          data: [8, 27],
           backgroundColor: ['#cbd5e1', '#059669'],
           borderRadius: 6,
           borderWidth: 0,
@@ -198,9 +202,9 @@
     new Chart(dEl, {
       type: 'doughnut',
       data: {
-        labels: ['신규 기능', '검수 핫픽스', '정책/문서'],
+        labels: ['신규 기능', '검수 핫픽스', '정책/UX'],
         datasets: [{
-          data: [9, 5, 3],
+          data: [12, 9, 3],
           backgroundColor: ['#3b82f6', '#f59e0b', '#10b981'],
           borderWidth: 0
         }]

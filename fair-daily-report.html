@@ -85,22 +85,22 @@
 
   <div class="tldr">
     <div class="tldr-label">오늘 핵심</div>
-    <div class="tldr-text">1차 일정 W1+W2+W3 작업을 하루에 압축 진행. 14개 버전 배포로 1차 빌더형 약 27% 진척. 자율 워크플로우 + 글로벌 링크 정책 신설.</div>
+    <div class="tldr-text">1차 W1+W2+W3 nav 완료 + W4 채용관 Stage 1/4 진입. 24개 버전 배포로 1차 빌더형 약 30% 진척. 자율 워크플로우 + 글로벌 링크 정책(3곳 적용) + 채용관 탭/게시판 토글 + Mixed Content 보안 핫픽스.</div>
   </div>
 
   <div class="kpi-row">
     <div class="kpi feature">
       <div class="label">신규 기능</div>
-      <div class="value">9</div>
+      <div class="value">12</div>
       <div class="sub">건</div>
     </div>
     <div class="kpi fix">
       <div class="label">검수 핫픽스</div>
-      <div class="value">5</div>
+      <div class="value">9</div>
       <div class="sub">건</div>
     </div>
     <div class="kpi policy">
-      <div class="label">정책/문서</div>
+      <div class="label">정책/UX</div>
       <div class="value">3</div>
       <div class="sub">건</div>
     </div>
@@ -115,7 +115,7 @@
     <div class="cat-box">
       <div class="cat-head">
         <span class="cat-name">🔵 신규 기능</span>
-        <span class="cat-count">9건</span>
+        <span class="cat-count">12건</span>
       </div>
       <ul>
         <li>메인비주얼 이미지↔텍스트 모드 전환</li>
@@ -126,13 +126,16 @@
         <li>repeater +추가 자동 클론 (5섹션)</li>
         <li>메인비주얼 텍스트별 AOS 효과</li>
         <li>네비게이션 4건 (추가/삭제/hover/편집)</li>
-        <li>링크 target 옵션 (nav + 버튼)</li>
+        <li>링크 target 옵션 ─ 글로벌 정책 (nav/section_gradient/박람회개요 적용)</li>
+        <li><strong>채용관 1뎁스 탭 on/off + 추가/삭제 (2~5)</strong></li>
+        <li><strong>채용관 탭별 게시판 형식 토글 (광고형/리스트형)</strong></li>
+        <li><strong>award-company-list 영구 제거 + sub-tab 정리</strong></li>
       </ul>
     </div>
     <div class="cat-box">
       <div class="cat-head">
         <span class="cat-name">🟠 검수 핫픽스</span>
-        <span class="cat-count">5건</span>
+        <span class="cat-count">9건</span>
       </div>
       <ul>
         <li>편집모드 링크 차단 부작용 (a 안 img 편집)</li>
@@ -140,6 +143,10 @@
         <li>섹션 제거 시 영상이 최상단 이동</li>
         <li>편집모드 nav 링크 navigation</li>
         <li>섹션명 단방향 동기화</li>
+        <li>Export 정리 누락 5건 (스타일/속성)</li>
+        <li><strong>채용관 패널 좌→우 드로어 이동 (UX)</strong></li>
+        <li><strong>좌측 섹션 패널 단순화 (P0-2)</strong></li>
+        <li><strong>Mixed Content 차단 해결 (http→https)</strong></li>
       </ul>
     </div>
   </div>
@@ -147,8 +154,8 @@
   <div class="next-box">
     <div class="next-title">📌 다음 작업 (다음 세션)</div>
     <div class="next-text">
-      <strong>P4 W4 채용관 5순위 Stage 1</strong>: 1뎁스 탭 on/off (2~5개) — 마크업 복잡, 종일급<br>
-      <span style="font-size:11px;color:#a16207;">※ 미해결: B-1 컬러 블록 단위 적용 (큰 변경, 별도 Stage 필요)</span>
+      <strong>채용관 Stage 2 (2뎁스 sub-tab on/off)</strong> 또는 <strong>P0-1 편집 드로어 탭 분리</strong> 또는 <strong>박람회 개요 4순위 본격 작업</strong><br>
+      <span style="font-size:11px;color:#a16207;">※ 미해결: B-1 컬러 블록 단위 적용 (포맷팅 시스템 큰 변경 필요)</span>
     </div>
   </div>
 </div>
@@ -167,11 +174,11 @@
     new Chart(el, {
       type: 'bar',
       data: {
-        labels: ['메인비주얼', '섹션 관리', '에디터/툴바', '네비게이션', '글로벌 정책', '기타 핫픽스'],
+        labels: ['메인비주얼', '섹션 관리', '에디터/툴바', '네비게이션', '글로벌 정책', '채용관 5순위', '검수 핫픽스'],
         datasets: [{
           label: '버전 수',
-          data: [3, 2, 2, 2, 2, 3],
-          backgroundColor: ['#3b82f6','#06b6d4','#10b981','#a855f7','#ec4899','#f59e0b'],
+          data: [3, 2, 2, 2, 3, 5, 5],
+          backgroundColor: ['#3b82f6','#06b6d4','#10b981','#a855f7','#ec4899','#dc2626','#f59e0b'],
           borderRadius: 6,
           borderWidth: 0
         }]
