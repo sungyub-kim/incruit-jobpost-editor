@@ -390,7 +390,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.17.3</span>
+  <span id="ver-badge" title="배포 버전">v0.17.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1790,10 +1790,12 @@ function buildVisualPanel() {
       '</button>';
 
     if (isActive) {
-      /* v0.16.0: 이미지/텍스트 모드 전환 */
+      /* v0.16.0/0.17.4: 이미지/텍스트 모드 전환 — 활성 시 밝은 파랑 + 그림자로 강조 */
+      var imgActive = mediaMode === 'image';
+      var txtActive = mediaMode === 'text';
       h += '<div style="display:flex;gap:4px;margin-top:8px;">' +
-        '<button style="flex:1;padding:5px;background:' + (mediaMode === 'image' ? '#1e40af' : '#1e293b') + ';color:' + (mediaMode === 'image' ? '#fff' : '#94a3b8') + ';border:1px solid #334155;border-radius:3px;cursor:pointer;font-size:10px;" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'image\')">🖼 이미지</button>' +
-        '<button style="flex:1;padding:5px;background:' + (mediaMode === 'text' ? '#1e40af' : '#1e293b') + ';color:' + (mediaMode === 'text' ? '#fff' : '#94a3b8') + ';border:1px solid #334155;border-radius:3px;cursor:pointer;font-size:10px;" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'text\')">T 텍스트</button>' +
+        '<button style="flex:1;padding:6px;background:' + (imgActive ? '#2563eb' : '#0f172a') + ';color:' + (imgActive ? '#fff' : '#64748b') + ';border:1px solid ' + (imgActive ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (imgActive ? '700' : '400') + ';box-shadow:' + (imgActive ? '0 0 0 1px #3b82f6 inset' : 'none') + ';" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'image\')">' + (imgActive ? '✓ ' : '') + '🖼 이미지</button>' +
+        '<button style="flex:1;padding:6px;background:' + (txtActive ? '#2563eb' : '#0f172a') + ';color:' + (txtActive ? '#fff' : '#64748b') + ';border:1px solid ' + (txtActive ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (txtActive ? '700' : '400') + ';box-shadow:' + (txtActive ? '0 0 0 1px #3b82f6 inset' : 'none') + ';" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'text\')">' + (txtActive ? '✓ ' : '') + 'T 텍스트</button>' +
       '</div>';
 
       if (mediaMode === 'image') {
@@ -2007,10 +2009,11 @@ function applyMediaModesToPreview() {
           if (editMode) makeEditable(div, 'section_visual', 'mediaModes.' + group.groupId + '.' + key, 'innerHTML');
           parent.insertBefore(div, img);
         }
-        img.style.display = 'none';
+        /* v0.17.4: temp.html의 .d-lg-block { display:block !important } 등을 이기려면 important 필요 */
+        img.style.setProperty('display', 'none', 'important');
       } else {
         if (existing) existing.remove();
-        img.style.display = '';
+        img.style.removeProperty('display');
       }
     });
   });
@@ -3991,6 +3994,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 12:35 (v0.17.4)',
+    items: [
+      '<strong>[v0.17.4]</strong> 검수 핫픽스 2건: 텍스트 모드 시 이미지 미숨김 + 모드 토글 시각 강조',
+      '<strong>[v0.17.4]</strong> 텍스트 모드: img.style.display="none" → setProperty(...,"important") (temp.html의 .d-lg-block !important 우회)',
+      '<strong>[v0.17.4]</strong> 이미지 모드 복귀 시 removeProperty("display")로 깨끗하게 원복',
+      '<strong>[v0.17.4]</strong> 모드 토글 버튼: 활성 시 밝은 파랑 + 굵은 글자 + 내부 그림자 + ✓ 아이콘으로 명확히 표시',
+    ]
+  },
   {
     date: '2026.04.27 12:16 (v0.17.3)',
     items: [
