@@ -169,6 +169,10 @@
     .ep-field label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 3px; }
     .ep-field input[type=text] { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 7px; outline: none; box-sizing: border-box; }
     .ep-field input[type=text]:focus { border-color: #0066cc; }
+    /* v0.18.1: 편집 패널 select 다크 테마 가독성 */
+    .ep-field select { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 7px; outline: none; cursor: pointer; box-sizing: border-box; }
+    .ep-field select:focus { border-color: #0066cc; }
+    .ep-field select option { background: #161c2d; color: #e5e7eb; }
     .ep-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
     .ep-row > label:first-child { flex: 1; font-size: 11px; color: #6b7280; margin-bottom: 0; }
     .ep-color-wrap { display: flex; align-items: center; gap: 6px; }
@@ -390,7 +394,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.18.0</span>
+  <span id="ver-badge" title="배포 버전">v0.18.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2077,15 +2081,20 @@ function applyMediaModesToPreview() {
       if (modeData.mode === 'text') {
         var key = isM ? 'textM' : 'textPc';
         var html = modeData[key] || '';
+        var fieldPath = 'mediaModes.' + group.groupId + '.' + key;
         if (existing) {
           if (existing.innerHTML !== html) existing.innerHTML = html;
+          /* v0.18.1: 편집 모드 진입 시 existing에도 makeEditable 부착 (재편집 가능) */
+          if (editMode && !existing.hasAttribute('data-editable')) {
+            makeEditable(existing, 'section_visual', fieldPath, 'innerHTML');
+          }
         } else {
           var div = doc.createElement('div');
           div.setAttribute('data-media-text', marker);
           div.setAttribute('data-builder-section', 'section_visual');
           div.className = img.className;  /* d-lg-block / d-lg-none 등 responsive 클래스 보존 */
           div.innerHTML = html;
-          if (editMode) makeEditable(div, 'section_visual', 'mediaModes.' + group.groupId + '.' + key, 'innerHTML');
+          if (editMode) makeEditable(div, 'section_visual', fieldPath, 'innerHTML');
           parent.insertBefore(div, img);
         }
         /* v0.17.4: temp.html의 .d-lg-block { display:block !important } 등을 이기려면 important 필요 */
@@ -3236,6 +3245,12 @@ function enterEditMode() {
   injectBtnEditUI(doc);
   applyImageEditListeners(doc);   /* E1 */
   applyYoutubeEditListeners(doc); /* E2 */
+  /* v0.18.1: 편집모드 a navigation 완전 차단 — href를 data-orig-href로 백업 후 제거 */
+  doc.querySelectorAll('[data-builder-section] a').forEach(function(a) {
+    if (a.dataset.origHref !== undefined) return;
+    a.dataset.origHref = a.getAttribute('href') || '';
+    a.removeAttribute('href');
+  });
   editMode = true;
   applyMediaModesToPreview();     /* v0.16.0: 텍스트 모드 div에 makeEditable 부착 */
   document.getElementById('edit-mode-btn').classList.add('active');
@@ -3261,6 +3276,12 @@ function exitEditMode() {
   });
   doc.querySelectorAll('.builder-section-active').forEach(function(s) {
     s.classList.remove('builder-section-active');
+  });
+  /* v0.18.1: 편집모드 종료 시 a href 복원 */
+  doc.querySelectorAll('[data-builder-section] a[data-orig-href]').forEach(function(a) {
+    var orig = a.dataset.origHref;
+    if (orig) a.setAttribute('href', orig);
+    a.removeAttribute('data-orig-href');
   });
   doc.body.classList.remove('builder-edit-mode');
   var styleEl = doc.getElementById('builder-edit-css');
@@ -3650,8 +3671,14 @@ function onEditableBlur(e) {
     setFieldDirect(sId, field, val);
   }
   saveState();
-  /* v0.17.1: sec_title 변경 시 좌측 패널 섹션명 동기화 */
-  if (field === 'sec_title') renderSectionList();
+  /* v0.17.1: sec_title 변경 시 좌측 패널 섹션명 동기화
+   * v0.18.1: 우측 편집 드로어의 sec_title input도 함께 동기화 (양방향) */
+  if (field === 'sec_title') {
+    renderSectionList();
+    var inputId = 'field-' + sId + '-sec_title';
+    var input = document.getElementById(inputId);
+    if (input && document.activeElement !== input) input.value = val;
+  }
 }
 
 function collectEditableValues(doc) {
@@ -3737,6 +3764,19 @@ function applyToPreview() {
   if (!previewReady) return;
   var doc = getPreviewDoc();
   if (!doc) return;
+
+  /* v0.18.1: sectionOrder에 없는 섹션(✕ 제거된)은 DOM에서 숨김 — 안 그러면 재배치 후 맨 위로 보임 */
+  doc.querySelectorAll('[data-builder-section]').forEach(function(el) {
+    var id = el.dataset.builderSection;
+    if (sectionOrder.indexOf(id) === -1) {
+      el.style.display = 'none';
+      var prev = el.previousElementSibling;
+      if (prev && prev.tagName === 'A' && prev.classList.contains('href-height')) prev.style.display = 'none';
+    } else {
+      var prev2 = el.previousElementSibling;
+      if (prev2 && prev2.tagName === 'A' && prev2.classList.contains('href-height')) prev2.style.display = '';
+    }
+  });
 
   /* 1. 섹션 show/hide + 개별 배경색 */
   sectionOrder.forEach(function(id) {
@@ -4077,6 +4117,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 13:00 (v0.18.1)',
+    items: [
+      '<strong>[v0.18.1]</strong> 검수 핫픽스 5건 (회귀 + UX)',
+      '<strong>[v0.18.1]</strong> AOS select 글씨 안 보임 → .ep-field select 다크 테마 CSS 추가 (option 포함)',
+      '<strong>[v0.18.1]</strong> 섹션 ✕ 제거 시 영상이 최상단 이동 → applyToPreview에서 sectionOrder 외 섹션은 display:none + anchor 도 함께 hide',
+      '<strong>[v0.18.1]</strong> 텍스트 모드 재편집 불가 → applyMediaModesToPreview에서 existing div에도 makeEditable 부착',
+      '<strong>[v0.18.1]</strong> 편집모드 nav 링크 이동 → enterEditMode 시 모든 a href를 data-orig-href로 백업 후 제거, exitEditMode에서 복원',
+      '<strong>[v0.18.1]</strong> 섹션 제목 단방향 동기화 → onEditableBlur에서 우측 드로어 sec_title input value도 갱신 (포커스 중이 아닌 경우)',
+    ]
+  },
   {
     date: '2026.04.27 12:30 (v0.18.0)',
     items: [
