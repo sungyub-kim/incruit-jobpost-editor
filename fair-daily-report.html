@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>박람회 빌더 ─ 일일 업무 보고</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f4f6f9; color: #1f2937; line-height: 1.6; padding: 24px; }
@@ -35,10 +36,14 @@
   tbody tr:hover { background: #fafbfc; }
 
   h3 { font-size: 14px; font-weight: 600; color: #1f2937; margin: 16px 0 8px; }
-  .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 12px 0; }
+  .kpi-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 12px 0; }
   .kpi { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 12px; text-align: center; }
   .kpi .label { font-size: 11px; color: #6b7280; }
   .kpi .value { font-size: 20px; font-weight: 700; color: #1e40af; margin-top: 2px; }
+  .chart-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .chart-box { background: #fafbfc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }
+  .chart-box .chart-title { font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 8px; text-align: center; }
+  .chart-box canvas { max-height: 220px; }
 
   .next { background: #fffbeb; border: 1px solid #fcd34d; border-radius: 6px; padding: 12px 14px; font-size: 13px; color: #92400e; margin-top: 14px; }
   .next strong { color: #78350f; }
@@ -76,7 +81,17 @@
     <div class="kpi"><div class="label">배포 버전</div><div class="value">13개</div></div>
     <div class="kpi"><div class="label">신규 기능</div><div class="value">9개</div></div>
     <div class="kpi"><div class="label">검수 핫픽스</div><div class="value">4개</div></div>
-    <div class="kpi"><div class="label">일정 진척</div><div class="value">+8일치</div></div>
+  </div>
+
+  <div class="chart-grid">
+    <div class="chart-box">
+      <div class="chart-title">분류별 배포 (기능 vs 핫픽스)</div>
+      <canvas id="chart-d20260427-pie"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">작업 영역별 버전 수</div>
+      <canvas id="chart-d20260427-area"></canvas>
+    </div>
   </div>
 
   <h3>주요 작업 (시간 순)</h3>
@@ -132,6 +147,62 @@
 </div>
 
 </div>
+
+<script>
+/* 차트 — 일일 보고: 일자별 캔버스 ID로 누적 가능 (다음 일자 추가 시 새 ID로) */
+(function() {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'Pretendard', sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#374151';
+
+  /* 2026-04-27: 분류별 도넛 */
+  var pieEl = document.getElementById('chart-d20260427-pie');
+  if (pieEl) {
+    new Chart(pieEl, {
+      type: 'doughnut',
+      data: {
+        labels: ['신규 기능', '검수 핫픽스'],
+        datasets: [{
+          data: [9, 5],
+          backgroundColor: ['#2563eb', '#f59e0b'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom' } },
+        cutout: '60%'
+      }
+    });
+  }
+
+  /* 2026-04-27: 작업 영역별 막대 */
+  var areaEl = document.getElementById('chart-d20260427-area');
+  if (areaEl) {
+    new Chart(areaEl, {
+      type: 'bar',
+      data: {
+        labels: ['메인비주얼', '섹션 관리', '에디터/툴바', '네비게이션', '글로벌 정책', '기타 핫픽스'],
+        datasets: [{
+          label: '버전 수',
+          data: [3, 2, 2, 2, 2, 3],
+          backgroundColor: ['#2563eb','#0891b2','#059669','#9333ea','#be185d','#6b7280'],
+          borderWidth: 0,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
+      }
+    });
+  }
+})();
+</script>
 
 <footer>© 2026 인크루트 박람회 자동화 프로젝트 — 일일 업무 보고서</footer>
 </body>
