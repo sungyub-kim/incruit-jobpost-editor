@@ -11,7 +11,7 @@
   <style>
     /* 나눔 폰트 로드 */
     @import url('https://cdn.rawgit.com/moonspam/NanumSquare/master/nanumsquare.css');
-    @import url('http://fonts.googleapis.com/earlyaccess/nanumgothic.css');
+    @import url('https://fonts.googleapis.com/earlyaccess/nanumgothic.css');
     @import url('//fonts.googleapis.com/earlyaccess/notosanskr.css');
 
     /* 추가 웹폰트 */
@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.21.7</span>
+  <span id="ver-badge" title="배포 버전">v0.21.8</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4528,6 +4528,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 17:35 (v0.21.8)',
+    items: [
+      '<strong>[v0.21.8]</strong> 검수 핫픽스: Mixed Content 차단 해결',
+      '<strong>[v0.21.8]</strong> fair-builder.html + temp.html의 nanumgothic.css @import: http → https',
+      '<strong>[v0.21.8]</strong> temp.html canonical link + Copyright 링크: http → https (보안 강화)',
+      '<strong>[v0.21.8]</strong> 잔여 콘솔 에러는 환경 한계 (incruit 서버 리소스 404 / 추적 픽셀 / Tailwind production 경고) — 빌더 dev 환경에서만 나타남',
+    ]
+  },
   {
     date: '2026.04.27 17:26 (v0.21.7)',
     items: [
