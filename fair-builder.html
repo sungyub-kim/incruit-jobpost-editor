@@ -97,8 +97,11 @@
     .section-item .section-badge.fixed { background: #1f2937; color: #6b7280; }
     /* E5: Repeater 아이템 개수 표시 */
     .sec-repeater-badge { font-size: 9px; color: #6b7280; margin-left: 4px; }
-    .sec-quick-add-btn { background: none; border: none; color: #059669; cursor: pointer; font-size: 12px; padding: 0 6px; transition: color .15s; flex-shrink: 0; }
+    /* v0.21.2: P0-2 — 빠른 추가 버튼도 평소엔 숨기고 hover 시 표시 */
+    .sec-quick-add-btn { background: none; border: none; color: #059669; cursor: pointer; font-size: 12px; padding: 0 6px; transition: color .15s, opacity .15s; flex-shrink: 0; opacity: 0; }
     .sec-quick-add-btn:hover { color: #047857; }
+    .section-item:hover .sec-quick-add-btn,
+    .section-item.editing .sec-quick-add-btn { opacity: 1; }
     #top-bar .btn-danger { background: transparent; border: 1px solid #ef4444; color: #ef4444; }
     #top-bar .btn-danger:hover { background: #ef4444; color: #fff; }
     #top-bar .btn-zip { background: #059669; color: #fff; }
@@ -394,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.21.1</span>
+  <span id="ver-badge" title="배포 버전">v0.21.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4459,6 +4462,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 15:35 (v0.21.2)',
+    items: [
+      '<strong>[v0.21.2]</strong> P0-2 사용성 개선: 좌측 섹션 패널 단순화',
+      '<strong>[v0.21.2]</strong> sec-quick-add-btn(+빠른추가)도 평소 숨기고 hover/editing 시 표시 — 시각 부담 감소',
+      '<strong>[v0.21.2]</strong> 평소 보이는 인터랙션 5개(⠿/섹션명/고정배지/repeater카운트/토글)로 정리, hover 시 ▲▼/+/✕ 추가 노출',
+    ]
+  },
   {
     date: '2026.04.27 15:27 (v0.21.1)',
     items: [
