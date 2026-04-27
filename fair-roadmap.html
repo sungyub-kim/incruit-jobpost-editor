@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>박람회 비주얼 빌더 ─ 1차 + 2차 통합 로드맵</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #f4f6f9;
+    color: #1f2937;
+    line-height: 1.6;
+    padding: 24px;
+  }
+  .container { max-width: 1280px; margin: 0 auto; }
+
+  /* Header */
+  header {
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    color: #fff;
+    padding: 32px 40px;
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+  }
+  header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; }
+  header .meta { display: flex; gap: 24px; font-size: 14px; opacity: 0.9; flex-wrap: wrap; }
+  header .meta strong { font-weight: 600; }
+
+  /* Section */
+  section {
+    background: #fff;
+    padding: 28px 40px;
+    border-bottom: 1px solid #e5e7eb;
+  }
+  section:last-child { border-radius: 0 0 12px 12px; border-bottom: none; }
+  section h2 {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #1e40af;
+    display: inline-block;
+  }
+  section h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #1f2937;
+    margin: 20px 0 12px;
+  }
+
+  /* Stats */
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 8px; }
+  .stat {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    text-align: center;
+  }
+  .stat .label { font-size: 12px; color: #6b7280; margin-bottom: 4px; }
+  .stat .value { font-size: 22px; font-weight: 700; color: #1e40af; }
+  .stat .sub { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  thead th {
+    background: #f3f4f6;
+    color: #374151;
+    font-weight: 600;
+    text-align: left;
+    padding: 10px 12px;
+    border-bottom: 2px solid #d1d5db;
+  }
+  tbody td {
+    padding: 10px 12px;
+    border-bottom: 1px solid #e5e7eb;
+    vertical-align: top;
+  }
+  tbody tr:hover { background: #fafbfc; }
+
+  /* Timesheet */
+  .timesheet {
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .ts-header {
+    display: grid;
+    grid-template-columns: 90px repeat(5, 1fr);
+    background: #1f2937;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+  }
+  .ts-header div { padding: 10px 6px; border-right: 1px solid #374151; }
+  .ts-header div:last-child { border-right: none; }
+  .ts-row {
+    display: grid;
+    grid-template-columns: 90px repeat(5, 1fr);
+    border-top: 1px solid #e5e7eb;
+    min-height: 84px;
+  }
+  .ts-row:first-child { border-top: none; }
+  .ts-week {
+    background: #f9fafb;
+    padding: 10px 8px;
+    font-weight: 600;
+    font-size: 12px;
+    color: #4b5563;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    text-align: center;
+  }
+  .ts-week .w-num { font-size: 14px; color: #1e40af; }
+  .ts-week .w-date { font-size: 10px; color: #9ca3af; margin-top: 2px; }
+  .ts-cell {
+    padding: 8px 8px;
+    border-right: 1px solid #e5e7eb;
+    font-size: 11px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+  }
+  .ts-cell:last-child { border-right: none; }
+  .ts-cell .date { font-weight: 600; font-size: 11px; color: #6b7280; margin-bottom: 4px; }
+  .ts-cell .task { font-size: 11px; line-height: 1.45; color: #1f2937; }
+  .ts-cell.holiday { background: #fef2f2; }
+  .ts-cell.holiday .date { color: #dc2626; }
+  .ts-cell.holiday .task { color: #b91c1c; font-weight: 500; font-size: 10px; }
+  .ts-cell.leave { background: #fffbeb; }
+  .ts-cell.leave .date { color: #d97706; }
+  .ts-cell.leave .task { color: #b45309; font-weight: 500; font-size: 10px; }
+  .ts-cell.milestone { background: #ecfdf5; border-left: 3px solid #059669; }
+  .ts-cell.milestone .date { color: #059669; }
+
+  /* Phase badges */
+  .badge {
+    display: inline-block;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    margin-bottom: 3px;
+    color: #fff;
+  }
+  .b-p1 { background: #2563eb; }
+  .b-p2 { background: #0891b2; }
+  .b-p3 { background: #059669; }
+  .b-p4 { background: #ca8a04; }
+  .b-p5 { background: #d97706; }
+  .b-p6 { background: #dc2626; }
+  .b-p7 { background: #9333ea; }
+  .b-p8 { background: #be185d; }
+  .b-sa { background: #4338ca; }
+  .b-sb { background: #0284c7; }
+  .b-sc { background: #65a30d; }
+  .b-sd { background: #ea580c; }
+  .b-se { background: #be123c; }
+  .b-ms { background: #059669; color: #fff; }
+
+  /* Phase Plan */
+  .phase-plan { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 8px; }
+  .phase-card {
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 16px;
+    background: #fafbfc;
+  }
+  .phase-card .ph-head {
+    font-size: 13px;
+    font-weight: 700;
+    color: #fff;
+    padding: 4px 10px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-bottom: 8px;
+  }
+  .phase-card h4 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 6px;
+  }
+  .phase-card .ph-meta { font-size: 11px; color: #6b7280; margin-bottom: 10px; }
+  .phase-card ul { list-style: none; padding-left: 0; }
+  .phase-card li {
+    font-size: 12px;
+    color: #374151;
+    padding: 3px 0 3px 14px;
+    position: relative;
+  }
+  .phase-card li:before {
+    content: "▸";
+    position: absolute;
+    left: 0;
+    color: #9ca3af;
+  }
+
+  /* Milestone */
+  .milestone-list {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 8px;
+  }
+  .ms-card {
+    background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+    border: 1px solid #10b981;
+    border-radius: 8px;
+    padding: 14px;
+    text-align: center;
+  }
+  .ms-card .ms-date {
+    font-size: 16px;
+    font-weight: 700;
+    color: #047857;
+  }
+  .ms-card .ms-label {
+    font-size: 12px;
+    color: #065f46;
+    margin-top: 4px;
+  }
+
+  /* Legend */
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    font-size: 11px;
+  }
+  .legend-item { display: flex; align-items: center; gap: 5px; }
+  .legend-color {
+    width: 14px;
+    height: 14px;
+    border-radius: 3px;
+  }
+
+  /* Footer */
+  footer {
+    text-align: center;
+    padding: 16px;
+    color: #9ca3af;
+    font-size: 11px;
+  }
+
+  @media print {
+    body { background: #fff; padding: 0; }
+    .container { max-width: 100%; }
+    section { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <h1>박람회 비주얼 빌더 ─ 1차 + 2차 통합 로드맵</h1>
+  <div class="meta">
+    <span><strong>보고일자:</strong> 2026-04-27 (월)</span>
+    <span><strong>총 기간:</strong> 2026-04-27 ~ 2026-08-14 (16주)</span>
+    <span><strong>담당:</strong> 김성엽</span>
+    <span><strong>현재 버전:</strong> v0.15.16</span>
+  </div>
+</header>
+
+<!-- 요약 -->
+<section>
+  <h2>1. 프로젝트 요약</h2>
+  <div class="stats">
+    <div class="stat">
+      <div class="label">총 기간</div>
+      <div class="value">16주</div>
+      <div class="sub">2026.04.27 ~ 2026.08.14</div>
+    </div>
+    <div class="stat">
+      <div class="label">1차 빌더형</div>
+      <div class="value">8주 / 32일</div>
+      <div class="sub">수동 편집 도구</div>
+    </div>
+    <div class="stat">
+      <div class="label">2차 AI 요청형</div>
+      <div class="value">8주 / 40일</div>
+      <div class="sub">자동 분석 + 대화 편집</div>
+    </div>
+    <div class="stat">
+      <div class="label">정식 출시</div>
+      <div class="value">2회</div>
+      <div class="sub">v1.0.0 / v2.0.0</div>
+    </div>
+  </div>
+</section>
+
+<!-- 단계 구분 -->
+<section>
+  <h2>2. 단계 구분</h2>
+  <table>
+    <thead>
+      <tr><th style="width:130px;">단계</th><th style="width:110px;">기간</th><th>성격</th><th>목표</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>1차 빌더형</strong></td>
+        <td>4/27 ~ 6/19</td>
+        <td>수동 편집 도구</td>
+        <td>비개발자가 직접 섹션·스타일을 조작해 ASP+CSS 다운로드</td>
+      </tr>
+      <tr>
+        <td><strong>2차 AI 요청형</strong></td>
+        <td>6/22 ~ 8/14</td>
+        <td>자동화 + 대화 편집</td>
+        <td>기획서 업로드 → AI 자동 채움 → 자연어 수정 명령</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 1차 타임시트 -->
+<section>
+  <h2>3. 1차 타임시트 (4/27 ~ 6/19)</h2>
+  <p style="font-size:12px;color:#6b7280;margin-bottom:12px;">평일 09:00 ~ 18:00 기준 / 휴일·연차 반영 / 영업일 32일</p>
+
+  <div class="timesheet">
+    <div class="ts-header">
+      <div>주차</div>
+      <div>월</div>
+      <div>화</div>
+      <div>수</div>
+      <div>목</div>
+      <div>금</div>
+    </div>
+
+    <!-- W1 4/27~5/1 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W1</div><div class="w-date">4/27~5/1</div></div>
+      <div class="ts-cell"><div class="date">4/27 (월)</div><span class="badge b-p1">P1</span><div class="task">1순위 회귀 + 캡처본 폰트 버그 조사 / 메인비주얼 이미지↔텍스트 전환</div></div>
+      <div class="ts-cell"><div class="date">4/28 (화)</div><span class="badge b-p1">P1</span><div class="task">WEBFONTS @font-face 동적 주입 / 편집모드 링크 차단 + 드로어 이미지 미리보기</div></div>
+      <div class="ts-cell"><div class="date">4/29 (수)</div><span class="badge b-p1">P1</span><div class="task">섹션 추가/삭제 (sectionOrder 동적화) - 종일</div></div>
+      <div class="ts-cell"><div class="date">4/30 (목)</div><span class="badge b-p1">P1</span><div class="task">섹션 제목 ↔ .sec_tit 동기화 / AOS 개별 적용 UI 설계</div></div>
+      <div class="ts-cell holiday"><div class="date">5/1 (금)</div><div class="task">근로자의 날<br>휴무</div></div>
+    </div>
+
+    <!-- W2 5/4~5/8 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W2</div><div class="w-date">5/4~5/8</div></div>
+      <div class="ts-cell holiday"><div class="date">5/4 (월)</div><div class="task">대체공휴일<br>휴무</div></div>
+      <div class="ts-cell holiday"><div class="date">5/5 (화)</div><div class="task">어린이날<br>휴무</div></div>
+      <div class="ts-cell"><div class="date">5/6 (수)</div><span class="badge b-p2">P2</span><div class="task">AOS 개별 적용 완료 (전역 토글 제거)</div></div>
+      <div class="ts-cell"><div class="date">5/7 (목)</div><span class="badge b-p2">P2</span><div class="task">에디터 툴바 정렬 추가/ul,ol 제거 / 메인비주얼 폰트·굵기 패널 제거</div></div>
+      <div class="ts-cell milestone"><div class="date">5/8 (금)</div><span class="badge b-p2">P2</span><span class="badge b-ms">MS</span><div class="task">행사안내 포스터 버튼 버그 / <strong>1차 통합 검수 + 배포</strong></div></div>
+    </div>
+
+    <!-- W3 5/11~5/15 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W3</div><div class="w-date">5/11~5/15</div></div>
+      <div class="ts-cell"><div class="date">5/11 (월)</div><span class="badge b-p3">P3</span><div class="task">nav 항목 추가/삭제</div></div>
+      <div class="ts-cell"><div class="date">5/12 (화)</div><span class="badge b-p3">P3</span><div class="task">nav hover 효과 + 모바일 #sitemap target=_blank 제거</div></div>
+      <div class="ts-cell"><div class="date">5/13 (수)</div><span class="badge b-p3">P3</span><div class="task">편집모드 nav 클릭 → 우측 편집 레이어</div></div>
+      <div class="ts-cell"><div class="date">5/14 (목)</div><span class="badge b-p3">P3</span><div class="task">박람회 개요: 요소 추가/제거</div></div>
+      <div class="ts-cell"><div class="date">5/15 (금)</div><span class="badge b-p3">P3</span><div class="task">박람회 개요: 이미지/텍스트 자유 선택</div></div>
+    </div>
+
+    <!-- W4 5/18~5/22 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W4</div><div class="w-date">5/18~5/22</div></div>
+      <div class="ts-cell"><div class="date">5/18 (월)</div><span class="badge b-p4">P4</span><div class="task">박람회 개요: 이미지 다중 추가 + 버튼 위치 자유 배치</div></div>
+      <div class="ts-cell"><div class="date">5/19 (화)</div><span class="badge b-p4">P4</span><div class="task">채용관: 1뎁스 탭 on/off (2~5개)</div></div>
+      <div class="ts-cell"><div class="date">5/20 (수)</div><span class="badge b-p4">P4</span><div class="task">채용관: 2뎁스 탭 on/off (2~5개)</div></div>
+      <div class="ts-cell"><div class="date">5/21 (목)</div><span class="badge b-p4">P4</span><div class="task">채용관: 검색 직종/지역 토글 + 모바일 swiper 제어</div></div>
+      <div class="ts-cell"><div class="date">5/22 (금)</div><span class="badge b-p4">P4</span><div class="task">채용관: 게시판 광고형/리스트형 + award-company-list 제거</div></div>
+    </div>
+
+    <!-- W5 5/25~5/29 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W5</div><div class="w-date">5/25~5/29</div></div>
+      <div class="ts-cell holiday"><div class="date">5/25 (월)</div><div class="task">휴일</div></div>
+      <div class="ts-cell"><div class="date">5/26 (화)</div><span class="badge b-p5">P5</span><div class="task">채용관: 탭별 검색/게시판 독립 설정</div></div>
+      <div class="ts-cell"><div class="date">5/27 (수)</div><span class="badge b-p5">P5</span><div class="task">7순위: sec_tit 위 .sec_txt.basic.top on/off</div></div>
+      <div class="ts-cell leave"><div class="date">5/28 (목)</div><div class="task">연차</div></div>
+      <div class="ts-cell leave"><div class="date">5/29 (금)</div><div class="task">연차</div></div>
+    </div>
+
+    <!-- W6 6/1~6/5 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W6</div><div class="w-date">6/1~6/5</div></div>
+      <div class="ts-cell"><div class="date">6/1 (월)</div><span class="badge b-p6">P6</span><div class="task">7순위: 섹션 클릭→우측 편집 자동 열림 + #edit-drawer 그림자/테두리 패널 제거</div></div>
+      <div class="ts-cell"><div class="date">6/2 (화)</div><span class="badge b-p6">P6</span><div class="task">7순위: number→range+number 동기 (1차)</div></div>
+      <div class="ts-cell leave"><div class="date">6/3 (수)</div><div class="task">휴가</div></div>
+      <div class="ts-cell leave"><div class="date">6/4 (목)</div><div class="task">연차</div></div>
+      <div class="ts-cell"><div class="date">6/5 (금)</div><span class="badge b-p6">P6</span><div class="task">8순위: 영상 1xN/2xN/3xN 타입 on/off</div></div>
+    </div>
+
+    <!-- W7 6/8~6/12 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W7</div><div class="w-date">6/8~6/12</div></div>
+      <div class="ts-cell"><div class="date">6/8 (월)</div><span class="badge b-p7">P7</span><div class="task">7순위: number→range 마무리 + 초기화 시 영상/공지 off</div></div>
+      <div class="ts-cell"><div class="date">6/9 (화)</div><span class="badge b-p7">P7</span><div class="task">영상: 갯수 추가/제거 + v-tit/v-bar on/off</div></div>
+      <div class="ts-cell"><div class="date">6/10 (수)</div><span class="badge b-p7">P7</span><div class="task">9순위: 컬러 적용 위치 매핑 조사 + 문서화</div></div>
+      <div class="ts-cell"><div class="date">6/11 (목)</div><span class="badge b-p7">P7</span><div class="task">9순위: 스타일 on/off + 커스텀 우선순위 로직</div></div>
+      <div class="ts-cell"><div class="date">6/12 (금)</div><span class="badge b-p7">P7</span><div class="task">9순위: 섹션 배경 1~6번 + 적용 섹션 체크박스</div></div>
+    </div>
+
+    <!-- W8 6/15~6/19 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W8</div><div class="w-date">6/15~6/19</div></div>
+      <div class="ts-cell"><div class="date">6/15 (월)</div><span class="badge b-p8">P8</span><div class="task">10순위: AOS 잔여 작업</div></div>
+      <div class="ts-cell"><div class="date">6/16 (화)</div><span class="badge b-p8">P8</span><div class="task">튜토리얼: 가이드 마스크 + 단계별 안내 설계</div></div>
+      <div class="ts-cell"><div class="date">6/17 (수)</div><span class="badge b-p8">P8</span><div class="task">튜토리얼: 섹션별 가이드 콘텐츠 작성</div></div>
+      <div class="ts-cell"><div class="date">6/18 (목)</div><span class="badge b-p8">P8</span><div class="task">튜토리얼: 통합 + UI 폴리싱</div></div>
+      <div class="ts-cell milestone"><div class="date">6/19 (금)</div><span class="badge b-p8">P8</span><span class="badge b-ms">MS</span><div class="task"><strong>1차 정식 출시 v1.0.0</strong></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-color" style="background:#2563eb;"></span>P1 메인비주얼+공통</div>
+    <div class="legend-item"><span class="legend-color" style="background:#0891b2;"></span>P2 AOS+툴바</div>
+    <div class="legend-item"><span class="legend-color" style="background:#059669;"></span>P3 nav+개요</div>
+    <div class="legend-item"><span class="legend-color" style="background:#ca8a04;"></span>P4 개요+채용관</div>
+    <div class="legend-item"><span class="legend-color" style="background:#d97706;"></span>P5 채용관+sec_txt</div>
+    <div class="legend-item"><span class="legend-color" style="background:#dc2626;"></span>P6 편집UX+영상</div>
+    <div class="legend-item"><span class="legend-color" style="background:#9333ea;"></span>P7 range+스타일</div>
+    <div class="legend-item"><span class="legend-color" style="background:#be185d;"></span>P8 AOS+튜토리얼</div>
+    <div class="legend-item"><span class="legend-color" style="background:#fef2f2;border:1px solid #dc2626;"></span>휴일</div>
+    <div class="legend-item"><span class="legend-color" style="background:#fffbeb;border:1px solid #d97706;"></span>연차/휴가</div>
+    <div class="legend-item"><span class="legend-color" style="background:#ecfdf5;border:1px solid #059669;"></span>마일스톤</div>
+  </div>
+</section>
+
+<!-- 2차 타임시트 -->
+<section>
+  <h2>4. 2차 AI 요청형 타임시트 (6/22 ~ 8/14)</h2>
+  <p style="font-size:12px;color:#6b7280;margin-bottom:12px;">8주 / 영업일 약 40일 / 휴일·연차는 추후 반영</p>
+
+  <div class="timesheet">
+    <div class="ts-header">
+      <div>주차</div>
+      <div>월</div>
+      <div>화</div>
+      <div>수</div>
+      <div>목</div>
+      <div>금</div>
+    </div>
+
+    <!-- W9 6/22~6/26 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W9</div><div class="w-date">6/22~6/26</div></div>
+      <div class="ts-cell"><div class="date">6/22 (월)</div><span class="badge b-sa">A</span><div class="task">파일 업로드 UI 설계</div></div>
+      <div class="ts-cell"><div class="date">6/23 (화)</div><span class="badge b-sa">A</span><div class="task">PDF.js 연동 + 텍스트 추출</div></div>
+      <div class="ts-cell"><div class="date">6/24 (수)</div><span class="badge b-sa">A</span><div class="task">mammoth.js 연동 (docx 파싱)</div></div>
+      <div class="ts-cell"><div class="date">6/25 (목)</div><span class="badge b-sa">A</span><div class="task">텍스트 정제 + 구조 추출 로직</div></div>
+      <div class="ts-cell"><div class="date">6/26 (금)</div><span class="badge b-sa">A</span><div class="task">업로드 UI 통합 테스트</div></div>
+    </div>
+
+    <!-- W10 6/29~7/3 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W10</div><div class="w-date">6/29~7/3</div></div>
+      <div class="ts-cell"><div class="date">6/29 (월)</div><span class="badge b-sa">A</span><div class="task">빌더 상태 schema 정형화</div></div>
+      <div class="ts-cell"><div class="date">6/30 (화)</div><span class="badge b-sa">A</span><div class="task">AI 호출용 JSON I/O 정의</div></div>
+      <div class="ts-cell"><div class="date">7/1 (수)</div><span class="badge b-sa">A</span><div class="task">상태 ↔ JSON 양방향 변환기</div></div>
+      <div class="ts-cell"><div class="date">7/2 (목)</div><span class="badge b-sa">A</span><div class="task">변환기 단위 테스트</div></div>
+      <div class="ts-cell"><div class="date">7/3 (금)</div><span class="badge b-sa">A</span><div class="task">Stage A 검수 + 문서화</div></div>
+    </div>
+
+    <!-- W11 7/6~7/10 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W11</div><div class="w-date">7/6~7/10</div></div>
+      <div class="ts-cell"><div class="date">7/6 (월)</div><span class="badge b-sb">B</span><div class="task">Claude API 연동 모듈</div></div>
+      <div class="ts-cell"><div class="date">7/7 (화)</div><span class="badge b-sb">B</span><div class="task">시스템 프롬프트 v1 작성</div></div>
+      <div class="ts-cell"><div class="date">7/8 (수)</div><span class="badge b-sb">B</span><div class="task">기획서 → 구조 JSON 변환 1차</div></div>
+      <div class="ts-cell"><div class="date">7/9 (목)</div><span class="badge b-sb">B</span><div class="task">출력 검증 + 에러 핸들링</div></div>
+      <div class="ts-cell"><div class="date">7/10 (금)</div><span class="badge b-sb">B</span><div class="task">캐싱 + 비용 최적화</div></div>
+    </div>
+
+    <!-- W12 7/13~7/17 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W12</div><div class="w-date">7/13~7/17</div></div>
+      <div class="ts-cell"><div class="date">7/13 (월)</div><span class="badge b-sb">B</span><div class="task">실 기획서 샘플 5종 수집</div></div>
+      <div class="ts-cell"><div class="date">7/14 (화)</div><span class="badge b-sb">B</span><div class="task">샘플 1~2 테스트 + 프롬프트 튜닝</div></div>
+      <div class="ts-cell"><div class="date">7/15 (수)</div><span class="badge b-sb">B</span><div class="task">샘플 3~4 테스트 + 튜닝</div></div>
+      <div class="ts-cell"><div class="date">7/16 (목)</div><span class="badge b-sb">B</span><div class="task">샘플 5 + 정확도 측정</div></div>
+      <div class="ts-cell milestone"><div class="date">7/17 (금)</div><span class="badge b-sb">B</span><span class="badge b-ms">MS</span><div class="task"><strong>AI 분석 엔진 검증 완료</strong></div></div>
+    </div>
+
+    <!-- W13 7/20~7/24 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W13</div><div class="w-date">7/20~7/24</div></div>
+      <div class="ts-cell"><div class="date">7/20 (월)</div><span class="badge b-sc">C</span><div class="task">JSON → sectionOrder 자동 적용</div></div>
+      <div class="ts-cell"><div class="date">7/21 (화)</div><span class="badge b-sc">C</span><div class="task">JSON → sectionData 자동 채움</div></div>
+      <div class="ts-cell"><div class="date">7/22 (수)</div><span class="badge b-sc">C</span><div class="task">이미지 placeholder 처리</div></div>
+      <div class="ts-cell"><div class="date">7/23 (목)</div><span class="badge b-sc">C</span><div class="task">자동 매핑 통합 테스트</div></div>
+      <div class="ts-cell"><div class="date">7/24 (금)</div><span class="badge b-sc">C</span><div class="task">Stage C 검수 + 사내 시연</div></div>
+    </div>
+
+    <!-- W14 7/27~7/31 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W14</div><div class="w-date">7/27~7/31</div></div>
+      <div class="ts-cell"><div class="date">7/27 (월)</div><span class="badge b-sd">D</span><div class="task">채팅 UI 컴포넌트 설계</div></div>
+      <div class="ts-cell"><div class="date">7/28 (화)</div><span class="badge b-sd">D</span><div class="task">자연어 명령 입력/표시</div></div>
+      <div class="ts-cell"><div class="date">7/29 (수)</div><span class="badge b-sd">D</span><div class="task">명령 → 액션 의도 파싱 (Claude)</div></div>
+      <div class="ts-cell"><div class="date">7/30 (목)</div><span class="badge b-sd">D</span><div class="task">파싱 결과 검증 로직</div></div>
+      <div class="ts-cell"><div class="date">7/31 (금)</div><span class="badge b-sd">D</span><div class="task">채팅 히스토리 + 컨텍스트 유지</div></div>
+    </div>
+
+    <!-- W15 8/3~8/7 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W15</div><div class="w-date">8/3~8/7</div></div>
+      <div class="ts-cell"><div class="date">8/3 (월)</div><span class="badge b-sd">D</span><div class="task">액션 → 빌더 상태 변경 매핑 1차</div></div>
+      <div class="ts-cell"><div class="date">8/4 (화)</div><span class="badge b-sd">D</span><div class="task">색상/텍스트/순서 액션 핸들러</div></div>
+      <div class="ts-cell"><div class="date">8/5 (수)</div><span class="badge b-sd">D</span><div class="task">on/off 토글 액션 핸들러</div></div>
+      <div class="ts-cell"><div class="date">8/6 (목)</div><span class="badge b-sd">D</span><div class="task">실시간 미리보기 반영</div></div>
+      <div class="ts-cell"><div class="date">8/7 (금)</div><span class="badge b-sd">D</span><div class="task">Stage D 통합 + 검수</div></div>
+    </div>
+
+    <!-- W16 8/10~8/14 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W16</div><div class="w-date">8/10~8/14</div></div>
+      <div class="ts-cell"><div class="date">8/10 (월)</div><span class="badge b-se">E</span><div class="task">diff 미리보기 (변경 전/후)</div></div>
+      <div class="ts-cell"><div class="date">8/11 (화)</div><span class="badge b-se">E</span><div class="task">승인/되돌리기 워크플로우</div></div>
+      <div class="ts-cell"><div class="date">8/12 (수)</div><span class="badge b-se">E</span><div class="task">사내 베타 테스트 시작</div></div>
+      <div class="ts-cell"><div class="date">8/13 (목)</div><span class="badge b-se">E</span><div class="task">베타 피드백 반영 + QA</div></div>
+      <div class="ts-cell milestone"><div class="date">8/14 (금)</div><span class="badge b-se">E</span><span class="badge b-ms">MS</span><div class="task"><strong>2차 정식 출시 v2.0.0</strong></div></div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><span class="legend-color" style="background:#4338ca;"></span>Stage A 기반 인프라</div>
+    <div class="legend-item"><span class="legend-color" style="background:#0284c7;"></span>Stage B AI 분석 엔진</div>
+    <div class="legend-item"><span class="legend-color" style="background:#65a30d;"></span>Stage C 자동 매핑</div>
+    <div class="legend-item"><span class="legend-color" style="background:#ea580c;"></span>Stage D 자연어 수정</div>
+    <div class="legend-item"><span class="legend-color" style="background:#be123c;"></span>Stage E 검증+출시</div>
+  </div>
+</section>
+
+<!-- Phase 마스터플랜 -->
+<section>
+  <h2>5. Phase 마스터플랜</h2>
+  <h3>1차 빌더형</h3>
+  <div class="phase-plan">
+    <div class="phase-card">
+      <div class="ph-head" style="background:#2563eb;">P1 · W1 (4/27~4/30)</div>
+      <h4>메인비주얼 + 공통 UX</h4>
+      <div class="ph-meta">영업일 4일 · 8 세션</div>
+      <ul>
+        <li>이미지↔텍스트 전환</li>
+        <li>WEBFONTS 동적 주입</li>
+        <li>섹션 추가/삭제</li>
+        <li>AOS 개별 적용 설계</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#0891b2;">P2 · W2 (5/6~5/8)</div>
+      <h4>AOS 마무리 + 툴바 정비</h4>
+      <div class="ph-meta">영업일 3일 · 1차 배포</div>
+      <ul>
+        <li>AOS 개별화 완료</li>
+        <li>에디터 툴바 정렬/UI</li>
+        <li>5/8 1차 통합 배포</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#059669;">P3 · W3 (5/11~5/15)</div>
+      <h4>nav + 박람회 개요</h4>
+      <div class="ph-meta">영업일 5일</div>
+      <ul>
+        <li>nav 항목 관리</li>
+        <li>nav 편집 레이어</li>
+        <li>개요 요소 동적화</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#ca8a04;">P4 · W4 (5/18~5/22)</div>
+      <h4>개요 마무리 + 채용관 시작</h4>
+      <div class="ph-meta">영업일 5일</div>
+      <ul>
+        <li>이미지 다중 추가</li>
+        <li>채용관 1/2뎁스 탭</li>
+        <li>검색·게시판 토글</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#d97706;">P5 · W5 (5/26~5/27)</div>
+      <h4>채용관 + sec_txt</h4>
+      <div class="ph-meta">영업일 2일 · 압축</div>
+      <ul>
+        <li>탭별 독립 설정</li>
+        <li>sec_txt.basic.top on/off</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#dc2626;">P6 · W6 (6/1, 6/2, 6/5)</div>
+      <h4>편집 UX + 영상 시작</h4>
+      <div class="ph-meta">영업일 3일</div>
+      <ul>
+        <li>섹션 클릭 자동 열림</li>
+        <li>range 인풋 1차</li>
+        <li>영상 1xN/2xN/3xN</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#9333ea;">P7 · W7 (6/8~6/12)</div>
+      <h4>range 마무리 + 스타일</h4>
+      <div class="ph-meta">영업일 5일</div>
+      <ul>
+        <li>range 마무리</li>
+        <li>영상 갯수/v-bar</li>
+        <li>컬러 시스템 + 섹션 배경</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#be185d;">P8 · W8 (6/15~6/19)</div>
+      <h4>AOS 잔여 + 튜토리얼</h4>
+      <div class="ph-meta">영업일 5일 · 1차 출시</div>
+      <ul>
+        <li>10순위 AOS 잔여</li>
+        <li>사용자 튜토리얼</li>
+        <li>6/19 v1.0.0 정식 출시</li>
+      </ul>
+    </div>
+  </div>
+
+  <h3>2차 AI 요청형</h3>
+  <div class="phase-plan">
+    <div class="phase-card">
+      <div class="ph-head" style="background:#4338ca;">Stage A · W9~10</div>
+      <h4>기반 인프라</h4>
+      <div class="ph-meta">영업일 10일</div>
+      <ul>
+        <li>파일 업로드 UI</li>
+        <li>PDF/docx 파싱</li>
+        <li>빌더 상태 schema 정형화</li>
+        <li>AI I/O JSON 정의</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#0284c7;">Stage B · W11~12</div>
+      <h4>AI 분석 엔진</h4>
+      <div class="ph-meta">영업일 10일</div>
+      <ul>
+        <li>Claude API 연동</li>
+        <li>시스템 프롬프트 v1</li>
+        <li>실 기획서 5종 정확도 측정</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#65a30d;">Stage C · W13</div>
+      <h4>자동 매핑</h4>
+      <div class="ph-meta">영업일 5일</div>
+      <ul>
+        <li>JSON → 빌더 상태 자동 적용</li>
+        <li>이미지 placeholder 처리</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#ea580c;">Stage D · W14~15</div>
+      <h4>자연어 수정 인터페이스</h4>
+      <div class="ph-meta">영업일 10일</div>
+      <ul>
+        <li>채팅 UI</li>
+        <li>명령 → 액션 의도 파싱</li>
+        <li>액션 → 상태 변경 매핑</li>
+      </ul>
+    </div>
+    <div class="phase-card">
+      <div class="ph-head" style="background:#be123c;">Stage E · W16</div>
+      <h4>검증 + 출시</h4>
+      <div class="ph-meta">영업일 5일 · 2차 출시</div>
+      <ul>
+        <li>diff 미리보기</li>
+        <li>승인 워크플로우</li>
+        <li>사내 베타 → 8/14 v2.0.0</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- 마일스톤 -->
+<section>
+  <h2>6. 핵심 마일스톤</h2>
+  <div class="milestone-list">
+    <div class="ms-card">
+      <div class="ms-date">5/8 (금)</div>
+      <div class="ms-label">1차 통합 배포 (P1+P2)</div>
+    </div>
+    <div class="ms-card">
+      <div class="ms-date">6/19 (금)</div>
+      <div class="ms-label">1차 정식 출시 v1.0.0</div>
+    </div>
+    <div class="ms-card">
+      <div class="ms-date">7/17 (금)</div>
+      <div class="ms-label">AI 엔진 검증 완료</div>
+    </div>
+    <div class="ms-card">
+      <div class="ms-date">8/14 (금)</div>
+      <div class="ms-label">2차 정식 출시 v2.0.0</div>
+    </div>
+  </div>
+</section>
+
+<!-- 리스크 -->
+<section>
+  <h2>7. 리스크 & 대응</h2>
+  <table>
+    <thead>
+      <tr><th style="width:25%;">리스크</th><th style="width:30%;">영향</th><th>대응</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>캡처본 로드 시 폰트 변경 버그</td>
+        <td>1차 회귀 가능성</td>
+        <td>W1 4/27 첫 작업으로 우선 조사</td>
+      </tr>
+      <tr>
+        <td>W5 2일 / W6 3일 압축</td>
+        <td>채용관·7순위 작업 W7 이월</td>
+        <td>P5/P6 분량 자연스럽게 W7로 분배 완료</td>
+      </tr>
+      <tr>
+        <td>5순위 채용관 스펙 전면 교체</td>
+        <td>W4~W5 작업량 재산정</td>
+        <td>on/off 토글 위주로 단순화 적용</td>
+      </tr>
+      <tr>
+        <td>2차 AI 정확도 (다양한 기획서)</td>
+        <td>자동 매핑 신뢰도 저하</td>
+        <td>W12 전체를 튜닝/측정에 할애</td>
+      </tr>
+      <tr>
+        <td>2차 자연어 명령 범위</td>
+        <td>무한 명령 → 매핑 어려움</td>
+        <td>v2.0.0은 색상/텍스트/순서/on-off로 한정</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- 부록 -->
+<section>
+  <h2>8. 부록 ─ 1순위 완료 처리</h2>
+  <p style="font-size:13px;color:#374151;">
+    v0.15.16 (2026-04-24)에서 다음 1순위 항목이 완료되었습니다.
+  </p>
+  <table style="margin-top:8px;">
+    <thead>
+      <tr><th>항목</th><th>해결 방법</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>같은 폰트/굵기/색상 재적용 불가</td>
+        <td><code>&lt;select&gt;.selectedIndex = 0</code> 리셋, color는 button 분리</td>
+      </tr>
+      <tr>
+        <td>드래그 부분만 변경되어야 하는데 블록 전체 변경</td>
+        <td><code>applyUnifiedFormatting</code> 후 selection 확장 제거</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<footer>
+  © 2026 인크루트 박람회 자동화 프로젝트 ─ 김성엽
+</footer>
+
+</div>
+</body>
+</html>
