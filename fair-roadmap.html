@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>박람회 비주얼 빌더 ─ 1차 + 2차 통합 로드맵</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -79,6 +80,17 @@
 
   /* Stats */
   .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 8px; }
+  /* Charts */
+  .chart-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 16px 0; }
+  .chart-box { background: #fafbfc; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px; }
+  .chart-box .chart-title { font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 8px; text-align: center; }
+  .chart-box canvas { max-height: 240px; }
+  /* Progress card */
+  .progress-card { background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%); border: 1px solid #10b981; border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; }
+  .progress-card .pc-title { font-size: 13px; font-weight: 700; color: #065f46; margin-bottom: 8px; }
+  .progress-bar-bg { background: #fff; border-radius: 100px; height: 12px; overflow: hidden; box-shadow: inset 0 1px 2px rgba(0,0,0,0.06); }
+  .progress-bar-fill { background: linear-gradient(90deg, #059669 0%, #10b981 100%); height: 100%; border-radius: 100px; transition: width .3s; }
+  .progress-stats { display: flex; justify-content: space-between; margin-top: 6px; font-size: 11px; color: #047857; font-weight: 500; }
   .stat {
     background: #f9fafb;
     border: 1px solid #e5e7eb;
@@ -237,7 +249,7 @@
   /* Milestone */
   .milestone-list {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(3, 1fr);
     gap: 12px;
     margin-top: 8px;
   }
@@ -305,11 +317,41 @@
   <h1>박람회 비주얼 빌더 ─ 1차 + 2차 통합 로드맵</h1>
   <div class="meta">
     <span><strong>보고일자:</strong> 2026-04-27 (월)</span>
-    <span><strong>총 기간:</strong> 2026-04-27 ~ 2026-08-14 (16주)</span>
+    <span><strong>총 기간:</strong> 2026-04-27 ~ 2026-09-23 (21주)</span>
     <span><strong>담당:</strong> 김성엽</span>
-    <span><strong>현재 버전:</strong> v0.15.16</span>
+    <span><strong>현재 버전:</strong> v0.20.1</span>
   </div>
 </header>
+
+<!-- 진척 + 차트 -->
+<section>
+  <h2>📊 현재 진척 (2026-04-27 기준)</h2>
+
+  <div class="progress-card">
+    <div class="pc-title">1차 빌더형 진척률</div>
+    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:27%;"></div></div>
+    <div class="progress-stats">
+      <span>완료: 약 27% (W1+W2+W3 nav)</span>
+      <span>14개 버전 배포 (v0.16.0 → v0.20.1)</span>
+      <span>잔여: 약 8주 (~7/8 출시)</span>
+    </div>
+  </div>
+
+  <div class="chart-grid-3">
+    <div class="chart-box">
+      <div class="chart-title">단계별 영업일</div>
+      <canvas id="chart-roadmap-phase"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">기간 비중 (1차/베타/2차)</div>
+      <canvas id="chart-roadmap-pie"></canvas>
+    </div>
+    <div class="chart-box">
+      <div class="chart-title">마일스톤 타임라인</div>
+      <canvas id="chart-roadmap-ms"></canvas>
+    </div>
+  </div>
+</section>
 
 <!-- 요약 -->
 <section>
@@ -352,11 +394,23 @@
         <td>수동 편집 도구</td>
         <td>비개발자가 직접 섹션·스타일을 조작해 ASP+CSS 다운로드</td>
       </tr>
+      <tr style="background:#fef3c7;">
+        <td><strong>1차 베타</strong></td>
+        <td>6/22 ~ 7/7</td>
+        <td>사용성 검증</td>
+        <td>클로즈(4일) → 오픈(7일) → 7/8 v1.0.0 정식 출시</td>
+      </tr>
       <tr>
         <td><strong>2차 AI 요청형</strong></td>
-        <td>6/22 ~ 8/14</td>
+        <td>7/13 ~ 9/4</td>
         <td>자동화 + 대화 편집</td>
         <td>기획서 업로드 → AI 자동 채움 → 자연어 수정 명령</td>
+      </tr>
+      <tr style="background:#fef3c7;">
+        <td><strong>2차 베타</strong></td>
+        <td>9/7 ~ 9/22</td>
+        <td>사용성 검증</td>
+        <td>클로즈(4일) → 오픈(7일) → 9/23 v2.0.0 정식 출시</td>
       </tr>
     </tbody>
   </table>
@@ -454,7 +508,37 @@
       <div class="ts-cell"><div class="date">6/16 (화)</div><span class="badge b-p8">P8</span><div class="task">튜토리얼: 가이드 마스크 + 단계별 안내 설계</div></div>
       <div class="ts-cell"><div class="date">6/17 (수)</div><span class="badge b-p8">P8</span><div class="task">튜토리얼: 섹션별 가이드 콘텐츠 작성</div></div>
       <div class="ts-cell"><div class="date">6/18 (목)</div><span class="badge b-p8">P8</span><div class="task">튜토리얼: 통합 + UI 폴리싱</div></div>
-      <div class="ts-cell milestone"><div class="date">6/19 (금)</div><span class="badge b-p8">P8</span><span class="badge b-ms">MS</span><div class="task"><strong>1차 정식 출시 v1.0.0</strong></div></div>
+      <div class="ts-cell milestone"><div class="date">6/19 (금)</div><span class="badge b-p8">P8</span><span class="badge b-ms">MS</span><div class="task"><strong>1차 베타 빌드 완성</strong></div></div>
+    </div>
+
+    <!-- W9 6/22~6/26: 1차 클로즈 베타 (4일) + 피드백 정리 -->
+    <div class="ts-row">
+      <div class="ts-week" style="background:#fef3c7;color:#78350f;"><div class="w-num" style="color:#b45309;">W9</div><div class="w-date">6/22~6/26</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">6/22 (월)</div><span class="badge" style="background:#f59e0b;">베타</span><div class="task">1차 클로즈 베타 시작</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">6/23 (화)</div><span class="badge" style="background:#f59e0b;">베타</span><div class="task">클로즈 베타 진행 + 이슈 수집</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">6/24 (수)</div><span class="badge" style="background:#f59e0b;">베타</span><div class="task">클로즈 베타 진행 + 이슈 수집</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">6/25 (목)</div><span class="badge" style="background:#f59e0b;">베타</span><div class="task">클로즈 베타 종료 + 피드백 통합</div></div>
+      <div class="ts-cell"><div class="date">6/26 (금)</div><span class="badge b-p8">픽스</span><div class="task">베타 피드백 핫픽스</div></div>
+    </div>
+
+    <!-- W10 6/29~7/3: 1차 오픈 베타 (5영업일) -->
+    <div class="ts-row">
+      <div class="ts-week" style="background:#fef3c7;color:#78350f;"><div class="w-num" style="color:#b45309;">W10</div><div class="w-date">6/29~7/3</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">6/29 (월)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">1차 오픈 베타 시작</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">6/30 (화)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">7/1 (수)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">7/2 (목)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행 + 메트릭 측정</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">7/3 (금)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행</div></div>
+    </div>
+
+    <!-- W11 7/6~7/10: 오픈 베타 마무리 + 출시 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W11</div><div class="w-date">7/6~7/10</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">7/6 (월)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 6일차</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">7/7 (화)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 종료 + 최종 피드백</div></div>
+      <div class="ts-cell milestone"><div class="date">7/8 (수)</div><span class="badge b-ms">MS</span><div class="task"><strong>1차 정식 출시 v1.0.0</strong></div></div>
+      <div class="ts-cell"><div class="date">7/9 (목)</div><span class="badge b-p8">정리</span><div class="task">출시 후 모니터링</div></div>
+      <div class="ts-cell"><div class="date">7/10 (금)</div><span class="badge b-p8">정리</span><div class="task">2차 작업 킥오프 준비</div></div>
     </div>
   </div>
 
@@ -475,8 +559,9 @@
 
 <!-- 2차 타임시트 -->
 <section>
-  <h2>4. 2차 AI 요청형 타임시트 (6/22 ~ 8/14)</h2>
-  <p style="font-size:12px;color:#6b7280;margin-bottom:12px;">8주 / 영업일 약 40일 / 휴일·연차는 추후 반영</p>
+  <h2>4. 2차 AI 요청형 + 베타 타임시트 (7/13 ~ 9/23)</h2>
+  <p style="font-size:12px;color:#6b7280;margin-bottom:12px;">개발 8주 + 베타 2주 + 출시 정리 1주 / 휴일·연차는 추후 반영</p>
+  <p style="font-size:11px;color:#b45309;margin-bottom:12px;background:#fef3c7;padding:8px 12px;border-radius:6px;">⚠️ 아래 W12~W19 표시 일자는 <strong>1차 출시(7/8) 후 +3주 시프트 적용 전 기준</strong>입니다. 정확한 일자 시프트는 1차 출시 직전(W11) 별도 갱신 예정. 베타 W20~W22는 시프트 반영 일자입니다.</p>
 
   <div class="timesheet">
     <div class="ts-header">
@@ -488,9 +573,9 @@
       <div>금</div>
     </div>
 
-    <!-- W9 6/22~6/26 -->
+    <!-- W12 7/13~7/17 (Stage A 시작 — 시프트됨) -->
     <div class="ts-row">
-      <div class="ts-week"><div class="w-num">W9</div><div class="w-date">6/22~6/26</div></div>
+      <div class="ts-week"><div class="w-num">W12</div><div class="w-date">7/13~7/17</div></div>
       <div class="ts-cell"><div class="date">6/22 (월)</div><span class="badge b-sa">A</span><div class="task">파일 업로드 UI 설계</div></div>
       <div class="ts-cell"><div class="date">6/23 (화)</div><span class="badge b-sa">A</span><div class="task">PDF.js 연동 + 텍스트 추출</div></div>
       <div class="ts-cell"><div class="date">6/24 (수)</div><span class="badge b-sa">A</span><div class="task">mammoth.js 연동 (docx 파싱)</div></div>
@@ -563,9 +648,39 @@
       <div class="ts-week"><div class="w-num">W16</div><div class="w-date">8/10~8/14</div></div>
       <div class="ts-cell"><div class="date">8/10 (월)</div><span class="badge b-se">E</span><div class="task">diff 미리보기 (변경 전/후)</div></div>
       <div class="ts-cell"><div class="date">8/11 (화)</div><span class="badge b-se">E</span><div class="task">승인/되돌리기 워크플로우</div></div>
-      <div class="ts-cell"><div class="date">8/12 (수)</div><span class="badge b-se">E</span><div class="task">사내 베타 테스트 시작</div></div>
-      <div class="ts-cell"><div class="date">8/13 (목)</div><span class="badge b-se">E</span><div class="task">베타 피드백 반영 + QA</div></div>
-      <div class="ts-cell milestone"><div class="date">8/14 (금)</div><span class="badge b-se">E</span><span class="badge b-ms">MS</span><div class="task"><strong>2차 정식 출시 v2.0.0</strong></div></div>
+      <div class="ts-cell"><div class="date">8/12 (수)</div><span class="badge b-se">E</span><div class="task">QA + 통합 테스트</div></div>
+      <div class="ts-cell"><div class="date">8/13 (목)</div><span class="badge b-se">E</span><div class="task">QA 마무리</div></div>
+      <div class="ts-cell"><div class="date">8/14 (금)</div><span class="badge b-se">E</span><div class="task"><strong>2차 베타 빌드 완성</strong> (시프트 후 9/4)</div></div>
+    </div>
+
+    <!-- W20 9/7~9/11: 2차 클로즈 베타 + 픽스 -->
+    <div class="ts-row">
+      <div class="ts-week" style="background:#fef3c7;color:#78350f;"><div class="w-num" style="color:#b45309;">W20</div><div class="w-date">9/7~9/11</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/7 (월)</div><span class="badge" style="background:#f59e0b;">베타</span><div class="task">2차 클로즈 베타 시작</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/8 (화)</div><span class="badge" style="background:#f59e0b;">베타</span><div class="task">클로즈 베타 진행 + 이슈 수집</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/9 (수)</div><span class="badge" style="background:#f59e0b;">베타</span><div class="task">클로즈 베타 진행</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/10 (목)</div><span class="badge" style="background:#f59e0b;">베타</span><div class="task">클로즈 베타 종료 + 피드백 통합</div></div>
+      <div class="ts-cell"><div class="date">9/11 (금)</div><span class="badge b-se">픽스</span><div class="task">베타 피드백 핫픽스</div></div>
+    </div>
+
+    <!-- W21 9/14~9/18: 2차 오픈 베타 (5영업일) -->
+    <div class="ts-row">
+      <div class="ts-week" style="background:#fef3c7;color:#78350f;"><div class="w-num" style="color:#b45309;">W21</div><div class="w-date">9/14~9/18</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/14 (월)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">2차 오픈 베타 시작</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/15 (화)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/16 (수)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/17 (목)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행 + 메트릭 측정</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/18 (금)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 진행</div></div>
+    </div>
+
+    <!-- W22 9/21~9/25: 오픈 베타 마무리 + 출시 -->
+    <div class="ts-row">
+      <div class="ts-week"><div class="w-num">W22</div><div class="w-date">9/21~9/25</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/21 (월)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 6일차</div></div>
+      <div class="ts-cell" style="background:#fffbeb;"><div class="date">9/22 (화)</div><span class="badge" style="background:#f59e0b;">오픈</span><div class="task">오픈 베타 종료 + 최종 피드백</div></div>
+      <div class="ts-cell milestone"><div class="date">9/23 (수)</div><span class="badge b-ms">MS</span><div class="task"><strong>2차 정식 출시 v2.0.0</strong></div></div>
+      <div class="ts-cell"><div class="date">9/24 (목)</div><span class="badge b-se">정리</span><div class="task">출시 후 모니터링</div></div>
+      <div class="ts-cell"><div class="date">9/25 (금)</div><span class="badge b-se">정리</span><div class="task">프로젝트 종료 회고</div></div>
     </div>
   </div>
 
@@ -730,14 +845,22 @@
     </div>
     <div class="ms-card">
       <div class="ms-date">6/19 (금)</div>
+      <div class="ms-label">1차 베타 빌드 완성</div>
+    </div>
+    <div class="ms-card" style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border-color:#f59e0b;">
+      <div class="ms-date" style="color:#b45309;">6/22 ~ 7/7</div>
+      <div class="ms-label" style="color:#78350f;">1차 베타 (클로즈+오픈)</div>
+    </div>
+    <div class="ms-card">
+      <div class="ms-date">7/8 (수)</div>
       <div class="ms-label">1차 정식 출시 v1.0.0</div>
     </div>
-    <div class="ms-card">
-      <div class="ms-date">7/17 (금)</div>
-      <div class="ms-label">AI 엔진 검증 완료</div>
+    <div class="ms-card" style="background:linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);border-color:#f59e0b;">
+      <div class="ms-date" style="color:#b45309;">9/7 ~ 9/22</div>
+      <div class="ms-label" style="color:#78350f;">2차 베타 (클로즈+오픈)</div>
     </div>
     <div class="ms-card">
-      <div class="ms-date">8/14 (금)</div>
+      <div class="ms-date">9/23 (수)</div>
       <div class="ms-label">2차 정식 출시 v2.0.0</div>
     </div>
   </div>
@@ -802,6 +925,96 @@
     </tbody>
   </table>
 </section>
+
+<script>
+(function() {
+  if (typeof Chart === 'undefined') return;
+  Chart.defaults.font.family = "'Pretendard', sans-serif";
+  Chart.defaults.font.size = 11;
+  Chart.defaults.color = '#374151';
+
+  /* 단계별 영업일 (1차 P1~P8 + 베타 + 2차 Stage A~E + 베타) */
+  var phEl = document.getElementById('chart-roadmap-phase');
+  if (phEl) {
+    new Chart(phEl, {
+      type: 'bar',
+      data: {
+        labels: ['P1','P2','P3','P4','P5','P6','P7','P8','1차베타','SA','SB','SC','SD','SE','2차베타'],
+        datasets: [{
+          label: '영업일',
+          data: [4, 3, 5, 5, 2, 3, 5, 5, 11, 10, 10, 5, 10, 5, 11],
+          backgroundColor: ['#2563eb','#0891b2','#059669','#ca8a04','#d97706','#dc2626','#9333ea','#be185d','#f59e0b','#4338ca','#0284c7','#65a30d','#ea580c','#be123c','#f59e0b'],
+          borderRadius: 3,
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+  }
+
+  /* 기간 비중 도넛 (1차 개발 / 1차 베타 / 2차 개발 / 2차 베타) */
+  var piEl = document.getElementById('chart-roadmap-pie');
+  if (piEl) {
+    new Chart(piEl, {
+      type: 'doughnut',
+      data: {
+        labels: ['1차 빌더 개발', '1차 베타', '2차 AI 개발', '2차 베타'],
+        datasets: [{
+          data: [32, 11, 40, 11],
+          backgroundColor: ['#2563eb', '#fbbf24', '#7c3aed', '#f59e0b'],
+          borderWidth: 0
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, padding: 8 } },
+          tooltip: { callbacks: { label: function(ctx) { return ctx.label + ': ' + ctx.parsed + '영업일'; } } }
+        },
+        cutout: '55%'
+      }
+    });
+  }
+
+  /* 마일스톤 타임라인 (산점도) */
+  var msEl = document.getElementById('chart-roadmap-ms');
+  if (msEl) {
+    /* x축: 시작일(4/27)부터 일수 */
+    var base = new Date(2026, 3, 27).getTime();
+    function days(d) { return Math.round((new Date(d).getTime() - base) / 86400000); }
+    new Chart(msEl, {
+      type: 'scatter',
+      data: {
+        datasets: [
+          { label: '1차 통합', data: [{x: days('2026-05-08'), y: 1, label: '1차 통합 배포'}], backgroundColor: '#0891b2', pointRadius: 8 },
+          { label: '1차 베타', data: [{x: days('2026-06-22'), y: 2, label: '1차 베타 시작'}, {x: days('2026-07-07'), y: 2, label: '1차 베타 종료'}], backgroundColor: '#f59e0b', pointRadius: 8 },
+          { label: '1차 출시', data: [{x: days('2026-07-08'), y: 3, label: '1차 v1.0.0 출시'}], backgroundColor: '#059669', pointRadius: 10 },
+          { label: '2차 베타', data: [{x: days('2026-09-07'), y: 4, label: '2차 베타 시작'}, {x: days('2026-09-22'), y: 4, label: '2차 베타 종료'}], backgroundColor: '#f59e0b', pointRadius: 8 },
+          { label: '2차 출시', data: [{x: days('2026-09-23'), y: 5, label: '2차 v2.0.0 출시'}], backgroundColor: '#059669', pointRadius: 10 }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 10, padding: 6, font: { size: 10 } } },
+          tooltip: { callbacks: { label: function(ctx) { return ctx.raw.label; } } }
+        },
+        scales: {
+          x: { title: { display: true, text: '4/27부터 경과일', font: { size: 10 } } },
+          y: { display: false, min: 0, max: 6 }
+        }
+      }
+    });
+  }
+})();
+</script>
 
 <footer>
   © 2026 인크루트 박람회 자동화 프로젝트 ─ 김성엽
