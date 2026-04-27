@@ -381,7 +381,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.16.1</span>
+  <span id="ver-badge" title="배포 버전">v0.16.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3085,6 +3085,24 @@ function exitEditMode() {
   document.getElementById('format-toolbar').classList.remove('show');
 }
 
+/* v0.16.2: 편집모드 a 링크 navigation 차단 (자식 img/iframe 클릭은 통과)
+ * - capture phase에서 a의 default 동작만 preventDefault
+ * - stopPropagation 안 함 → 이미지 편집 핸들러(img click) 정상 작동
+ */
+function attachEditModeLinkBlocker(doc) {
+  if (!doc || doc._builderLinkBlockBound) return;
+  doc._builderLinkBlockBound = true;
+  doc.addEventListener('click', function(e) {
+    if (!editMode) return;
+    var t = e.target;
+    if (!t || !t.closest) return;
+    var a = t.closest('a');
+    if (!a) return;
+    if (!a.closest('[data-builder-section]')) return;
+    e.preventDefault();
+  }, true);  /* capture phase: 다른 핸들러가 stopPropagation 해도 안전 */
+}
+
 /* v0.16.1: WEBFONTS의 faces 정보로 iframe에 @font-face 동적 주입 */
 function injectWebfontsCSS(doc) {
   if (!doc) return;
@@ -3142,8 +3160,6 @@ function injectEditModeCSS(doc) {
     '}' +
     /* H3: YouTube/영상 iframe 클릭 차단 */
     '.builder-edit-mode [data-builder-section] iframe{pointer-events:none!important;}' +
-    /* v0.16.1: 편집모드에서 모든 링크 클릭 차단 (contenteditable 안 링크는 편집 의도이므로 차단해도 무방) */
-    '.builder-edit-mode [data-builder-section] a{pointer-events:none!important;}' +
     /* H4: 네이티브 이미지/링크 드래그 방지 */
     '.builder-edit-mode [data-builder-section] img,' +
     '.builder-edit-mode [data-builder-section] a{-webkit-user-drag:none;user-drag:none;}' +
@@ -3491,6 +3507,8 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   previewReady = true;
   /* v0.16.1: 동적 웹폰트 주입 (가장 먼저 — 다른 렌더링이 폰트를 참조하기 전에) */
   try { injectWebfontsCSS(this.contentDocument); } catch(e) {}
+  /* v0.16.2: 편집모드 a navigation 차단 (자식 click은 통과) */
+  try { attachEditModeLinkBlocker(this.contentDocument); } catch(e) {}
   /* 모든 링크 새 탭으로 */
   try {
     var doc = this.contentDocument;
@@ -3869,6 +3887,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 11:50 (v0.16.2)',
+    items: [
+      '<strong>[v0.16.2]</strong> 핫픽스: 링크 차단 부작용 수정 (success-link-wrap 등 a 안 img 편집 불가 문제)',
+      '<strong>[v0.16.2]</strong> 원인: CSS pointer-events:none이 a의 모든 자식까지 차단 → img click 핸들러 미발화',
+      '<strong>[v0.16.2]</strong> 해결: CSS 규칙 제거, JS capture phase에서 a click의 default(navigation)만 preventDefault',
+      '<strong>[v0.16.2]</strong> stopPropagation 안 함 → 자식 img/iframe 등의 별도 click 핸들러 정상 작동 (이미지 편집/유튜브 편집 복원)',
+      '<strong>[v0.16.2]</strong> 영향 케이스: success-link-wrap, award-company__inner, quick-menu 등 a><img/iframe 패턴 161건 자동 해결',
+    ]
+  },
   {
     date: '2026.04.27 11:22 (v0.16.1)',
     items: [
