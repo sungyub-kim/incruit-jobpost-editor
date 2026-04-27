@@ -394,7 +394,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.18.1</span>
+  <span id="ver-badge" title="배포 버전">v0.19.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -637,6 +637,7 @@ var editMode = false;
 var previewBreakpoint = 'desktop';  /* R3: 반응형 미리보기 선택 breakpoint (desktop | tablet | mobile) */
 var posterConfig = 'both'; /* 'both' | 'online' | 'offline' */
 var navLinks    = [];  /* S2: 네비게이션 링크 [{text,href}] */
+var navHoverStyle = { color: '', bgColor: '' };  /* v0.19.0: nav 호버 색상/배경 */
 var joblistTabs = [];  /* S1: 채용공고 탭 [{name}] */
 
 /* ── 섹션 DOM 매핑 테이블 ── */
@@ -738,6 +739,7 @@ function saveState() {
     previewBreakpoint: previewBreakpoint,
     sectionTemplates: sectionTemplates,
     navLinks:       navLinks,
+    navHoverStyle:  navHoverStyle,
     joblistTabs:    joblistTabs
   }));
 }
@@ -814,6 +816,7 @@ function loadState() {
     }
     if (s.posterConfig)  posterConfig  = s.posterConfig;
     if (s.navLinks)      navLinks      = s.navLinks;
+    if (s.navHoverStyle) navHoverStyle = Object.assign({ color:'', bgColor:'' }, s.navHoverStyle);
     if (s.joblistTabs)   joblistTabs   = s.joblistTabs;
     if (s.aosEnabled !== undefined)         aosEnabled         = s.aosEnabled;
     if (s.visualRightVisible !== undefined) visualRightVisible = s.visualRightVisible;
@@ -839,15 +842,43 @@ function readNavFromPreview() {
 function renderNavPanel() {
   var el = document.getElementById('nav-link-list');
   if (!el) return;
-  if (!navLinks.length) { el.innerHTML = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>'; return; }
-  el.innerHTML = navLinks.map(function(link, i) {
-    return '<div class="logo-input-wrap" style="padding:6px 8px;">' +
-      '<label>링크 ' + (i+1) + ' — 텍스트</label>' +
-      '<input type="text" value="' + esc(link.text) + '" oninput="updateNavLink(' + i + ',\'text\',this.value)">' +
-      '<label style="margin-top:4px;">href</label>' +
-      '<input type="text" value="' + esc(link.href) + '" oninput="updateNavLink(' + i + ',\'href\',this.value)">' +
+  var html = '';
+  if (!navLinks.length) {
+    html = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>';
+  } else {
+    html = navLinks.map(function(link, i) {
+      return '<div class="logo-input-wrap" style="padding:6px 8px;position:relative;">' +
+        '<button class="nav-link-remove" title="이 링크 제거" onclick="removeNavLink(' + i + ')" style="position:absolute;top:4px;right:4px;background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:18px;padding:0;">✕</button>' +
+        '<label>링크 ' + (i+1) + ' — 텍스트</label>' +
+        '<input type="text" value="' + esc(link.text) + '" oninput="updateNavLink(' + i + ',\'text\',this.value)">' +
+        '<label style="margin-top:4px;">href</label>' +
+        '<input type="text" value="' + esc(link.href) + '" oninput="updateNavLink(' + i + ',\'href\',this.value)">' +
       '</div>';
-  }).join('');
+    }).join('');
+  }
+  /* v0.19.0: nav 항목 추가 버튼 (PC 한도 고려해 최대 8개) */
+  if (navLinks.length < 8) {
+    html += '<button class="ep-add-btn" style="width:100%;background:#059669;color:#fff;border:none;border-radius:4px;padding:6px;margin-top:6px;cursor:pointer;font-size:11px;font-weight:600;" onclick="addNavLink()">+ 링크 추가</button>';
+  }
+  /* v0.19.0: nav hover 효과 */
+  html += '<div style="margin-top:10px;padding-top:8px;border-top:1px solid #2e3a52;">' +
+    '<div style="font-size:11px;color:#9ca3af;font-weight:600;margin-bottom:6px;">호버 효과</div>' +
+    '<div class="logo-input-wrap" style="padding:6px 8px;">' +
+      '<label>텍스트 색상</label>' +
+      '<div style="display:flex;gap:4px;align-items:center;">' +
+        '<input type="color" value="' + (navHoverStyle.color || '#0066cc') + '" oninput="updateNavHover(\'color\',this.value)" style="width:32px;height:24px;padding:0;border:1px solid #2e3a52;border-radius:3px;background:none;cursor:pointer;">' +
+        '<input type="text" value="' + esc(navHoverStyle.color || '') + '" placeholder="(없음)" oninput="updateNavHover(\'color\',this.value)" style="flex:1;">' +
+        (navHoverStyle.color ? '<button onclick="updateNavHover(\'color\',\'\');renderNavPanel()" title="제거" style="background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0;">✕</button>' : '') +
+      '</div>' +
+      '<label style="margin-top:6px;">배경 색상</label>' +
+      '<div style="display:flex;gap:4px;align-items:center;">' +
+        '<input type="color" value="' + (navHoverStyle.bgColor || '#f3f4f6') + '" oninput="updateNavHover(\'bgColor\',this.value)" style="width:32px;height:24px;padding:0;border:1px solid #2e3a52;border-radius:3px;background:none;cursor:pointer;">' +
+        '<input type="text" value="' + esc(navHoverStyle.bgColor || '') + '" placeholder="(없음)" oninput="updateNavHover(\'bgColor\',this.value)" style="flex:1;">' +
+        (navHoverStyle.bgColor ? '<button onclick="updateNavHover(\'bgColor\',\'\');renderNavPanel()" title="제거" style="background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0;">✕</button>' : '') +
+      '</div>' +
+    '</div>' +
+  '</div>';
+  el.innerHTML = html;
 }
 
 function updateNavLink(i, key, val) {
@@ -857,15 +888,121 @@ function updateNavLink(i, key, val) {
   saveState();
 }
 
+/* v0.19.0: 편집모드에서 nav/sitemap 클릭 시 좌측 nav 패널로 스크롤 + 해당 input 포커스/강조 */
+function attachNavEditClickHandler(doc) {
+  if (!doc || doc._navEditClickBound) return;
+  doc._navEditClickBound = true;
+  doc.addEventListener('click', function(e) {
+    if (!editMode) return;
+    var t = e.target;
+    if (!t || !t.closest) return;
+    var a = t.closest('.nav > li > a.links, #sitemap > ul > li > a.links');
+    if (!a) return;
+    e.preventDefault();
+    var li = a.parentElement;
+    var siblings = li.parentElement.querySelectorAll(':scope > li');
+    var idx = Array.prototype.indexOf.call(siblings, li);
+    if (idx < 0) return;
+    /* 좌측 nav 패널로 스크롤 + 해당 텍스트 input 포커스 */
+    var navList = document.getElementById('nav-link-list');
+    if (navList) {
+      navList.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      var wraps = navList.querySelectorAll('.logo-input-wrap');
+      if (wraps[idx]) {
+        var input = wraps[idx].querySelector('input[type=text]');
+        if (input) {
+          input.focus();
+          input.select();
+          /* 시각 강조 */
+          wraps[idx].style.transition = 'box-shadow .25s';
+          wraps[idx].style.boxShadow = '0 0 0 2px #0066cc inset';
+          setTimeout(function() { if (wraps[idx]) wraps[idx].style.boxShadow = ''; }, 1500);
+        }
+      }
+    }
+  }, true);
+}
+
+/* v0.19.0: nav hover 색상/배경 CSS 주입 */
+function applyNavHoverToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var styleId = 'builder-nav-hover-css';
+  var tag = doc.getElementById(styleId);
+  if (!tag) { tag = doc.createElement('style'); tag.id = styleId; doc.head.appendChild(tag); }
+  var rules = '';
+  if (navHoverStyle.color) {
+    rules += '.nav > li > a.links:hover{color:' + navHoverStyle.color + '!important;}';
+    rules += '#sitemap > ul > li > a.links:hover{color:' + navHoverStyle.color + '!important;}';
+  }
+  if (navHoverStyle.bgColor) {
+    rules += '.nav > li > a.links:hover{background:' + navHoverStyle.bgColor + '!important;}';
+    rules += '#sitemap > ul > li > a.links:hover{background:' + navHoverStyle.bgColor + '!important;}';
+  }
+  tag.textContent = rules;
+}
+
+/* v0.19.0: nav hover 색상 변경 */
+function updateNavHover(key, val) {
+  navHoverStyle[key] = val;
+  applyNavHoverToPreview();
+  saveState();
+}
+
+/* v0.19.0: nav 항목 추가 (마지막 항목 기준 새로 + DOM도 동기) */
+function addNavLink() {
+  var idx = navLinks.length + 1;
+  navLinks.push({ text: '새 링크 ' + idx, href: '#' });
+  applyNavToPreview();
+  renderNavPanel();
+  saveState();
+}
+
+/* v0.19.0: nav 항목 제거 */
+function removeNavLink(i) {
+  if (!navLinks[i]) return;
+  if (navLinks.length <= 1) { alert('최소 1개 항목은 유지해야 합니다.'); return; }
+  if (!confirm('"' + (navLinks[i].text || '링크 ' + (i+1)) + '" 항목을 제거하시겠습니까?')) return;
+  navLinks.splice(i, 1);
+  applyNavToPreview();
+  renderNavPanel();
+  saveState();
+}
+
 function applyNavToPreview() {
   var doc = getPreviewDoc();
-  if (!doc || !navLinks.length) return;
-  var pcLinks = doc.querySelectorAll('.nav > li > a.links');
-  var mbLinks = doc.querySelectorAll('#sitemap > ul > li > a.links');
-  navLinks.forEach(function(link, i) {
-    if (pcLinks[i]) { pcLinks[i].textContent = link.text; pcLinks[i].setAttribute('href', link.href); }
-    if (mbLinks[i]) { mbLinks[i].textContent = link.text; mbLinks[i].setAttribute('href', link.href); }
-  });
+  if (!doc) return;
+  /* PC nav과 모바일 sitemap의 li를 navLinks 길이에 맞게 동기 */
+  function syncList(parent, selectorLi) {
+    if (!parent) return;
+    var items = parent.querySelectorAll(':scope > ' + selectorLi);
+    var arr = Array.prototype.slice.call(items);
+    /* 길이 맞추기 */
+    if (arr.length > 0 && navLinks.length > arr.length) {
+      var lastLi = arr[arr.length - 1];
+      while (arr.length < navLinks.length) {
+        var clone = lastLi.cloneNode(true);
+        parent.appendChild(clone);
+        arr.push(clone);
+      }
+    } else if (navLinks.length < arr.length) {
+      for (var i = arr.length - 1; i >= navLinks.length; i--) {
+        arr[i].parentNode.removeChild(arr[i]);
+      }
+      arr.length = navLinks.length;
+    }
+    /* 텍스트/href 채움 */
+    arr.forEach(function(li, i) {
+      var a = li.querySelector('a.links');
+      if (!a || !navLinks[i]) return;
+      a.textContent = navLinks[i].text;
+      a.setAttribute('href', navLinks[i].href);
+    });
+  }
+  var pcUl = doc.querySelector('.nav');
+  var mbUl = doc.querySelector('#sitemap > ul');
+  syncList(pcUl, 'li');
+  syncList(mbUl, 'li');
 }
 
 /* ── S1: 채용공고 탭 편집 ── */
@@ -3251,6 +3388,14 @@ function enterEditMode() {
     a.dataset.origHref = a.getAttribute('href') || '';
     a.removeAttribute('href');
   });
+  /* v0.19.0: nav 자체도 navigation 차단 + 클릭 시 좌측 nav 패널로 자동 스크롤 + 항목 강조 */
+  doc.querySelectorAll('.nav > li > a.links, #sitemap > ul > li > a.links').forEach(function(a) {
+    if (a.dataset.origHref === undefined) {
+      a.dataset.origHref = a.getAttribute('href') || '';
+      a.removeAttribute('href');
+    }
+  });
+  attachNavEditClickHandler(doc);
   editMode = true;
   applyMediaModesToPreview();     /* v0.16.0: 텍스트 모드 div에 makeEditable 부착 */
   document.getElementById('edit-mode-btn').classList.add('active');
@@ -3726,10 +3871,15 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   try { injectWebfontsCSS(this.contentDocument); } catch(e) {}
   /* v0.16.2: 편집모드 a navigation 차단 (자식 click은 통과) */
   try { attachEditModeLinkBlocker(this.contentDocument); } catch(e) {}
-  /* 모든 링크 새 탭으로 */
+  /* 모든 링크 새 탭으로 — 단, # anchor / javascript: 는 제외 (모바일 sitemap 등 페이지 내 이동) */
   try {
     var doc = this.contentDocument;
     doc.querySelectorAll('a[href]').forEach(function(a) {
+      var hrefAttr = a.getAttribute('href') || '';
+      if (hrefAttr.charAt(0) === '#' || hrefAttr.indexOf('javascript:') === 0) {
+        a.removeAttribute('target');  /* v0.19.0: 페이지 내 anchor는 새창 강제 해제 */
+        return;
+      }
       if (!a.target) a.target = '_blank';
     });
   } catch(e) {}
@@ -3743,6 +3893,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   if (!navLinks.length)    readNavFromPreview();
   if (!joblistTabs.length) readTabsFromPreview();
   applyNavToPreview();
+  applyNavHoverToPreview();  /* v0.19.0 */
   applyTabsToPreview();
   applySpacingToPreview();
   applyBgImagesToPreview();
@@ -4117,6 +4268,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 13:20 (v0.19.0)',
+    items: [
+      '<strong>[v0.19.0]</strong> P3 W3 nav 작업 4건 일괄: 항목 추가/삭제 + hover 효과 + 모바일 # anchor 새창 차단 + 클릭→편집 자동 포커스',
+      '<strong>[v0.19.0]</strong> nav 항목 추가/삭제: addNavLink / removeNavLink (최대 8개), DOM도 자동 클론/제거 (PC nav + 모바일 #sitemap 동시)',
+      '<strong>[v0.19.0]</strong> nav hover 효과: 색상 + 배경 색상 (color picker + hex input + ✕ 제거), navHoverStyle 상태에 저장 + applyNavHoverToPreview로 iframe CSS 주입',
+      '<strong>[v0.19.0]</strong> # anchor / javascript: a는 iframe load 시 target=_blank 강제 해제 (모바일 sitemap 새창 이슈 해결)',
+      '<strong>[v0.19.0]</strong> 편집모드 nav/sitemap 클릭 → 좌측 nav 편집 패널로 스크롤 + 해당 input 포커스 + 1.5s 강조 박스',
+      '<strong>[v0.19.0]</strong> 편집모드 진입 시 nav a href도 백업/복원 (navigation 차단)',
+    ]
+  },
   {
     date: '2026.04.27 12:58 (v0.18.1)',
     items: [
