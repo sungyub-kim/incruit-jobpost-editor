@@ -390,7 +390,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.17.0</span>
+  <span id="ver-badge" title="배포 버전">v0.17.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -966,7 +966,8 @@ function renderSectionList() {
     item.innerHTML =
       '<span class="drag-handle">⠿</span>' +
       /* 섹션명 버튼: 클릭 → 편집 드로어 열기 */
-      '<button class="sec-name-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="클릭하여 편집 · Shift+클릭 시 미리보기로 스크롤">' + schema.name + repeaterCount + '</button>' +
+      /* v0.17.1: sec_title이 있으면 그것을 표시 (미리보기 .sec_tit.basic과 동기화) */
+      '<button class="sec-name-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="클릭하여 편집 · Shift+클릭 시 미리보기로 스크롤">' + esc((sectionData[id] && sectionData[id].sec_title) || schema.name) + repeaterCount + '</button>' +
       (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
       /* ▲▼ 이동 버튼 (hover 시 표시) */
       '<div class="sec-move-group">' +
@@ -1397,6 +1398,8 @@ function updateField(sectionId, path, val) {
   obj[isNaN(last) ? last : +last] = val;
   saveState();
   applyFieldsToPreview(sectionId);
+  /* v0.17.1: sec_title 변경 시 좌측 패널 섹션명 동기화 */
+  if (path === 'sec_title') renderSectionList();
 }
 
 /* S3: Repeater 아이템 추가 */
@@ -3526,6 +3529,8 @@ function onEditableBlur(e) {
     setFieldDirect(sId, field, val);
   }
   saveState();
+  /* v0.17.1: sec_title 변경 시 좌측 패널 섹션명 동기화 */
+  if (field === 'sec_title') renderSectionList();
 }
 
 function collectEditableValues(doc) {
@@ -3951,6 +3956,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 11:50 (v0.17.1)',
+    items: [
+      '<strong>[v0.17.1]</strong> P1 4/30: 좌측 패널 섹션명 ↔ 미리보기 .sec_tit.basic 동기화',
+      '<strong>[v0.17.1]</strong> renderSectionList: 섹션명을 sectionData[id].sec_title (있으면) || schema.name (fallback)으로 표시',
+      '<strong>[v0.17.1]</strong> sec_title 변경 시 자동 갱신: updateField(좌측 입력) + onEditableBlur(미리보기 contenteditable) 두 진입점에서 renderSectionList 재호출',
+    ]
+  },
   {
     date: '2026.04.27 11:38 (v0.17.0)',
     items: [
