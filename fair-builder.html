@@ -394,7 +394,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.19.1</span>
+  <span id="ver-badge" title="배포 버전">v0.20.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -815,7 +815,15 @@ function loadState() {
       });
     }
     if (s.posterConfig)  posterConfig  = s.posterConfig;
-    if (s.navLinks)      navLinks      = s.navLinks;
+    if (s.navLinks) {
+      navLinks = s.navLinks;
+      /* v0.20.0: 마이그레이션 — target 필드 없는 기존 데이터 보강 */
+      navLinks.forEach(function(link) {
+        if (link.target === undefined) {
+          link.target = (link.href && link.href.charAt(0) === '#') ? '_self' : '_blank';
+        }
+      });
+    }
     if (s.navHoverStyle) navHoverStyle = Object.assign({ color:'', bgColor:'' }, s.navHoverStyle);
     if (s.joblistTabs)   joblistTabs   = s.joblistTabs;
     if (s.aosEnabled !== undefined)         aosEnabled         = s.aosEnabled;
@@ -835,7 +843,10 @@ function readNavFromPreview() {
   if (!links.length) return;
   navLinks = [];
   links.forEach(function(a) {
-    navLinks.push({ text: a.textContent.trim(), href: a.getAttribute('href') || '' });
+    var hrefVal = a.getAttribute('href') || '';
+    /* v0.20.0: target 기본값 — # anchor는 _self, 그 외는 _blank */
+    var defTarget = (hrefVal.charAt(0) === '#') ? '_self' : '_blank';
+    navLinks.push({ text: a.textContent.trim(), href: hrefVal, target: a.getAttribute('target') || defTarget });
   });
 }
 
@@ -847,12 +858,19 @@ function renderNavPanel() {
     html = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>';
   } else {
     html = navLinks.map(function(link, i) {
+      var tgt = link.target || '_blank';
       return '<div class="logo-input-wrap" style="padding:6px 8px;position:relative;">' +
         '<button class="nav-link-remove" title="이 링크 제거" onclick="removeNavLink(' + i + ')" style="position:absolute;top:4px;right:4px;background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:18px;padding:0;">✕</button>' +
         '<label>링크 ' + (i+1) + ' — 텍스트</label>' +
         '<input type="text" value="' + esc(link.text) + '" oninput="updateNavLink(' + i + ',\'text\',this.value)">' +
         '<label style="margin-top:4px;">href</label>' +
         '<input type="text" value="' + esc(link.href) + '" oninput="updateNavLink(' + i + ',\'href\',this.value)">' +
+        /* v0.20.0: target select (현재창/새창) */
+        '<label style="margin-top:4px;">열기 방식</label>' +
+        '<select onchange="updateNavLink(' + i + ',\'target\',this.value)" style="width:100%;background:#161c2d;border:1px solid #2e3a52;border-radius:4px;color:#e5e7eb;font-size:11px;padding:3px 6px;cursor:pointer;">' +
+          '<option value="_blank" ' + (tgt === '_blank' ? 'selected' : '') + '>새창 (_blank)</option>' +
+          '<option value="_self" ' + (tgt === '_self' ? 'selected' : '') + '>현재창 (_self)</option>' +
+        '</select>' +
       '</div>';
     }).join('');
   }
@@ -952,7 +970,8 @@ function updateNavHover(key, val) {
 /* v0.19.0: nav 항목 추가 (마지막 항목 기준 새로 + DOM도 동기) */
 function addNavLink() {
   var idx = navLinks.length + 1;
-  navLinks.push({ text: '새 링크 ' + idx, href: '#' });
+  /* v0.20.0: 새 링크 기본 target = _self (# anchor 가정) */
+  navLinks.push({ text: '새 링크 ' + idx, href: '#', target: '_self' });
   applyNavToPreview();
   renderNavPanel();
   saveState();
@@ -991,12 +1010,16 @@ function applyNavToPreview() {
       }
       arr.length = navLinks.length;
     }
-    /* 텍스트/href 채움 */
+    /* 텍스트/href/target 채움 */
     arr.forEach(function(li, i) {
       var a = li.querySelector('a.links');
       if (!a || !navLinks[i]) return;
       a.textContent = navLinks[i].text;
       a.setAttribute('href', navLinks[i].href);
+      /* v0.20.0: target 옵션 적용 */
+      var tgt = navLinks[i].target || '_blank';
+      if (tgt === '_self') a.removeAttribute('target');
+      else a.setAttribute('target', tgt);
     });
   }
   var pcUl = doc.querySelector('.nav');
@@ -4268,6 +4291,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.27 13:25 (v0.20.0)',
+    items: [
+      '<strong>[v0.20.0]</strong> 글로벌 정책 첫 적용: nav 링크에 target 옵션(현재창 _self / 새창 _blank) 추가',
+      '<strong>[v0.20.0]</strong> navLinks 데이터 구조 확장: { text, href, target } + loadState 마이그레이션 (기존 데이터는 # anchor면 _self, 그 외 _blank)',
+      '<strong>[v0.20.0]</strong> renderNavPanel: target select 추가 (각 링크별 새창/현재창 선택)',
+      '<strong>[v0.20.0]</strong> applyNavToPreview: target도 동기 — _self는 removeAttribute, _blank는 setAttribute',
+      '<strong>[v0.20.0]</strong> addNavLink 기본값 target=_self (# anchor 가정)',
+      '<strong>[v0.20.0]</strong> 검수: iframe load의 강제 target 설정과 충돌 가능성 점검 → applyNavToPreview가 직후 덮어쓰므로 회귀 없음',
+    ]
+  },
   {
     date: '2026.04.27 13:09 (v0.19.1)',
     items: [
