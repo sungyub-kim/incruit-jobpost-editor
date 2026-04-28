@@ -74,7 +74,12 @@
     #main-area { display: flex; flex: 1; overflow: hidden; }
 
     /* 좌측 패널 */
-    #left-panel { width: 280px; min-width: 280px; background: #1e2433; border-right: 1px solid #2e3a52; display: flex; flex-direction: column; overflow: hidden; }
+    #left-panel { width: 280px; min-width: 280px; background: #1e2433; border-right: 1px solid #2e3a52; display: flex; flex-direction: column; overflow: hidden; transition: width .25s ease, min-width .25s ease; position: relative; }
+    /* v0.28.0: 좌측 패널 접기 */
+    #left-panel.collapsed { width: 0; min-width: 0; border-right: 0; }
+    #left-panel-toggle { position: absolute; top: 8px; right: -28px; width: 24px; height: 24px; background: #2e3a52; color: #cbd5e1; border: 1px solid #2e3a52; border-left: 0; border-radius: 0 4px 4px 0; cursor: pointer; font-size: 13px; line-height: 22px; padding: 0; z-index: 10; transition: background .15s; }
+    #left-panel-toggle:hover { background: #475569; }
+    #left-panel.collapsed #left-panel-toggle { right: -28px; background: #1e40af; color: #fff; box-shadow: 2px 0 4px rgba(0,0,0,.4); }
     #left-panel .panel-tab { display: flex; border-bottom: 1px solid #2e3a52; }
     #left-panel .panel-tab button { flex: 1; padding: 10px 0; font-size: 12px; font-weight: 600; color: #6b7280; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
     #left-panel .panel-tab button.active { color: #60a5fa; border-bottom-color: #0066cc; }
@@ -164,20 +169,21 @@
     .tab-panel { display: none; }
     .tab-panel.active { display: block; }
 
-    .ep-title { font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 10px; }
+    /* v0.28.0: 드로어 패널 가독성 향상 — 폰트 크기 + 색상 대비 */
+    .ep-title { font-size: 13px; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 12px; padding-bottom: 6px; border-bottom: 1px solid #2e3a52; }
     .ep-btn-card { background: #1e2433; border: 1px solid #2e3a52; border-radius: 6px; padding: 10px; margin-bottom: 8px; }
     .ep-btn-card:last-child { margin-bottom: 0; }
-    .ep-btn-header { font-size: 12px; font-weight: 700; color: #60a5fa; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #2e3a52; }
-    .ep-field { margin-bottom: 6px; }
-    .ep-field label { display: block; font-size: 11px; color: #6b7280; margin-bottom: 3px; }
-    .ep-field input[type=text] { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 7px; outline: none; box-sizing: border-box; }
+    .ep-btn-header { font-size: 13px; font-weight: 700; color: #60a5fa; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #2e3a52; }
+    .ep-field { margin-bottom: 8px; }
+    .ep-field label { display: block; font-size: 12px; color: #cbd5e1; margin-bottom: 4px; font-weight: 500; }
+    .ep-field input[type=text] { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #f1f5f9; font-size: 13px; padding: 5px 8px; outline: none; box-sizing: border-box; }
     .ep-field input[type=text]:focus { border-color: #0066cc; }
     /* v0.18.1: 편집 패널 select 다크 테마 가독성 */
-    .ep-field select { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 7px; outline: none; cursor: pointer; box-sizing: border-box; }
+    .ep-field select { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #f1f5f9; font-size: 13px; padding: 5px 8px; outline: none; cursor: pointer; box-sizing: border-box; }
     .ep-field select:focus { border-color: #0066cc; }
-    .ep-field select option { background: #161c2d; color: #e5e7eb; }
-    .ep-row { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
-    .ep-row > label:first-child { flex: 1; font-size: 11px; color: #6b7280; margin-bottom: 0; }
+    .ep-field select option { background: #161c2d; color: #f1f5f9; }
+    .ep-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .ep-row > label:first-child { flex: 1; font-size: 12px; color: #cbd5e1; margin-bottom: 0; font-weight: 500; }
     .ep-color-wrap { display: flex; align-items: center; gap: 6px; }
     .ep-color-preview { width: 22px; height: 22px; border-radius: 3px; border: 1px solid #374151; position: relative; overflow: hidden; cursor: pointer; flex-shrink: 0; }
     .ep-color-preview input[type=color] { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer; }
@@ -185,9 +191,9 @@
     .ep-hex:focus { border-color: #0066cc !important; }
     .ep-hint { font-size: 10px; color: #4b5563; white-space: nowrap; }
     .ep-hover-sub { padding-left: 10px; border-left: 2px solid #2e3a52; margin-top: 6px; }
-    .ep-textarea { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 12px; padding: 4px 7px; resize: vertical; outline: none; box-sizing: border-box; min-height: 76px; }
+    .ep-textarea { width: 100%; background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #f1f5f9; font-size: 13px; padding: 5px 8px; resize: vertical; outline: none; box-sizing: border-box; min-height: 76px; }
     .ep-textarea:focus { border-color: #0066cc; }
-    .ep-repeater-label { font-size: 10px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .05em; margin: 10px 0 4px 0; display: flex; justify-content: space-between; align-items: center; }
+    .ep-repeater-label { font-size: 12px; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: .04em; margin: 12px 0 6px 0; display: flex; justify-content: space-between; align-items: center; }
     .ep-add-btn { background: #059669; color: #fff; border: none; border-radius: 4px; font-size: 10px; padding: 3px 8px; cursor: pointer; transition: background .15s; }
     .ep-add-btn:hover { background: #047857; }
     .ep-remove-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; padding: 0; margin-left: 4px; transition: color .15s; }
@@ -261,27 +267,20 @@
 
     /* ST1: 여백 편집 패널 */
     .ep-spacing-group { margin-top: 12px; border-top: 1px solid #2e3a52; padding-top: 10px; }
-    .ep-spacing-title { font-size: 11px; font-weight: 600; color: #9ca3af; margin-bottom: 6px; }
-    .ep-spacing-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; }
-    .ep-spacing-label { font-size: 10px; color: #6b7280; width: 42px; flex-shrink: 0; }
-    .ep-spacing-item { display: flex; align-items: center; gap: 3px; font-size: 10px; color: #6b7280; flex: 1; }
-    .ep-spacing-item input { width: 100%; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 11px; padding: 3px 5px; }
+    .ep-spacing-title { font-size: 12px; font-weight: 700; color: #cbd5e1; margin-bottom: 8px; }
+    .ep-spacing-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+    .ep-spacing-label { font-size: 11px; color: #cbd5e1; width: 48px; flex-shrink: 0; font-weight: 500; }
+    .ep-spacing-item { display: flex; align-items: center; gap: 4px; font-size: 11px; color: #cbd5e1; flex: 1; }
+    .ep-spacing-item input { width: 100%; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #f1f5f9; font-size: 12px; padding: 4px 6px; }
     .ep-spacing-item input:focus { border-color: #3b82f6; outline: none; }
+    /* v0.28.0: range+number 결합 입력 */
+    .ep-rn-wrap { display: flex; align-items: center; gap: 6px; flex: 1; }
+    .ep-rn-wrap input[type=range] { flex: 1; height: 4px; min-width: 0; cursor: pointer; }
+    .ep-rn-wrap input[type=number] { width: 56px; flex-shrink: 0; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #f1f5f9; font-size: 12px; padding: 4px 6px; outline: none; }
+    .ep-rn-wrap input[type=number]:focus { border-color: #3b82f6; }
 
     /* ST4: 고급 스타일 패널 */
-    .ep-advanced-group { margin-top: 12px; border-top: 1px solid #2e3a52; padding-top: 10px; }
-    .ep-adv-section { margin-bottom: 12px; padding-bottom: 10px; border-bottom: 1px solid #1e293b; }
-    .ep-adv-section:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
-    .ep-adv-title { font-size: 11px; font-weight: 600; color: #9ca3af; margin-bottom: 6px; }
-    .ep-adv-row { display: flex; align-items: center; gap: 6px; margin-bottom: 5px; font-size: 10px; }
-    .ep-adv-label { color: #6b7280; width: 50px; flex-shrink: 0; }
-    .ep-adv-row input[type="color"] { width: 32px; height: 28px; border: 1px solid #2e3a52; border-radius: 4px; cursor: pointer; }
-    .ep-adv-row input[type="number"] { width: 50px; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 10px; padding: 3px 5px; }
-    .ep-adv-row input[type="number"]:focus { border-color: #3b82f6; outline: none; }
-    .ep-adv-row input[type="range"] { flex: 1; cursor: pointer; }
-    .ep-adv-row select { background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #e2e8f0; font-size: 10px; padding: 3px 5px; cursor: pointer; }
-    .ep-adv-row select:focus { border-color: #3b82f6; outline: none; }
-    .ep-adv-value { color: #6b7280; font-size: 10px; }
+    /* v0.26.5: 고급 스타일 패널 CSS 제거됨 */
 
     /* Adv: 템플릿 저장/적용 */
     .ep-template-group { margin-top: 14px; padding-top: 12px; border-top: 1px solid #2e3a52; display: flex; gap: 6px; }
@@ -397,7 +396,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.27.0</span>
+  <span id="ver-badge" title="배포 버전">v0.28.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -413,6 +412,7 @@
 
   <!-- 좌측 패널 -->
   <div id="left-panel">
+    <button id="left-panel-toggle" onclick="toggleLeftPanel()" title="좌측 패널 접기/펼치기">◀</button>
     <div class="panel-tab">
       <button class="active" onclick="switchTab('sections', this)">섹션</button>
       <button onclick="switchTab('style', this)">스타일</button>
@@ -1483,6 +1483,30 @@ function resetAll() {
 }
 
 /* ── 탭 전환 ── */
+/* v0.28.0: 좌측 패널 접기/펼치기 */
+function toggleLeftPanel() {
+  var panel = document.getElementById('left-panel');
+  var btn = document.getElementById('left-panel-toggle');
+  if (!panel || !btn) return;
+  var collapsed = panel.classList.toggle('collapsed');
+  btn.textContent = collapsed ? '▶' : '◀';
+  btn.title = collapsed ? '좌측 패널 펼치기' : '좌측 패널 접기';
+  try { localStorage.setItem('fair_left_panel_collapsed', collapsed ? '1' : '0'); } catch(e) {}
+}
+/* 페이지 로드 시 이전 상태 복원 */
+(function() {
+  try {
+    if (localStorage.getItem('fair_left_panel_collapsed') === '1') {
+      document.addEventListener('DOMContentLoaded', function() {
+        var p = document.getElementById('left-panel');
+        var b = document.getElementById('left-panel-toggle');
+        if (p) p.classList.add('collapsed');
+        if (b) { b.textContent = '▶'; b.title = '좌측 패널 펼치기'; }
+      });
+    }
+  } catch(e) {}
+})();
+
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-panel').forEach(function(el) { el.classList.remove('active'); });
   document.querySelectorAll('.panel-tab button').forEach(function(el) { el.classList.remove('active'); });
@@ -2381,24 +2405,22 @@ function buildVisualPanel() {
       h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(' + activeIdx + ',\'pc\',this.value)"></div>';
       h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(' + activeIdx + ',\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
 
-      /* 요소별 여백 */
+      /* v0.28.0: 요소별 여백 — range+number 결합 */
       h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #2e3a52;">' +
         '<div class="ep-spacing-title">여백 (margin)</div>';
       ['Top', 'Bottom', 'Left', 'Right'].forEach(function(dir) {
         var val = activeText['margin' + dir] || '';
-        h += '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
-          '<label style="width:50px;font-size:10px;">' + dir + '</label>' +
-          '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + val + '" placeholder="px" oninput="updateVisualElementSpacing(' + activeIdx + ',\'margin' + dir + '\',this.value)">' +
-          '<span style="font-size:10px;color:#6b7280;">px</span>' +
+        h += '<div class="ep-field" style="display:flex;align-items:center;gap:8px;">' +
+          '<label style="width:48px;font-size:11px;color:#cbd5e1;">' + dir + '</label>' +
+          rangeNum(-100, 200, 1, val, "updateVisualElementSpacing(" + activeIdx + ",'margin" + dir + "',VAL)", 'px') +
         '</div>';
       });
-      h += '<div class="ep-spacing-title" style="margin-top:10px;">여백 (padding)</div>';
+      h += '<div class="ep-spacing-title" style="margin-top:12px;">여백 (padding)</div>';
       ['Top', 'Bottom', 'Left', 'Right'].forEach(function(dir) {
         var val = activeText['padding' + dir] || '';
-        h += '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
-          '<label style="width:50px;font-size:10px;">' + dir + '</label>' +
-          '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + val + '" placeholder="px" oninput="updateVisualElementSpacing(' + activeIdx + ',\'padding' + dir + '\',this.value)">' +
-          '<span style="font-size:10px;color:#6b7280;">px</span>' +
+        h += '<div class="ep-field" style="display:flex;align-items:center;gap:8px;">' +
+          '<label style="width:48px;font-size:11px;color:#cbd5e1;">' + dir + '</label>' +
+          rangeNum(0, 200, 1, val, "updateVisualElementSpacing(" + activeIdx + ",'padding" + dir + "',VAL)", 'px') +
         '</div>';
       });
       h += '</div>';
@@ -2425,15 +2447,15 @@ function buildVisualPanel() {
           '<select onchange="updateVisualAos(' + activeIdx + ',\'aosEffect\',this.value)">' +
             AOS_EFFECTS.map(function(e) { return '<option value="' + e.value + '" ' + ((activeText.aosEffect || '') === e.value ? 'selected' : '') + '>' + e.label + '</option>'; }).join('') +
           '</select></div>' +
-        '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
-          '<label style="width:60px;font-size:10px;">Duration</label>' +
-          '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + (activeText.aosDuration || '') + '" placeholder="800" oninput="updateVisualAos(' + activeIdx + ',\'aosDuration\',this.value)">' +
-          '<span style="font-size:10px;color:#6b7280;">ms</span>' +
+        '<div class="ep-field" style="display:flex;align-items:center;gap:8px;">' +
+          '<label style="width:60px;font-size:11px;color:#cbd5e1;">Duration</label>' +
+          rangeNum(0, 3000, 50, activeText.aosDuration, "updateVisualAos(" + activeIdx + ",'aosDuration',VAL)", '800') +
+          '<span style="font-size:11px;color:#94a3b8;">ms</span>' +
         '</div>' +
-        '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
-          '<label style="width:60px;font-size:10px;">Delay</label>' +
-          '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + (activeText.aosDelay || '') + '" placeholder="0" oninput="updateVisualAos(' + activeIdx + ',\'aosDelay\',this.value)">' +
-          '<span style="font-size:10px;color:#6b7280;">ms</span>' +
+        '<div class="ep-field" style="display:flex;align-items:center;gap:8px;">' +
+          '<label style="width:60px;font-size:11px;color:#cbd5e1;">Delay</label>' +
+          rangeNum(0, 3000, 50, activeText.aosDelay, "updateVisualAos(" + activeIdx + ",'aosDelay',VAL)", '0') +
+          '<span style="font-size:11px;color:#94a3b8;">ms</span>' +
         '</div>' +
         '<div style="font-size:10px;color:#6b7280;margin-top:4px;">※ 변경 후 미리보기에서 즉시 보려면 페이지 새로고침</div>';
     } else {
@@ -3025,19 +3047,33 @@ function applySectionColorToPreview(sectionId, hex) {
   sEl.style.backgroundColor = hex;
 }
 
+/* v0.28.0: range + number 결합 입력 헬퍼
+ * @param min/max/step
+ * @param val      현재 값 (빈 문자열 가능)
+ * @param callExpr 콜백 표현식 — 'VAL' 토큰을 값으로 치환. 예: "updateSpacing('section_x','pt',VAL)"
+ * @param placeholder 빈 값 안내
+ */
+function rangeNum(min, max, step, val, callExpr, placeholder) {
+  var v = (val === '' || val === null || val === undefined) ? '' : val;
+  var rangeV = (v === '' ? min : v);
+  var c = callExpr.replace(/VAL/g, 'this.value');
+  var sync1 = 'var n=this.parentNode.querySelector("input[type=number]");if(n)n.value=this.value;';
+  var sync2 = 'var r=this.parentNode.querySelector("input[type=range]");if(r)r.value=(this.value||' + min + ');';
+  return '<span class="ep-rn-wrap">' +
+    '<input type="range" min="' + min + '" max="' + max + '" step="' + (step || 1) + '" value="' + rangeV + '" oninput="' + sync1 + c + '">' +
+    '<input type="number" min="' + min + '" max="' + max + '" step="' + (step || 1) + '" value="' + v + '" placeholder="' + (placeholder || '') + '" oninput="' + sync2 + c + '">' +
+  '</span>';
+}
+
 function buildSpacingPanel(sId) {
   var sp = sectionSpacing[sId] || { pt:'', pb:'', mpt:'', mpb:'' };
   return '<div class="ep-spacing-group">' +
     '<div class="ep-spacing-title">여백 설정 <span class="ep-hint">(px)</span></div>' +
-    '<div class="ep-spacing-row">' +
-      '<span class="ep-spacing-label">PC</span>' +
-      '<span class="ep-spacing-item">상단<input type="number" min="0" max="300" value="' + sp.pt + '" placeholder="기본" oninput="updateSpacing(\'' + sId + '\',\'pt\',this.value)"></span>' +
-      '<span class="ep-spacing-item">하단<input type="number" min="0" max="300" value="' + sp.pb + '" placeholder="기본" oninput="updateSpacing(\'' + sId + '\',\'pb\',this.value)"></span>' +
-    '</div>' +
-    '<div class="ep-spacing-row">' +
-      '<span class="ep-spacing-label">모바일</span>' +
-      '<span class="ep-spacing-item">상단<input type="number" min="0" max="300" value="' + sp.mpt + '" placeholder="기본" oninput="updateSpacing(\'' + sId + '\',\'mpt\',this.value)"></span>' +
-      '<span class="ep-spacing-item">하단<input type="number" min="0" max="300" value="' + sp.mpb + '" placeholder="기본" oninput="updateSpacing(\'' + sId + '\',\'mpb\',this.value)"></span>' +
+    '<div class="ep-spacing-row" style="flex-direction:column;align-items:stretch;gap:6px;">' +
+      '<div style="display:flex;align-items:center;gap:8px;"><span class="ep-spacing-label">PC ↑</span>' + rangeNum(0, 300, 1, sp.pt, "updateSpacing('" + sId + "','pt',VAL)", '기본') + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;"><span class="ep-spacing-label">PC ↓</span>' + rangeNum(0, 300, 1, sp.pb, "updateSpacing('" + sId + "','pb',VAL)", '기본') + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;"><span class="ep-spacing-label">M ↑</span>' + rangeNum(0, 300, 1, sp.mpt, "updateSpacing('" + sId + "','mpt',VAL)", '기본') + '</div>' +
+      '<div style="display:flex;align-items:center;gap:8px;"><span class="ep-spacing-label">M ↓</span>' + rangeNum(0, 300, 1, sp.mpb, "updateSpacing('" + sId + "','mpb',VAL)", '기본') + '</div>' +
     '</div>' +
   '</div>';
 }
@@ -4694,6 +4730,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 15:54 (v0.28.0)',
+    items: [
+      '<strong>[v0.28.0]</strong> UX 개선 3건',
+      '<strong>[v0.28.0]</strong> ① 좌측 패널 접기/펼치기 — ◀/▶ 토글 버튼 (panel 모서리 fixed) + 접으면 본문 영역 확장 + localStorage 상태 유지',
+      '<strong>[v0.28.0]</strong> ② 우측 드로어 가독성 향상 — 폰트 11→13px / 색상 #6b7280→#cbd5e1 (label) / #e5e7eb→#f1f5f9 (입력) / 제목 강조 (#93c5fd + 밑줄)',
+      '<strong>[v0.28.0]</strong> ③ 숫자 입력 range+number 결합 — 슬라이더+숫자 동시 제어. 적용 8건: 섹션 PC/M 여백(4) + 메인비주얼 요소 margin/padding(8) + AOS Duration/Delay(2)',
+      '<strong>[v0.28.0]</strong> 신규 헬퍼: rangeNum(min,max,step,val,callExpr,placeholder)',
+      '<strong>[v0.28.0]</strong> 정리: 사용 안 하는 .ep-adv-* CSS 룰 제거 (고급 스타일 패널 v0.26.5에서 폐기됨)',
+    ]
+  },
   {
     date: '2026.04.28 15:43 (v0.27.0)',
     items: [
