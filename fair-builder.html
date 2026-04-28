@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.22.1</span>
+  <span id="ver-badge" title="배포 버전">v0.22.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -845,6 +845,10 @@ function loadState() {
         if (t.subTabsEnabled === undefined) t.subTabsEnabled = false;
         /* v0.22.1: subTabs 마이그레이션 — 빈 배열 기본 */
         if (!Array.isArray(t.subTabs)) t.subTabs = [];
+        /* v0.22.2: search 마이그레이션 — 직종/지역 모두 기본 true */
+        if (!t.search || typeof t.search !== 'object') t.search = { job: true, local: true };
+        if (t.search.job === undefined) t.search.job = true;
+        if (t.search.local === undefined) t.search.local = true;
       });
     }
     if (s.aosEnabled !== undefined)         aosEnabled         = s.aosEnabled;
@@ -1068,12 +1072,19 @@ function readTabsFromPreview() {
         subTabsList.push({ name: a.textContent.trim() });
       });
     }
+    /* v0.22.2: 마크업에서 검색 영역 존재 감지 */
+    var hasJobSearch = contents[i] && (
+      contents[i].querySelector('.search_job_tab') ||
+      contents[i].querySelector('.swiper-container.societyGroupTab.job')
+    );
+    var hasLocalSearch = contents[i] && contents[i].querySelector('.swiper-container.societyGroupTab.local');
     joblistTabs.push({
       name: label.textContent.trim(),
       enabled: true,
       boardType: i === 0 ? 'ad' : 'list',
       subTabsEnabled: !!hasSubTab,
-      subTabs: subTabsList
+      subTabs: subTabsList,
+      search: { job: !!hasJobSearch, local: !!hasLocalSearch }
     });
   });
 }
@@ -1106,6 +1117,12 @@ function renderTabPanel() {
         '</label>' +
         /* v0.22.1: 2뎁스 탭 항목 목록 (subTabsEnabled일 때만) */
         (tab.subTabsEnabled ? buildSubTabsUI(i, tab.subTabs || []) : '') +
+        /* v0.22.2: 검색 영역 (직종/지역) */
+        '<label style="margin-top:8px;font-size:10px;color:#9ca3af;">검색 영역</label>' +
+        '<div style="display:flex;gap:4px;margin-top:2px;">' +
+          '<button onclick="toggleJoblistSearch(' + i + ',\'job\')" style="flex:1;padding:5px;background:' + ((tab.search && tab.search.job) ? '#2563eb' : '#0f172a') + ';color:' + ((tab.search && tab.search.job) ? '#fff' : '#64748b') + ';border:1px solid ' + ((tab.search && tab.search.job) ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + ((tab.search && tab.search.job) ? '700' : '400') + ';">' + ((tab.search && tab.search.job) ? '✓ ' : '') + '🏢 직종</button>' +
+          '<button onclick="toggleJoblistSearch(' + i + ',\'local\')" style="flex:1;padding:5px;background:' + ((tab.search && tab.search.local) ? '#2563eb' : '#0f172a') + ';color:' + ((tab.search && tab.search.local) ? '#fff' : '#64748b') + ';border:1px solid ' + ((tab.search && tab.search.local) ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + ((tab.search && tab.search.local) ? '700' : '400') + ';">' + ((tab.search && tab.search.local) ? '✓ ' : '') + '📍 지역</button>' +
+        '</div>' +
         /* v0.21.4: 게시판 타입 선택 (광고형 / 리스트형) */
         '<label style="margin-top:6px;font-size:10px;color:#9ca3af;">게시판 형식</label>' +
         '<div style="display:flex;gap:4px;margin-top:2px;">' +
@@ -1128,6 +1145,16 @@ function updateJoblistTab(i, val) {
   if (!joblistTabs[i]) return;
   joblistTabs[i].name = val;
   applyTabsToPreview();
+  saveState();
+}
+
+/* v0.22.2: 검색 영역 직종/지역 토글 (둘 중 하나는 반드시 켜져 있어야 — 둘 다 끄는 건 허용) */
+function toggleJoblistSearch(i, key) {
+  if (!joblistTabs[i]) return;
+  if (!joblistTabs[i].search) joblistTabs[i].search = { job: true, local: true };
+  joblistTabs[i].search[key] = !joblistTabs[i].search[key];
+  applyTabsToPreview();
+  renderTabPanel();
   saveState();
 }
 
@@ -1218,7 +1245,7 @@ function toggleJoblistTab(i, enabled) {
 function addJoblistTab() {
   if (joblistTabs.length >= JOBLIST_TAB_MAX) { alert('최대 ' + JOBLIST_TAB_MAX + '개까지 추가 가능합니다.'); return; }
   var idx = joblistTabs.length + 1;
-  joblistTabs.push({ name: '탭 ' + idx, enabled: true, boardType: 'list', subTabsEnabled: false, subTabs: [] });
+  joblistTabs.push({ name: '탭 ' + idx, enabled: true, boardType: 'list', subTabsEnabled: false, subTabs: [], search: { job: true, local: true } });
   applyTabsToPreview();
   renderTabPanel();
   saveState();
@@ -1388,6 +1415,31 @@ function applyTabsToPreview() {
       }
     } else if (subTab) {
       subTab.style.setProperty('display', 'none', 'important');
+    }
+
+    /* v0.22.2: 검색 영역 직종/지역 토글 */
+    var search = tab.search || { job: true, local: true };
+    var pcSearch = contents[i].querySelector('.search_job_tab');
+    var mJob = contents[i].querySelector('.swiper-container.societyGroupTab.job');
+    var mLocal = contents[i].querySelector('.swiper-container.societyGroupTab.local');
+    /* PC: search_job_tab — 직종 또는 지역이 하나라도 있으면 표시, 둘 다면 .margin */
+    if (pcSearch) {
+      if (search.job || search.local) {
+        pcSearch.style.removeProperty('display');
+        if (search.job && search.local) pcSearch.classList.add('margin');
+        else pcSearch.classList.remove('margin');
+      } else {
+        pcSearch.style.setProperty('display', 'none', 'important');
+      }
+    }
+    /* 모바일 swiper: 직종 / 지역 각각 토글 */
+    if (mJob) {
+      if (search.job) mJob.style.removeProperty('display');
+      else mJob.style.setProperty('display', 'none', 'important');
+    }
+    if (mLocal) {
+      if (search.local) mLocal.style.removeProperty('display');
+      else mLocal.style.setProperty('display', 'none', 'important');
     }
   });
 }
@@ -4672,6 +4724,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 09:50 (v0.22.2)',
+    items: [
+      '<strong>[v0.22.2]</strong> 채용관 5순위 Stage 3: 검색 영역 직종/지역 토글',
+      '<strong>[v0.22.2]</strong> joblistTabs[i].search = { job, local } 데이터 + 마이그레이션 (마크업 자동 감지)',
+      '<strong>[v0.22.2]</strong> 우측 드로어 탭 카드: 🏢 직종 / 📍 지역 토글 버튼 (둘 다 끔도 허용)',
+      '<strong>[v0.22.2]</strong> applyTabsToPreview 확장:',
+      '<strong>[v0.22.2]</strong>   - PC .search_job_tab: 직종/지역 하나라도 있으면 표시, 둘 다면 .margin 클래스 자동',
+      '<strong>[v0.22.2]</strong>   - 모바일 .swiper-container.societyGroupTab.job/.local 각각 토글',
+    ]
+  },
   {
     date: '2026.04.28 09:33 (v0.22.1)',
     items: [
