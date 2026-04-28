@@ -195,6 +195,10 @@
     .ep-textarea:focus { border-color: #0066cc; }
     .ep-repeater-label { font-size: 12px; font-weight: 700; color: #93c5fd; text-transform: uppercase; letter-spacing: .04em; margin: 12px 0 6px 0; display: flex; justify-content: space-between; align-items: center; }
     .ep-add-btn { background: #059669; color: #fff; border: none; border-radius: 4px; font-size: 10px; padding: 3px 8px; cursor: pointer; transition: background .15s; }
+    /* v0.29.3: repeater 항목 순서 변경 버튼 */
+    .ep-reorder-btn { background: #1e293b; border: 1px solid #2e3a52; color: #94a3b8; font-size: 10px; padding: 2px 6px; cursor: pointer; border-radius: 3px; transition: all .15s; }
+    .ep-reorder-btn:hover:not(:disabled) { background: #1e40af; color: #fff; border-color: #3b82f6; }
+    .ep-reorder-btn:disabled { opacity: .3; cursor: default; }
     .ep-add-btn:hover { background: #047857; }
     .ep-remove-btn { background: none; border: none; color: #ef4444; cursor: pointer; font-size: 14px; padding: 0; margin-left: 4px; transition: color .15s; }
     .ep-remove-btn:hover { color: #dc2626; }
@@ -398,7 +402,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.29.2</span>
+  <span id="ver-badge" title="배포 버전">v0.29.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2148,6 +2152,26 @@ function removeRepeaterItem(sectionId, fieldKey, itemIndex) {
   }
 }
 
+/* v0.29.3: repeater 항목 순서 변경 (위/아래) */
+function moveRepeaterItem(sectionId, fieldKey, itemIndex, dir) {
+  if (!sectionData[sectionId] || !sectionData[sectionId][fieldKey]) return;
+  var arr = sectionData[sectionId][fieldKey];
+  var newIdx = itemIndex + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  var tmp = arr[itemIndex];
+  arr[itemIndex] = arr[newIdx];
+  arr[newIdx] = tmp;
+  saveState();
+  applyFieldsToPreview(sectionId);
+  if (openEditPanelId === sectionId) {
+    var body = document.getElementById('edit-drawer-body');
+    if (body) {
+      loadFieldsFromPreview(sectionId);
+      body.innerHTML = buildSectionPanel(sectionId);
+    }
+  }
+}
+
 /* ── 섹션 편집 폼 빌더 ── */
 function buildSectionPanel(sectionId) {
   var schema = FAIR_BUILDER_SCHEMA[sectionId];
@@ -2176,9 +2200,13 @@ function buildSectionPanel(sectionId) {
       }
       h += '</div>';
       items.forEach(function(item, i) {
-        h += '<div class="ep-btn-card"><div class="ep-btn-header">' + field.itemLabel + ' ' + (i + 1);
+        h += '<div class="ep-btn-card"><div class="ep-btn-header" style="display:flex;align-items:center;gap:6px;">' +
+          '<span style="flex:1;">' + field.itemLabel + ' ' + (i + 1) + '</span>';
+        /* v0.29.3: 순서 변경 버튼 — 2개 이상일 때 */
         if (items.length > 1) {
-          h += ' <button class="ep-remove-btn" onclick="event.stopPropagation();removeRepeaterItem(\'' + sectionId + '\',\'' + fk + '\',' + i + ')">✕</button>';
+          h += '<button class="ep-reorder-btn" title="위로" ' + (i === 0 ? 'disabled' : '') + ' onclick="event.stopPropagation();moveRepeaterItem(\'' + sectionId + '\',\'' + fk + '\',' + i + ',-1)">▲</button>' +
+            '<button class="ep-reorder-btn" title="아래로" ' + (i === items.length - 1 ? 'disabled' : '') + ' onclick="event.stopPropagation();moveRepeaterItem(\'' + sectionId + '\',\'' + fk + '\',' + i + ',1)">▼</button>';
+          h += '<button class="ep-remove-btn" onclick="event.stopPropagation();removeRepeaterItem(\'' + sectionId + '\',\'' + fk + '\',' + i + ')">✕</button>';
         }
         h += '</div>';
         Object.keys(field.fields).forEach(function(sfk) {
@@ -4869,6 +4897,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 17:16 (v0.29.3)',
+    items: [
+      '<strong>[v0.29.3]</strong> 모든 repeater 항목에 순서 변경 ▲▼ 버튼 추가 (2개 이상일 때)',
+      '<strong>[v0.29.3]</strong> moveRepeaterItem(sectionId, fieldKey, idx, dir) 신규 — 데이터 swap + applyFieldsToPreview 자동 동기',
+      '<strong>[v0.29.3]</strong> 적용 대상 (모든 repeater): posters / intro_links items / success items / video items 등',
+      '<strong>[v0.29.3]</strong> 박람회 개요 후속 — 로고 reorder는 nested repeater 렌더링 추가 후 별도 작업 필요',
+    ]
+  },
   {
     date: '2026.04.28 17:06 (v0.29.2)',
     items: [
