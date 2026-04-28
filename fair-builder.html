@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.25.0</span>
+  <span id="ver-badge" title="배포 버전">v0.25.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1459,7 +1459,7 @@ function removeJoblistTab(i) {
 }
 
 /* v0.21.0: 채용관 탭 동기 — 텍스트 + on/off + DOM 추가/제거 */
-/* v0.25.0: 헬퍼 — tab_content에 검색 영역 적용 (job/local/keyword) + !important */
+/* v0.25.1: 헬퍼 — tab_content에 검색 영역 적용 (PC 직종/지역 개별 토글) */
 function applySearchToContent(content, search) {
   if (!content || !search) return;
   var pcSearch = content.querySelector('.search_job_tab');
@@ -1467,6 +1467,19 @@ function applySearchToContent(content, search) {
   var mLocal = content.querySelector('.swiper-container.societyGroupTab.local');
   var keywordWrap = content.querySelector('.search-form-wrap');
   if (pcSearch) {
+    /* v0.25.1: PC 직종/지역 개별 토글 — societyGroupTab-divided 안의 두 ul 각각 제어 */
+    var divided = pcSearch.querySelector('.societyGroupTab-divided');
+    var ulJob = divided ? divided.querySelector(':scope > ul.search_cont:not(.s-remove)') : null;
+    var ulLocal = divided ? divided.querySelector(':scope > ul.search_cont.s-remove') : null;
+    if (ulJob) {
+      if (search.job) ulJob.style.setProperty('display', 'block', 'important');
+      else ulJob.style.setProperty('display', 'none', 'important');
+    }
+    if (ulLocal) {
+      if (search.local) ulLocal.style.setProperty('display', 'block', 'important');
+      else ulLocal.style.setProperty('display', 'none', 'important');
+    }
+    /* PC 컨테이너 자체는 둘 다 off일 때만 숨김 */
     if (search.job || search.local) {
       pcSearch.style.setProperty('display', 'block', 'important');
       if (search.job && search.local) pcSearch.classList.add('margin');
@@ -1483,7 +1496,6 @@ function applySearchToContent(content, search) {
     if (search.local) mLocal.style.setProperty('display', 'block', 'important');
     else mLocal.style.setProperty('display', 'none', 'important');
   }
-  /* v0.25.0: search-form-wrap (키워드 검색) 토글 */
   if (keywordWrap) {
     if (search.keyword !== false) keywordWrap.style.setProperty('display', 'block', 'important');
     else keywordWrap.style.setProperty('display', 'none', 'important');
@@ -1705,8 +1717,10 @@ function applyTabsToPreview() {
       }
     });
   } else {
-    /* === 탭 메뉴 OFF === */
+    /* === 탭 메뉴 OFF === v0.25.1: 모든 탭 라벨/라디오 강제 숨김 (한 개도 안 남게) */
     tabsWrap.style.setProperty('display', 'none', 'important');
+    inputs.forEach(function(inp) { inp.style.setProperty('display', 'none', 'important'); });
+    labels.forEach(function(lbl) { lbl.style.setProperty('display', 'none', 'important'); });
     contents.forEach(function(c, i) {
       if (i === 0) c.style.setProperty('display', 'block', 'important');
       else c.style.setProperty('display', 'none', 'important');
@@ -5034,6 +5048,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 14:09 (v0.25.1)',
+    items: [
+      '<strong>[v0.25.1]</strong> 채용관 핫픽스 4건',
+      '<strong>[v0.25.1]</strong> #1 PC 직종/지역 개별 토글 — societyGroupTab-divided 안의 ul.search_cont (직종) / ul.search_cont.s-remove (지역) 각각 제어',
+      '<strong>[v0.25.1]</strong> #4 탭메뉴 OFF 시 모든 탭 라벨/라디오 강제 숨김 (한 개도 안 남게) — display:none !important 명시',
+      '<strong>[v0.25.1]</strong> #2/3 탭1만 해당/탭메뉴 OFF 누락 — 코드 검증 후 보강 (apply scope 명확화)',
+    ]
+  },
   {
     date: '2026.04.28 13:59 (v0.25.0)',
     items: [
