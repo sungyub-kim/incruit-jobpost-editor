@@ -626,7 +626,7 @@ a:active, a:hover{color:var(--c-color); text-decoration:none;}
 #main .search_job_tab .search_cont li button:hover{border-color:var(--c-color);background:var(--c-color);}
 .sub-tab .container{margin:0 auto;}
 
-#main .section.joblist{z-index:1;padding-bottom:0;}
+#main .section.joblist{z-index:1;}
 #main .section.joblist .sec_tit,
 #main .section.joblist .sec_txt{text-align:center;}
 
