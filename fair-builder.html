@@ -71,15 +71,15 @@
     #top-bar .btn-primary:hover { background: #0052a3; }
 
     /* 메인 영역 */
-    #main-area { display: flex; flex: 1; overflow: hidden; }
+    #main-area { display: flex; flex: 1; overflow: hidden; position: relative; }
 
     /* 좌측 패널 */
-    #left-panel { width: 280px; min-width: 280px; background: #1e2433; border-right: 1px solid #2e3a52; display: flex; flex-direction: column; overflow: hidden; transition: width .25s ease, min-width .25s ease; position: relative; }
-    /* v0.28.0: 좌측 패널 접기 */
+    #left-panel { width: 280px; min-width: 280px; background: #1e2433; border-right: 1px solid #2e3a52; display: flex; flex-direction: column; overflow: hidden; transition: width .25s ease, min-width .25s ease; }
+    /* v0.28.0/v0.28.2: 좌측 패널 접기 — 토글 버튼은 #main-area의 직속 자식으로 이동 (overflow:hidden 회피) */
     #left-panel.collapsed { width: 0; min-width: 0; border-right: 0; }
-    #left-panel-toggle { position: absolute; top: 8px; right: -28px; width: 24px; height: 24px; background: #2e3a52; color: #cbd5e1; border: 1px solid #2e3a52; border-left: 0; border-radius: 0 4px 4px 0; cursor: pointer; font-size: 13px; line-height: 22px; padding: 0; z-index: 10; transition: background .15s; }
-    #left-panel-toggle:hover { background: #475569; }
-    #left-panel.collapsed #left-panel-toggle { right: -28px; background: #1e40af; color: #fff; box-shadow: 2px 0 4px rgba(0,0,0,.4); }
+    #left-panel-toggle { position: absolute; top: 50%; left: 280px; transform: translateY(-50%); width: 22px; height: 56px; background: #1e40af; color: #fff; border: 0; border-radius: 0 6px 6px 0; cursor: pointer; font-size: 14px; line-height: 56px; padding: 0; z-index: 100; transition: left .25s ease, background .15s; box-shadow: 2px 0 6px rgba(0,0,0,.4); }
+    #left-panel-toggle:hover { background: #2563eb; }
+    #main-area.left-collapsed #left-panel-toggle { left: 0; }
     #left-panel .panel-tab { display: flex; border-bottom: 1px solid #2e3a52; }
     #left-panel .panel-tab button { flex: 1; padding: 10px 0; font-size: 12px; font-weight: 600; color: #6b7280; background: none; border: none; cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; }
     #left-panel .panel-tab button.active { color: #60a5fa; border-bottom-color: #0066cc; }
@@ -396,7 +396,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.28.1</span>
+  <span id="ver-badge" title="배포 버전">v0.28.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -410,9 +410,11 @@
 <!-- 메인 영역 -->
 <div id="main-area">
 
+  <!-- 좌측 패널 토글 버튼 (panel 외부에 위치 — overflow:hidden 회피) -->
+  <button id="left-panel-toggle" onclick="toggleLeftPanel()" title="좌측 패널 접기/펼치기">◀</button>
+
   <!-- 좌측 패널 -->
   <div id="left-panel">
-    <button id="left-panel-toggle" onclick="toggleLeftPanel()" title="좌측 패널 접기/펼치기">◀</button>
     <div class="panel-tab">
       <button class="active" onclick="switchTab('sections', this)">섹션</button>
       <button onclick="switchTab('style', this)">스타일</button>
@@ -479,9 +481,9 @@
       <div id="tab-style" class="tab-panel">
         <div class="p-section-header">레이블</div>
         <div id="label-toggles" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
-          <div class="color-item">
-            <label style="flex:1;">서브타이틀 (전체)</label>
-            <label class="toggle"><input type="checkbox" id="global-subtitle-toggle" onchange="toggleAllSubTitles(this.checked)"><span class="toggle-slider"></span></label>
+          <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#161c2d;border:1px solid #2e3a52;border-radius:6px;">
+            <span style="flex:1;font-size:12px;color:#cbd5e1;">서브타이틀 (전체)</span>
+            <label class="toggle" style="flex:0 0 auto;display:inline-block;"><input type="checkbox" id="global-subtitle-toggle" onchange="toggleAllSubTitles(this.checked)"><span class="toggle-slider"></span></label>
           </div>
         </div>
         <div class="p-section-header">CSS 색상 토큰</div>
@@ -1492,24 +1494,27 @@ function resetAll() {
 }
 
 /* ── 탭 전환 ── */
-/* v0.28.0: 좌측 패널 접기/펼치기 */
+/* v0.28.0/v0.28.2: 좌측 패널 접기/펼치기 — main-area에 left-collapsed 클래스 토글 */
 function toggleLeftPanel() {
   var panel = document.getElementById('left-panel');
+  var main = document.getElementById('main-area');
   var btn = document.getElementById('left-panel-toggle');
-  if (!panel || !btn) return;
+  if (!panel || !main || !btn) return;
   var collapsed = panel.classList.toggle('collapsed');
+  main.classList.toggle('left-collapsed', collapsed);
   btn.textContent = collapsed ? '▶' : '◀';
   btn.title = collapsed ? '좌측 패널 펼치기' : '좌측 패널 접기';
   try { localStorage.setItem('fair_left_panel_collapsed', collapsed ? '1' : '0'); } catch(e) {}
 }
-/* 페이지 로드 시 이전 상태 복원 */
 (function() {
   try {
     if (localStorage.getItem('fair_left_panel_collapsed') === '1') {
       document.addEventListener('DOMContentLoaded', function() {
         var p = document.getElementById('left-panel');
+        var m = document.getElementById('main-area');
         var b = document.getElementById('left-panel-toggle');
         if (p) p.classList.add('collapsed');
+        if (m) m.classList.add('left-collapsed');
         if (b) { b.textContent = '▶'; b.title = '좌측 패널 펼치기'; }
       });
     }
@@ -1855,13 +1860,32 @@ document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape' && openEditPanelId) closeEditDrawer();
 });
 
+/* v0.28.2: 색상 값 hex 정규화 — rgb()/빈 값/잘못된 값 → #ffffff 기본 */
+function toHexColor(val) {
+  if (!val) return '#ffffff';
+  var s = String(val).trim();
+  if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+  if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+    return ('#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3]).toLowerCase();
+  }
+  var m = s.match(/rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (m) {
+    return '#' + [m[1], m[2], m[3]].map(function(v) {
+      var h = parseInt(v, 10).toString(16);
+      return h.length === 1 ? '0' + h : h;
+    }).join('');
+  }
+  return '#ffffff';
+}
+
 function colorRow(i, key, val, label) {
+  var hex = toHexColor(val);
   return '<div class="ep-field"><label>' + label + '</label>' +
     '<div class="ep-color-wrap">' +
-      '<div class="ep-color-preview" style="background:' + val + '">' +
-        '<input type="color" value="' + val + '" oninput="updateBtn(' + i + ',\'' + key + '\',this.value);this.parentNode.style.background=this.value;syncEpHex(this,' + i + ',\'' + key + '\')">' +
+      '<div class="ep-color-preview" style="background:' + hex + '">' +
+        '<input type="color" value="' + hex + '" oninput="updateBtn(' + i + ',\'' + key + '\',this.value);this.parentNode.style.background=this.value;syncEpHex(this,' + i + ',\'' + key + '\')">' +
       '</div>' +
-      '<input type="text" class="ep-hex" id="ep-' + key + '-' + i + '" value="' + val + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateBtn(' + i + ',\'' + key + '\',this.value)}">' +
+      '<input type="text" class="ep-hex" id="ep-' + key + '-' + i + '" value="' + hex + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateBtn(' + i + ',\'' + key + '\',this.value)}">' +
     '</div></div>';
 }
 
@@ -1878,12 +1902,12 @@ function buildGradientPanel() {
     h += colorRow(i, 'bgColor', b.bgColor, '배경색');
     h += '<div class="ep-row"><label>인셋 쉐도우</label>' +
       '<label class="toggle"><input type="checkbox" ' + (b.shadowEnabled ? 'checked' : '') + ' onchange="updateBtn(' + i + ',\'shadowEnabled\',this.checked)"><span class="toggle-slider"></span></label>' +
-      '<div class="ep-color-wrap">' +
-        '<div class="ep-color-preview" style="background:' + b.shadowColor + '">' +
-          '<input type="color" value="' + b.shadowColor + '" oninput="updateBtn(' + i + ',\'shadowColor\',this.value);this.parentNode.style.background=this.value;syncEpHex(this,' + i + ',\'shadowColor\')">' +
+      (function() { var sh = toHexColor(b.shadowColor); return '<div class="ep-color-wrap">' +
+        '<div class="ep-color-preview" style="background:' + sh + '">' +
+          '<input type="color" value="' + sh + '" oninput="updateBtn(' + i + ',\'shadowColor\',this.value);this.parentNode.style.background=this.value;syncEpHex(this,' + i + ',\'shadowColor\')">' +
         '</div>' +
-        '<input type="text" class="ep-hex" id="ep-shadowColor-' + i + '" value="' + b.shadowColor + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateBtn(' + i + ',\'shadowColor\',this.value)}">' +
-      '</div></div>';
+        '<input type="text" class="ep-hex" id="ep-shadowColor-' + i + '" value="' + sh + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateBtn(' + i + ',\'shadowColor\',this.value)}">' +
+      '</div></div>'; })();
     h += '<div class="ep-row"><label>호버 효과</label>' +
       '<label class="toggle"><input type="checkbox" ' + (b.hoverEnabled ? 'checked' : '') + ' onchange="updateBtn(' + i + ',\'hoverEnabled\',this.checked);toggleEpHoverSub(' + i + ',this.checked)"><span class="toggle-slider"></span></label>' +
       '<span class="ep-hint">PC (≥1025px)</span></div>';
@@ -3020,17 +3044,16 @@ function updateSpacing(sId, key, val) {
 
 /* ST1: 섹션 색상 편집 패널 */
 function buildColorPanel(sectionId) {
-  var schema = FAIR_BUILDER_SCHEMA[sectionId];
-  var bgColor = sectionBgColors[sectionId] || '';
+  var bgColor = toHexColor(sectionBgColors[sectionId]);  /* v0.28.2: hex 정규화 (rgb→hex, 빈 값→#ffffff) */
   var h = '<div class="ep-spacing-group">' +
     '<div class="ep-spacing-title">배경색 설정</div>' +
     '<div class="ep-field">' +
       '<label>섹션 배경색</label>' +
       '<div class="ep-color-wrap">' +
-        '<div class="ep-color-preview" style="background:' + (bgColor || '#ffffff') + ';">' +
-          '<input type="color" value="' + (bgColor || '#ffffff') + '" oninput="updateSectionColor(\'' + sectionId + '\',this.value);this.parentNode.style.background=this.value;syncSectionColorHex(this,\'' + sectionId + '\')">' +
+        '<div class="ep-color-preview" style="background:' + bgColor + ';">' +
+          '<input type="color" value="' + bgColor + '" oninput="updateSectionColor(\'' + sectionId + '\',this.value);this.parentNode.style.background=this.value;syncSectionColorHex(this,\'' + sectionId + '\')">' +
         '</div>' +
-        '<input type="text" class="ep-hex" id="ep-color-' + sectionId + '" value="' + (bgColor || '#ffffff') + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateSectionColor(\'' + sectionId + '\',this.value)}">' +
+        '<input type="text" class="ep-hex" id="ep-color-' + sectionId + '" value="' + bgColor + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateSectionColor(\'' + sectionId + '\',this.value)}">' +
       '</div>' +
     '</div>' +
   '</div>';
@@ -3066,8 +3089,9 @@ function rangeNum(min, max, step, val, callExpr, placeholder) {
   var v = (val === '' || val === null || val === undefined) ? '' : val;
   var rangeV = (v === '' ? min : v);
   var c = callExpr.replace(/VAL/g, 'this.value');
-  var sync1 = 'var n=this.parentNode.querySelector("input[type=number]");if(n)n.value=this.value;';
-  var sync2 = 'var r=this.parentNode.querySelector("input[type=range]");if(r)r.value=(this.value||' + min + ');';
+  /* v0.28.2: 인용부호 충돌 회피 — 내부에 single quote 사용 */
+  var sync1 = "var n=this.parentNode.querySelector('input[type=number]');if(n)n.value=this.value;";
+  var sync2 = "var r=this.parentNode.querySelector('input[type=range]');if(r)r.value=(this.value||" + min + ");";
   return '<span class="ep-rn-wrap">' +
     '<input type="range" min="' + min + '" max="' + max + '" step="' + (step || 1) + '" value="' + rangeV + '" oninput="' + sync1 + c + '">' +
     '<input type="number" min="' + min + '" max="' + max + '" step="' + (step || 1) + '" value="' + v + '" placeholder="' + (placeholder || '') + '" oninput="' + sync2 + c + '">' +
@@ -4759,6 +4783,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 16:34 (v0.28.2)',
+    items: [
+      '<strong>[v0.28.2]</strong> 핫픽스 4건',
+      '<strong>[v0.28.2]</strong> ① rangeNum 인용부호 충돌 수정 — querySelector("input[...]") 의 내부 큰따옴표가 oninput 속성의 큰따옴표와 충돌해 HTML 파싱 깨짐 → 작은따옴표로 교체. 이제 range/number 양방향 동기 + 콜백 호출 정상 동작.',
+      '<strong>[v0.28.2]</strong> ② 좌측 패널 토글 버튼 안 보임 — #left-panel의 overflow:hidden 때문에 panel 내부 absolute 자식이 잘림 → 버튼을 #main-area 직속 자식으로 이동, position:absolute + .left-collapsed 클래스로 위치 제어',
+      '<strong>[v0.28.2]</strong> ③ 색상 picker rgb 기본값 → hex 정규화 — toHexColor() 헬퍼: rgb(r,g,b) → #RRGGBB, 빈 값/잘못된 값 → #ffffff. colorRow / buildColorPanel / 버튼 그림자색 적용',
+      '<strong>[v0.28.2]</strong> ④ 서브타이틀 토글 버튼 디자인 깨짐 — .color-item label { flex:1 } 가 .toggle 라벨에도 적용돼서 깨짐 → 별도 wrapping div로 변경 (color-item 클래스 미사용)',
+    ]
+  },
   {
     date: '2026.04.28 16:21 (v0.28.1)',
     items: [
