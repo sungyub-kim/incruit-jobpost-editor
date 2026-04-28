@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.21.8</span>
+  <span id="ver-badge" title="배포 버전">v0.22.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -839,6 +839,8 @@ function loadState() {
         if (t.enabled === undefined) t.enabled = true;
         /* v0.21.4: boardType 마이그레이션 — 'list' (리스트형) 기본 */
         if (t.boardType === undefined) t.boardType = 'list';
+        /* v0.22.0: subTabsEnabled 마이그레이션 — 기존 마크업에 .sub-tab 있으면 true */
+        if (t.subTabsEnabled === undefined) t.subTabsEnabled = false;
       });
     }
     if (s.aosEnabled !== undefined)         aosEnabled         = s.aosEnabled;
@@ -1050,10 +1052,17 @@ function readTabsFromPreview() {
   var labels = doc.querySelectorAll('[data-builder-section="section_joblist"] label.tab_item');
   if (!labels.length) return;
   joblistTabs = [];
+  /* v0.22.0: 미리보기에서 각 탭의 .sub-tab 존재 여부 감지 */
+  var sec = doc.querySelector('[data-builder-section="section_joblist"]');
+  var contents = sec ? sec.querySelectorAll('.tabs > .tab_content') : [];
   labels.forEach(function(label, i) {
-    /* v0.21.0: enabled 기본 true / v0.21.4: boardType 기본 list */
-    /* 첫 탭은 광고형(ad) 기본 — 기존 마크업 t_cont1 안에 광고형 있음 */
-    joblistTabs.push({ name: label.textContent.trim(), enabled: true, boardType: i === 0 ? 'ad' : 'list' });
+    var hasSubTab = contents[i] && contents[i].querySelector('.sub-tab');
+    joblistTabs.push({
+      name: label.textContent.trim(),
+      enabled: true,
+      boardType: i === 0 ? 'ad' : 'list',
+      subTabsEnabled: !!hasSubTab
+    });
   });
 }
 
@@ -1078,6 +1087,11 @@ function renderTabPanel() {
           '<label class="toggle" style="margin-left:auto;margin-right:24px;"><input type="checkbox" ' + (isActive ? 'checked' : '') + ' onchange="toggleJoblistTab(' + i + ',this.checked)"><span class="toggle-slider"></span></label>' +
         '</label>' +
         '<input type="text" value="' + esc(tab.name) + '" oninput="updateJoblistTab(' + i + ',this.value)">' +
+        /* v0.22.0: 2뎁스 탭 사용 여부 */
+        '<label style="display:flex;align-items:center;gap:6px;margin-top:6px;font-size:10px;color:#9ca3af;">' +
+          '<span>2뎁스 탭 사용</span>' +
+          '<label class="toggle" style="margin-left:auto;"><input type="checkbox" ' + (tab.subTabsEnabled ? 'checked' : '') + ' onchange="toggleJoblistSubTabs(' + i + ',this.checked)"><span class="toggle-slider"></span></label>' +
+        '</label>' +
         /* v0.21.4: 게시판 타입 선택 (광고형 / 리스트형) */
         '<label style="margin-top:6px;font-size:10px;color:#9ca3af;">게시판 형식</label>' +
         '<div style="display:flex;gap:4px;margin-top:2px;">' +
@@ -1099,6 +1113,14 @@ function renderTabPanel() {
 function updateJoblistTab(i, val) {
   if (!joblistTabs[i]) return;
   joblistTabs[i].name = val;
+  applyTabsToPreview();
+  saveState();
+}
+
+/* v0.22.0: 탭별 2뎁스 탭 사용 여부 토글 */
+function toggleJoblistSubTabs(i, enabled) {
+  if (!joblistTabs[i]) return;
+  joblistTabs[i].subTabsEnabled = enabled;
   applyTabsToPreview();
   saveState();
 }
@@ -1125,7 +1147,7 @@ function toggleJoblistTab(i, enabled) {
 function addJoblistTab() {
   if (joblistTabs.length >= JOBLIST_TAB_MAX) { alert('최대 ' + JOBLIST_TAB_MAX + '개까지 추가 가능합니다.'); return; }
   var idx = joblistTabs.length + 1;
-  joblistTabs.push({ name: '탭 ' + idx, enabled: true, boardType: 'list' });
+  joblistTabs.push({ name: '탭 ' + idx, enabled: true, boardType: 'list', subTabsEnabled: false });
   applyTabsToPreview();
   renderTabPanel();
   saveState();
@@ -1245,6 +1267,12 @@ function applyTabsToPreview() {
       if (boardType === 'list') b.style.removeProperty('display');
       else b.style.setProperty('display', 'none', 'important');
     });
+    /* v0.22.0: 2뎁스 sub-tab on/off (마크업 있는 경우만 작동, 없으면 Stage 2-B에서 클론 추가) */
+    var subTab = contents[i].querySelector('.sub-tab');
+    if (subTab) {
+      if (tab.subTabsEnabled) subTab.style.removeProperty('display');
+      else subTab.style.setProperty('display', 'none', 'important');
+    }
   });
 }
 
@@ -4528,6 +4556,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 09:10 (v0.22.0)',
+    items: [
+      '<strong>[v0.22.0]</strong> 채용관 5순위 Stage 2-A: 1뎁스 탭별 2뎁스 sub-tab 사용 여부 토글',
+      '<strong>[v0.22.0]</strong> joblistTabs 데이터 확장: subTabsEnabled 추가 + 마이그레이션 (마크업에 .sub-tab 있으면 true)',
+      '<strong>[v0.22.0]</strong> 우측 드로어 탭 카드에 "2뎁스 탭 사용" 토글 추가 (게시판 형식 위)',
+      '<strong>[v0.22.0]</strong> applyTabsToPreview에 sub-tab display 토글 (마크업 있는 경우만 작동)',
+      '<strong>[v0.22.0]</strong> Stage 2-B(.sub-tab 마크업 클론으로 다른 탭에도 추가)는 별도 진행',
+    ]
+  },
   {
     date: '2026.04.27 17:35 (v0.21.8)',
     items: [
