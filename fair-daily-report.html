@@ -80,29 +80,29 @@
 <div class="day-card">
   <div class="day-head">
     <h2>04월 28일 (화)</h2>
-    <span class="ver-tag">v0.21.0 → v0.23.0 (진행 중)</span>
+    <span class="ver-tag">v0.21.0 → v0.29.2 (29개 버전)</span>
   </div>
 
   <div class="tldr">
     <div class="tldr-label">오늘 핵심</div>
-    <div class="tldr-text">채용관 5순위 마무리 + <strong>v0.23.0 재설계 5단계 완료</strong>. 검색/게시판이 탭과 별개라는 사용자 인사이트 반영 → 데이터 통합 + 헬퍼 함수 추출 + ON/OFF 분기 명확화 + 글로벌 sub-tab 지원. 1차 빌더형 약 35% 진척.</div>
+    <div class="tldr-text">대규모 진척 — <strong>채용관 5순위 완료 + 재설계 v0.23.0 + 7순위(서브타이틀) + UX 개선 + 박람회 개요 1차</strong>. 채용관 사용자 보고 7건 통합 수정 후 사용자 스펙 기반 v0.26.0 전면 재구현. 좌측 패널 접기/우측 폰트 가독성/range+number 결합. 헤더 로고 링크 분리. 팔레트→버튼 색 동기. 1차 빌더형 약 50% 진척.</div>
   </div>
 
   <div class="kpi-row">
     <div class="kpi feature">
       <div class="label">신규 기능</div>
-      <div class="value">5</div>
-      <div class="sub">v0.22.x + v0.23.0</div>
+      <div class="value">11</div>
+      <div class="sub">5순위/7순위/UX/박람회</div>
     </div>
     <div class="kpi fix">
       <div class="label">검수 핫픽스</div>
-      <div class="value">3</div>
-      <div class="sub">v0.22.5/0.22.6/0.22.7</div>
+      <div class="value">14</div>
+      <div class="sub">채용관 다회 + 잡채림</div>
     </div>
     <div class="kpi policy">
       <div class="label">대형 리팩토링</div>
-      <div class="value">1</div>
-      <div class="sub">v0.23.0 재설계</div>
+      <div class="value">2</div>
+      <div class="sub">v0.23.0 + v0.26.0</div>
     </div>
   </div>
 
@@ -110,48 +110,59 @@
     <div class="cat-box">
       <div class="cat-head">
         <span class="cat-name">🔵 신규 기능</span>
-        <span class="cat-count">5건</span>
+        <span class="cat-count">11건</span>
       </div>
       <ul>
-        <li>v0.22.0 채용관 2뎁스 sub-tab 사용 토글</li>
-        <li>v0.22.1 sub-tab 항목 추가/삭제 + 마크업 클론</li>
-        <li>v0.22.2 검색 직종/지역 토글 (PC + 모바일 swiper)</li>
-        <li>v0.22.3 게시판 마크업 자동 클론</li>
-        <li>v0.22.4 1뎁스 탭 메뉴 자체 on/off + 단일 모드 컨트롤</li>
+        <li>v0.22.x 채용관 5순위 (sub-tab 사용/항목/검색/게시판/메뉴 토글)</li>
+        <li>v0.24.0 P0-1 메인비주얼 4탭 분리 (콘텐츠/스타일/AOS/이미지)</li>
+        <li>v0.27.0 섹션 상단 영문 텍스트 (.sec_txt.basic.top) 토글</li>
+        <li>v0.28.0 좌측 패널 접기/펼치기 + UX 가독성 + range+number 결합</li>
+        <li>v0.28.1 서브타이틀 글로벌 토글 + 빈 텍스트 자동 숨김</li>
+        <li>v0.28.3 ↺ 초기화 버튼 (CSS 기본값)</li>
+        <li>v0.29.0 박람회 개요 1차 (포스터 추가 버튼 숨김 + 로고 무제한)</li>
+        <li>v0.29.1 헤더 로고 logo1/logo2 분리 + target 옵션</li>
       </ul>
     </div>
     <div class="cat-box">
       <div class="cat-head">
         <span class="cat-name">🟠 검수 핫픽스</span>
-        <span class="cat-count">3건</span>
+        <span class="cat-count">14건</span>
       </div>
       <ul>
-        <li>v0.22.5 cleanup 추가 (.tab_content display 초기화)</li>
-        <li>v0.22.6 게시판 클론 위치 수정 (.wr → .tab_content 직접 자식)</li>
-        <li>v0.22.7 cleanup 강화 (input/label도) + fallback</li>
+        <li>v0.22.5~7 cleanup 강화 (단일 모드 빈 화면)</li>
+        <li>v0.24.0 openEditPanel 미정의 5건 → openEditDrawer 교체</li>
+        <li>v0.24.1 자동 1번 탭 이동 버그</li>
+        <li>v0.25.0~2 채용관 통합 7건 (PC/M 분리 + 즉시 적용 + sub-tab 위치)</li>
+        <li>v0.26.3 PC 지역 토글 + 게시판 .wr 래핑</li>
+        <li>v0.26.4 CSS 백그라운드 절대경로화 (//i.incru.it)</li>
+        <li>v0.26.5 .s-remove jQuery 차단 (탭1 지역 미노출 root cause)</li>
+        <li>v0.28.2 rangeNum 인용부호 충돌 + 토글 가시성 + 색상 hex 정규화</li>
+        <li>v0.29.2 좌측 팔레트 → 버튼 색 디폴트 동기 (override 플래그)</li>
       </ul>
     </div>
     <div class="cat-box">
       <div class="cat-head">
         <span class="cat-name">🟣 대형 리팩토링</span>
-        <span class="cat-count">1건 (5단계)</span>
+        <span class="cat-count">2건</span>
       </div>
       <ul>
-        <li>v0.23.0 Step 1 — 데이터 통합 (joblistGlobal 단일 객체)</li>
-        <li>v0.23.0 Step 2 — 헬퍼 추출 (applySearch/Board/SubTabs)</li>
-        <li>v0.23.0 Step 3 — applyTabsToPreview ON/OFF 분기</li>
-        <li>v0.23.0 Step 4 — 글로벌 sub-tab 지원 (6 신규 함수)</li>
-        <li>v0.23.0 Step 5 — 배포 + 패치노트 동기 (commit 41e2834)</li>
+        <li>v0.23.0 채용관 5단계 재설계 (검색/게시판 탭과 별개)</li>
+        <li>v0.26.0 사용자 스펙 기반 전면 재구현 — sub-tab 제거, max 3개, 데이터 단순화 (333줄 삭제)</li>
+        <li>v0.26.5 고급 스타일(테두리/그림자/투명도) 패널 전면 제거 (127줄)</li>
       </ul>
     </div>
   </div>
 
   <div class="next-box">
-    <div class="next-title">📌 다음 작업</div>
+    <div class="next-title">📌 다음 작업 (사용자 우선순위 지정)</div>
     <div class="next-text">
-      <strong>P0-1 편집 드로어 탭 분리</strong> ─ 메인비주얼 패널을 📝콘텐츠/🎨스타일/✨애니메이션/🖼이미지 4탭으로 재조직<br>
-      후속: 박람회 개요 4순위 (PC/M 분리, 요소 동적, 이미지 다중)<br>
-      <span style="font-size:11px;color:#a16207;">※ 사용자 1차 완료(6/19) 일괄 검수 시 v0.23.0 동작 검수 체크리스트 10항 (project_joblist_redesign.md) 동봉</span>
+      <strong>박람회 개요 (section_event_info) 후속 — 최우선</strong><br>
+      ① 행사일시/url/운영/문의처 동적 필드 (추가/제거/순서, 라벨 자유) — 큰 작업<br>
+      ② 로고 이미지 reorder UI<br>
+      ③ 신청 버튼 다중 지원 (단일 → repeater)<br>
+      ④ 편집모드 텍스트 수정 시 레이아웃 깨짐 (캡처 필요)<br>
+      <br>
+      <strong>📦 후순위 (메모리 등록)</strong>: 색상 팔레트 커스텀, 간이 이미지 편집 툴 (크롭/리사이징/형식 변환/필터/자동 업로드)
     </div>
   </div>
 </div>
