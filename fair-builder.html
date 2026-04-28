@@ -278,6 +278,8 @@
     .ep-rn-wrap input[type=range] { flex: 1; height: 4px; min-width: 0; cursor: pointer; }
     .ep-rn-wrap input[type=number] { width: 56px; flex-shrink: 0; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #f1f5f9; font-size: 12px; padding: 4px 6px; outline: none; }
     .ep-rn-wrap input[type=number]:focus { border-color: #3b82f6; }
+    .ep-rn-wrap .ep-rn-reset { flex-shrink: 0; width: 22px; height: 24px; background: #1e293b; border: 1px solid #2e3a52; border-radius: 4px; color: #94a3b8; font-size: 13px; cursor: pointer; padding: 0; line-height: 1; transition: all .15s; }
+    .ep-rn-wrap .ep-rn-reset:hover { background: #1e40af; color: #fff; border-color: #3b82f6; }
 
     /* ST4: 고급 스타일 패널 */
     /* v0.26.5: 고급 스타일 패널 CSS 제거됨 */
@@ -396,7 +398,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.28.2</span>
+  <span id="ver-badge" title="배포 버전">v0.28.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -927,13 +929,13 @@ function renderNavPanel() {
     '<div class="logo-input-wrap" style="padding:6px 8px;">' +
       '<label>텍스트 색상</label>' +
       '<div style="display:flex;gap:4px;align-items:center;">' +
-        '<input type="color" value="' + (navHoverStyle.color || '#0066cc') + '" oninput="updateNavHover(\'color\',this.value)" style="width:32px;height:24px;padding:0;border:1px solid #2e3a52;border-radius:3px;background:none;cursor:pointer;">' +
+        '<input type="color" value="' + toHexColor(navHoverStyle.color || '#0066cc') + '" oninput="updateNavHover(\'color\',this.value)" style="width:32px;height:24px;padding:0;border:1px solid #2e3a52;border-radius:3px;background:none;cursor:pointer;">' +
         '<input type="text" value="' + esc(navHoverStyle.color || '') + '" placeholder="(없음)" oninput="updateNavHover(\'color\',this.value)" style="flex:1;">' +
         (navHoverStyle.color ? '<button onclick="updateNavHover(\'color\',\'\');renderNavPanel()" title="제거" style="background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0;">✕</button>' : '') +
       '</div>' +
       '<label style="margin-top:6px;">배경 색상</label>' +
       '<div style="display:flex;gap:4px;align-items:center;">' +
-        '<input type="color" value="' + (navHoverStyle.bgColor || '#f3f4f6') + '" oninput="updateNavHover(\'bgColor\',this.value)" style="width:32px;height:24px;padding:0;border:1px solid #2e3a52;border-radius:3px;background:none;cursor:pointer;">' +
+        '<input type="color" value="' + toHexColor(navHoverStyle.bgColor || '#f3f4f6') + '" oninput="updateNavHover(\'bgColor\',this.value)" style="width:32px;height:24px;padding:0;border:1px solid #2e3a52;border-radius:3px;background:none;cursor:pointer;">' +
         '<input type="text" value="' + esc(navHoverStyle.bgColor || '') + '" placeholder="(없음)" oninput="updateNavHover(\'bgColor\',this.value)" style="flex:1;">' +
         (navHoverStyle.bgColor ? '<button onclick="updateNavHover(\'bgColor\',\'\');renderNavPanel()" title="제거" style="background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0;">✕</button>' : '') +
       '</div>' +
@@ -3092,9 +3094,13 @@ function rangeNum(min, max, step, val, callExpr, placeholder) {
   /* v0.28.2: 인용부호 충돌 회피 — 내부에 single quote 사용 */
   var sync1 = "var n=this.parentNode.querySelector('input[type=number]');if(n)n.value=this.value;";
   var sync2 = "var r=this.parentNode.querySelector('input[type=range]');if(r)r.value=(this.value||" + min + ");";
+  /* v0.28.3: 초기화 버튼 — 값 빈 문자열로 (CSS 기본값 적용) + range/number 모두 동기 */
+  var resetCall = callExpr.replace(/VAL/g, "''");
+  var resetCmd = "var p=this.parentNode;var n=p.querySelector('input[type=number]');var r=p.querySelector('input[type=range]');if(n)n.value='';if(r)r.value=" + min + ";" + resetCall + ";";
   return '<span class="ep-rn-wrap">' +
     '<input type="range" min="' + min + '" max="' + max + '" step="' + (step || 1) + '" value="' + rangeV + '" oninput="' + sync1 + c + '">' +
     '<input type="number" min="' + min + '" max="' + max + '" step="' + (step || 1) + '" value="' + v + '" placeholder="' + (placeholder || '') + '" oninput="' + sync2 + c + '">' +
+    '<button class="ep-rn-reset" type="button" title="초기화 (CSS 기본값 적용)" onclick="' + resetCmd + '">↺</button>' +
   '</span>';
 }
 
@@ -3710,17 +3716,19 @@ function bspRow(label, inputHtml) {
 }
 
 function bspColorSwatch(idx, key, val) {
-  return '<div style="width:22px;height:22px;border-radius:3px;border:1px solid #374151;background:' + val + ';position:relative;overflow:hidden;cursor:pointer;flex-shrink:0;">' +
-    '<input type="color" value="' + val + '" style="opacity:0;position:absolute;inset:0;cursor:pointer;width:100%;height:100%;" ' +
+  var hex = toHexColor(val);
+  return '<div style="width:22px;height:22px;border-radius:3px;border:1px solid #374151;background:' + hex + ';position:relative;overflow:hidden;cursor:pointer;flex-shrink:0;">' +
+    '<input type="color" value="' + hex + '" style="opacity:0;position:absolute;inset:0;cursor:pointer;width:100%;height:100%;" ' +
     'oninput="updateBtnField(' + idx + ',\'' + key + '\',this.value);this.parentNode.style.background=this.value;">' +
     '</div>';
 }
 
 function bspColorRow(idx, key, val, label) {
+  var hex = toHexColor(val);
   return '<div style="margin:6px 0;"><div style="color:#9ca3af;margin-bottom:3px;">' + label + '</div>' +
     '<div style="display:flex;gap:6px;align-items:center;">' +
-    bspColorSwatch(idx, key, val) +
-    '<input type="text" class="bsp-input" value="' + val + '" maxlength="7" style="width:76px !important;" ' +
+    bspColorSwatch(idx, key, hex) +
+    '<input type="text" class="bsp-input" value="' + hex + '" maxlength="7" style="width:76px !important;" ' +
     'oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){updateBtnField(' + idx + ',\'' + key + '\',this.value);var sw=this.previousElementSibling;sw.style.background=this.value;sw.querySelector(\'input[type=color]\').value=this.value}">' +
     '</div></div>';
 }
@@ -3751,7 +3759,7 @@ function renderColorList() {
   list.innerHTML = '';
   Object.keys(FAIR_BUILDER_COLORS).forEach(function(varName) {
     var cfg = FAIR_BUILDER_COLORS[varName];
-    var val = cssColors[varName] || cfg.default;
+    var val = toHexColor(cssColors[varName] || cfg.default);  /* v0.28.3: hex 정규화 */
     var item = document.createElement('div');
     item.className = 'color-item';
     item.innerHTML =
@@ -4783,6 +4791,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 16:48 (v0.28.3)',
+    items: [
+      '<strong>[v0.28.3]</strong> rangeNum 헬퍼에 ↺ 초기화 버튼 추가 — 클릭 시 값 빈 문자열 → CSS 기본값 적용 (range/number 동시 동기)',
+      '<strong>[v0.28.3]</strong> 색상 picker hex 정규화 추가 적용 — renderColorList (스타일 탭 CSS 색상 토큰), bspColorSwatch / bspColorRow (버튼 설정), navHover 색상 (네비게이션 호버)',
+      '<strong>[v0.28.3]</strong> 참고: 색상 picker 팝업 하단 RGB 슬라이더는 브라우저 네이티브 UI (사용자가 ↕ 클릭으로 HEX 모드 전환 가능). 우리 코드의 hex 표시값은 모두 #RRGGBB 정규화 완료',
+    ]
+  },
   {
     date: '2026.04.28 16:34 (v0.28.2)',
     items: [
