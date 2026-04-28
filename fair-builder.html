@@ -402,7 +402,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.29.3</span>
+  <span id="ver-badge" title="배포 버전">v0.30.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -482,10 +482,11 @@
 
         <!-- v0.21.1: S1 채용공고 탭 패널은 우측 편집 드로어로 이동 -->
 
-        <div class="p-section-header aos-toggle-row" style="margin-top:4px;">
-          AOS 애니메이션
-          <label class="toggle" title="편집 시 애니메이션 비활성화 권장">
-            <input type="checkbox" id="aos-toggle-chk" checked onchange="toggleAos(this.checked)">
+        <!-- v0.30.0: AOS 애니메이션 토글 제거 — 빌더에서 항상 OFF, 미리보기 새창에서만 ON -->
+        <div class="p-section-header aos-toggle-row" style="margin-top:4px;display:none;">
+          AOS 애니메이션 (빌더에서는 항상 OFF)
+          <label class="toggle">
+            <input type="checkbox" id="aos-toggle-chk" disabled>
             <span class="toggle-slider"></span>
           </label>
         </div>
@@ -530,6 +531,8 @@
       <button class="device-btn" onclick="setDevice('tablet', this)">태블릿</button>
       <button class="device-btn" onclick="setDevice('mobile', this)">모바일</button>
       <button id="edit-mode-btn" onclick="toggleEditMode()">✏ 편집 모드</button>
+      <!-- v0.30.0: 미리보기 새창 (AOS 활성) -->
+      <button id="preview-window-btn" onclick="openPreviewWindow()" title="새 창으로 미리보기 (AOS 애니메이션 활성)" style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid #2563eb;background:#1e40af;color:#fff;cursor:pointer;flex-shrink:0;">🔍 미리보기 새창</button>
     </div>
     <div id="format-toolbar">
       <span class="fmt-label">서식</span>
@@ -3017,32 +3020,41 @@ function applyVisualRightToPreview() {
 }
 
 /* ── ST3: AOS 애니메이션 토글 ── */
+/* v0.30.0: AOS 항상 비활성 (빌더 iframe 한정) — 미리보기 새창에서만 작동 */
 function applyAosToPreview() {
   var doc = getPreviewDoc();
   if (!doc) return;
   var styleId = 'builder-aos-disable';
-  var existing = doc.getElementById(styleId);
-  if (aosEnabled) {
-    if (existing) existing.parentNode.removeChild(existing);
-  } else {
-    if (!existing) {
-      var tag = doc.createElement('style');
-      tag.id = styleId;
-      tag.textContent =
-        '[data-aos]{opacity:1!important;transform:none!important;transition:none!important;}' +
-        '.aos-animate{opacity:1!important;transform:none!important;}';
-      doc.head.appendChild(tag);
-    }
+  if (!doc.getElementById(styleId)) {
+    var tag = doc.createElement('style');
+    tag.id = styleId;
+    tag.textContent =
+      '[data-aos]{opacity:1!important;transform:none!important;transition:none!important;}' +
+      '.aos-animate{opacity:1!important;transform:none!important;}';
+    doc.head.appendChild(tag);
   }
-  /* 체크박스 UI 동기화 */
   var chk = document.getElementById('aos-toggle-chk');
-  if (chk) chk.checked = aosEnabled;
+  if (chk) { chk.checked = false; chk.disabled = true; }
 }
+function toggleAos(val) { /* v0.30.0: no-op — 빌더 iframe AOS 항상 OFF */ }
 
-function toggleAos(val) {
-  aosEnabled = val;
-  saveState();
-  applyAosToPreview();
+/* v0.30.0: 미리보기 새창 — AOS 활성 상태로 현재 빌더 화면을 새 창에서 확인 */
+function openPreviewWindow() {
+  var doc = getPreviewDoc();
+  if (!doc) { alert('미리보기가 로드되지 않았습니다.'); return; }
+  /* iframe HTML 복제 + builder-aos-disable 제거 + builder-edit-css(편집 outline) 제거 */
+  var html = '<!DOCTYPE html>\n' + doc.documentElement.outerHTML;
+  html = html.replace(/<style id="builder-aos-disable"[\s\S]*?<\/style>/gi, '');
+  html = html.replace(/<style id="builder-edit-css"[\s\S]*?<\/style>/gi, '');
+  /* 편집모드 클래스 제거 */
+  html = html.replace(/class="([^"]*\s)?builder-edit-mode([^"]*)"/g, 'class="$1$2"');
+  /* a 태그 data-orig-href → href 복원 */
+  html = html.replace(/data-orig-href="([^"]*)"/g, 'href="$1" data-orig-href="$1"');
+  var win = window.open('', '_blank');
+  if (!win) { alert('팝업 차단되어 있습니다. 브라우저에서 팝업 허용 후 다시 시도하세요.'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
 }
 
 /* ── ST2: 섹션 배경 이미지 ── */
@@ -4524,6 +4536,12 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyMediaModesToPreview();  /* v0.16.0: 비주얼 영역 이미지/텍스트 모드 복원 */
   renderNavPanel();
   renderTabPanel();
+  /* v0.30.0: 페이지 로드 시 기본값 편집 모드 (사용자가 종료 가능) */
+  if (!editMode) {
+    setTimeout(function() {
+      try { enterEditMode(); } catch(e) {}
+    }, 100);
+  }
 });
 
 function getPreviewDoc() {
@@ -4897,6 +4915,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 17:20 (v0.30.0)',
+    items: [
+      '<strong>[v0.30.0]</strong> 긴급 적용 — 빌더 iframe AOS 애니메이션 항상 OFF (기본/편집 모드 모두). 좌측 토글 hidden+disabled.',
+      '<strong>[v0.30.0]</strong> 신규: 🔍 미리보기 새창 버튼 (preview-toolbar) — 현재 빌더 화면을 새 창으로 열어 AOS 애니메이션 활성 상태로 실제 웹 확인',
+      '<strong>[v0.30.0]</strong> openPreviewWindow(): iframe HTML 복제 → builder-aos-disable / builder-edit-css 제거 + builder-edit-mode 클래스 제거 + data-orig-href → href 복원 → 새 창에 출력',
+      '<strong>[v0.30.0]</strong> 페이지 로드 시 기본값 편집 모드 자동 진입 — enterEditMode() 100ms 지연 호출. 사용자는 [✕ 편집 종료] 버튼으로 종료 가능',
+    ]
+  },
   {
     date: '2026.04.28 17:16 (v0.29.3)',
     items: [
