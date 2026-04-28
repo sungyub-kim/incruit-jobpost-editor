@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.22.5</span>
+  <span id="ver-badge" title="배포 버전">v0.22.6</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1422,23 +1422,41 @@ function applyTabsToPreview() {
     inputs[firstEnabledIdx].checked = true;
   }
 
-  /* v0.22.4/0.22.5: 탭 메뉴 off 시 첫 활성 탭만 표시 + 글로벌 설정 적용 */
+  /* v0.22.4/0.22.5/0.22.6: 탭 메뉴 off 시 첫 활성 탭만 표시 + 글로벌 설정 적용 */
   if (!joblistMenuEnabled) {
     var firstEnIdx = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
     if (firstEnIdx < 0) firstEnIdx = 0;
     contents.forEach(function(c, i) {
       if (i === firstEnIdx) {
-        c.style.setProperty('display', 'block', 'important');  /* 강제 표시 */
+        c.style.setProperty('display', 'block', 'important');
       } else {
         c.style.setProperty('display', 'none', 'important');
       }
     });
-    /* 글로벌 boardType / search를 첫 탭에 적용 (forEach 처리 위해) */
     if (joblistTabs[firstEnIdx]) {
       joblistTabs[firstEnIdx].boardType = joblistGlobalBoardType;
       joblistTabs[firstEnIdx].search = Object.assign({}, joblistGlobalSearch);
-      /* 단일 모드는 sub-tab 비활성 — 충돌 방지 */
       joblistTabs[firstEnIdx].subTabsEnabled = false;
+    }
+    /* v0.22.6: 단일 모드 첫 탭에 광고형/리스트형 마크업 둘 다 보장 (boardType 토글 가능) */
+    if (contents[firstEnIdx]) {
+      ['.n_job_list_new.highest', '.cPrdlists_wrap'].forEach(function(s) {
+        if (!contents[firstEnIdx].querySelector(s)) {
+          var ref = sec.querySelector(s);
+          if (ref) {
+            var clone = ref.cloneNode(true);
+            clone.removeAttribute('id');
+            clone.style.removeProperty('display');
+            contents[firstEnIdx].appendChild(clone);
+          }
+        }
+      });
+    }
+    /* 첫 라디오 강제 checked (CSS :checked 기반 .tab_content 표시 백업) */
+    var inps = tabsWrap.querySelectorAll('input[type=radio]');
+    if (inps[firstEnIdx]) {
+      inps.forEach(function(inp) { inp.checked = false; });
+      inps[firstEnIdx].checked = true;
     }
   }
 
@@ -1446,7 +1464,8 @@ function applyTabsToPreview() {
   joblistTabs.forEach(function(tab, i) {
     if (!contents[i]) return;
     var boardType = tab.boardType || 'list';
-    /* v0.22.3: 선택한 boardType 마크업이 없으면 다른 탭에서 reference 클론 */
+    /* v0.22.3/0.22.6: 선택한 boardType 마크업이 없으면 다른 탭에서 reference 클론
+     *                  → .tab_content 직접 자식으로 추가 (원본 temp.html 마크업 위치) */
     var needSel = boardType === 'ad' ? '.n_job_list_new.highest' : '.cPrdlists_wrap';
     if (!contents[i].querySelector(needSel)) {
       var ref = sec.querySelector(needSel);
@@ -1454,9 +1473,7 @@ function applyTabsToPreview() {
         var refClone = ref.cloneNode(true);
         refClone.removeAttribute('id');
         refClone.style.removeProperty('display');
-        /* .wr 안에 추가 (sub-section 회피, 게시판은 .wr 직접 자식) */
-        var targetWr = contents[i].querySelector(':scope > .wr') || contents[i];
-        targetWr.appendChild(refClone);
+        contents[i].appendChild(refClone);  /* .tab_content 직접 자식 */
       }
     }
     var adBoards   = contents[i].querySelectorAll('.n_job_list_new.highest');
@@ -4828,6 +4845,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 10:40 (v0.22.6)',
+    items: [
+      '<strong>[v0.22.6]</strong> 핫픽스 ─ 단일 모드 빈 화면 진짜 원인 해결',
+      '<strong>[v0.22.6]</strong> 원인1: 게시판 클론 위치가 .wr 안 → 원본 마크업은 .tab_content 직접 자식. CSS selector 매칭 실패로 표시 안 됨',
+      '<strong>[v0.22.6]</strong> 원인2: 단일 모드 진입 시 첫 탭에 광고형/리스트형 마크업이 보장되지 않아 boardType 토글해도 마크업 자체가 없음',
+      '<strong>[v0.22.6]</strong> 해결1: 게시판 클론 위치 수정 — contents[i].appendChild(refClone) 직접 자식',
+      '<strong>[v0.22.6]</strong> 해결2: 단일 모드 진입 시 .n_job_list_new.highest + .cPrdlists_wrap 둘 다 클론 보장 (boardType 토글 즉시 동작)',
+      '<strong>[v0.22.6]</strong> 백업: 첫 라디오 강제 checked (CSS :checked + ~ 기반 .tab_content 표시 보강)',
+    ]
+  },
   {
     date: '2026.04.28 10:25 (v0.22.5)',
     items: [
