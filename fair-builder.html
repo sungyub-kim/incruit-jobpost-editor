@@ -402,7 +402,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.30.0</span>
+  <span id="ver-badge" title="배포 버전">v0.30.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4915,6 +4915,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 17:24 (v0.30.1)',
+    items: [
+      '<strong>[v0.30.1]</strong> temp.html 의 src="ui/static/image/specialty/" 22건을 src="//i.incru.it/ui/static/image/specialty/" 로 절대경로화 — 미리보기에서 공통 이미지 정상 로드',
+      '<strong>[v0.30.1]</strong> 일일 보고서: 작업 시간 KPI 추가 (~8.5h 09:00~17:30)',
+      '<strong>[v0.30.1]</strong> 주간 보고서: 누적 작업 시간 KPI 추가 (~17.5h 4/27 9h + 4/28 8.5h)',
+      '<strong>[v0.30.1]</strong> 토큰량은 정확한 측정 불가하여 제외 (사용자 요청)',
+    ]
+  },
   {
     date: '2026.04.28 17:20 (v0.30.0)',
     items: [
