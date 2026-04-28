@@ -2515,7 +2515,8 @@
 	jQuery('.job .downIcon').on('click', function () {
 	  jQuery('.job .upper_menuAll').toggle();
 	});
-jQuery(".s-remove").remove();
+/* v0.26.5: 빌더에서 .s-remove 요소 보존 위해 비활성화 (탭1 PC/모바일 지역 토글 가능하게) */
+/* jQuery(".s-remove").remove(); */
   });
 
   var swiper = new Swiper('.societyGroupTab.local', {

@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.26.4</span>
+  <span id="ver-badge" title="배포 버전">v0.26.5</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -604,8 +604,7 @@ var sectionEnabled = {};
 var sectionBgColors = {};
 var sectionBgImages = {};  /* ST2: 섹션 배경 이미지 URL */
 var sectionSpacing = {};   /* ST1: { sId: { pt, pb, mpt, mpb } } */
-var sectionAdvancedStyles = {};  /* ST4: { sId: { borderColor, borderWidth, borderStyle, shadowColor, shadowBlur, shadowSpread, shadowX, shadowY, opacity } } */
-var sectionTemplates = {};  /* Adv: { templateId: { sectionId, sectionData, bgColor, bgImage, spacing, advancedStyles, buttonStyles, timestamp, name } } */
+var sectionTemplates = {};  /* Adv: { templateId: { sectionId, sectionData, bgColor, bgImage, spacing, buttonStyles, timestamp, name } } */
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
@@ -730,7 +729,6 @@ function saveState() {
     sectionBgColors:sectionBgColors,
     sectionBgImages:sectionBgImages,
     sectionSpacing: sectionSpacing,
-    sectionAdvancedStyles: sectionAdvancedStyles,
     aosEnabled:          aosEnabled,
     visualRightVisible:  visualRightVisible,
     logoImages:          logoImages,
@@ -788,12 +786,7 @@ function loadState() {
         if (!sectionSpacing[id]) sectionSpacing[id] = { pt:'', pb:'', mpt:'', mpb:'' };
       });
     }
-    if (s.sectionAdvancedStyles) {
-      sectionAdvancedStyles = s.sectionAdvancedStyles;
-      FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
-        if (!sectionAdvancedStyles[id]) sectionAdvancedStyles[id] = { borderColor:'', borderWidth:'', borderStyle:'solid', shadowColor:'', shadowBlur:'', shadowSpread:'', shadowX:'', shadowY:'', opacity:'' };
-      });
-    }
+    /* v0.26.5: sectionAdvancedStyles 제거 — 기존 데이터는 silently 무시 */
     if (s.cssColors) {
       cssColors = s.cssColors;
       Object.keys(FAIR_BUILDER_COLORS).forEach(function(v) {
@@ -1670,7 +1663,6 @@ function saveSectionTemplate(sectionId) {
     bgColor: sectionBgColors[sectionId] || '',
     bgImage: sectionBgImages[sectionId] || '',
     spacing: JSON.parse(JSON.stringify(sectionSpacing[sectionId] || {})),
-    advancedStyles: JSON.parse(JSON.stringify(sectionAdvancedStyles[sectionId] || {})),
     buttonStyles: sectionId === 'section_gradient' ? JSON.parse(JSON.stringify(buttonStyles || [])) : [],
     timestamp: new Date().toLocaleString('ko-KR'),
     name: name
@@ -1706,7 +1698,6 @@ function applySectionTemplate(sectionId) {
   sectionBgColors[sectionId] = template.bgColor;
   sectionBgImages[sectionId] = template.bgImage;
   sectionSpacing[sectionId] = JSON.parse(JSON.stringify(template.spacing));
-  sectionAdvancedStyles[sectionId] = JSON.parse(JSON.stringify(template.advancedStyles));
 
   if (sectionId === 'section_gradient' && template.buttonStyles.length) {
     buttonStyles = JSON.parse(JSON.stringify(template.buttonStyles));
@@ -1867,7 +1858,6 @@ function buildGradientPanel() {
     h += '</div>';
   });
   h += buildSpacingPanel('section_gradient');
-  h += buildAdvancedStylePanel('section_gradient');
   return h;
 }
 
@@ -2102,7 +2092,6 @@ function buildSectionPanel(sectionId) {
   });
   h += buildColorPanel(sectionId);
   h += buildSpacingPanel(sectionId);
-  h += buildAdvancedStylePanel(sectionId);
   /* Adv: 템플릿 저장/적용 버튼 */
   h += '<div class="ep-template-group">' +
     '<button class="ep-template-btn" onclick="saveSectionTemplate(\'' + sectionId + '\')" title="현재 섹션의 필드+스타일을 템플릿으로 저장">💾 템플릿 저장</button>' +
@@ -3042,116 +3031,7 @@ function buildSpacingPanel(sId) {
   '</div>';
 }
 
-/* ST4: 고급 스타일 편집 패널 (테두리·그림자·투명도) */
-function buildAdvancedStylePanel(sId) {
-  var adv = sectionAdvancedStyles[sId] || {
-    borderColor: '', borderWidth: '', borderStyle: 'solid',
-    shadowColor: '', shadowBlur: '', shadowSpread: '', shadowX: '', shadowY: '',
-    opacity: ''
-  };
-  return '<div class="ep-advanced-group">' +
-    /* 테두리 */
-    '<div class="ep-adv-section">' +
-      '<div class="ep-adv-title">테두리</div>' +
-      '<div class="ep-adv-row">' +
-        '<span class="ep-adv-label">색상</span>' +
-        '<input type="color" value="' + (adv.borderColor || '#000000') + '" oninput="updateAdvancedStyle(\'' + sId + '\',\'borderColor\',this.value)">' +
-      '</div>' +
-      '<div class="ep-adv-row">' +
-        '<span class="ep-adv-label">두께</span>' +
-        '<input type="number" min="0" max="20" value="' + adv.borderWidth + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'borderWidth\',this.value)"> px' +
-      '</div>' +
-      '<div class="ep-adv-row">' +
-        '<span class="ep-adv-label">스타일</span>' +
-        '<select onchange="updateAdvancedStyle(\'' + sId + '\',\'borderStyle\',this.value)">' +
-          '<option value="solid" ' + (adv.borderStyle === 'solid' ? 'selected' : '') + '>실선</option>' +
-          '<option value="dashed" ' + (adv.borderStyle === 'dashed' ? 'selected' : '') + '>점선</option>' +
-          '<option value="dotted" ' + (adv.borderStyle === 'dotted' ? 'selected' : '') + '>점들</option>' +
-        '</select>' +
-      '</div>' +
-    '</div>' +
-    /* 그림자 */
-    '<div class="ep-adv-section">' +
-      '<div class="ep-adv-title">그림자</div>' +
-      '<div class="ep-adv-row">' +
-        '<span class="ep-adv-label">색상</span>' +
-        '<input type="color" value="' + (adv.shadowColor || '#000000') + '" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowColor\',this.value)">' +
-      '</div>' +
-      '<div class="ep-adv-row">' +
-        '<span class="ep-adv-label">흐릿함</span>' +
-        '<input type="number" min="0" max="50" value="' + adv.shadowBlur + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowBlur\',this.value)"> px' +
-      '</div>' +
-      '<div class="ep-adv-row">' +
-        '<span class="ep-adv-label">확산</span>' +
-        '<input type="number" min="-20" max="20" value="' + adv.shadowSpread + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowSpread\',this.value)"> px' +
-      '</div>' +
-      '<div class="ep-adv-row">' +
-        '<span class="ep-adv-label">위치 X/Y</span>' +
-        '<input type="number" min="-20" max="20" value="' + adv.shadowX + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowX\',this.value)"> / ' +
-        '<input type="number" min="-20" max="20" value="' + adv.shadowY + '" placeholder="0" oninput="updateAdvancedStyle(\'' + sId + '\',\'shadowY\',this.value)"> px' +
-      '</div>' +
-    '</div>' +
-    /* 투명도 */
-    '<div class="ep-adv-section">' +
-      '<div class="ep-adv-title">투명도</div>' +
-      '<div class="ep-adv-row">' +
-        '<span class="ep-adv-label">opacity</span>' +
-        '<input type="range" min="0" max="100" value="' + (adv.opacity === '' ? 100 : adv.opacity) + '" oninput="updateAdvancedStyle(\'' + sId + '\',\'opacity\',this.value)"> ' +
-        '<span class="ep-adv-value">' + (adv.opacity === '' ? 100 : adv.opacity) + '%</span>' +
-      '</div>' +
-    '</div>' +
-  '</div>';
-}
-
-function updateAdvancedStyle(sId, key, val) {
-  if (!sectionAdvancedStyles[sId]) {
-    sectionAdvancedStyles[sId] = {
-      borderColor: '', borderWidth: '', borderStyle: 'solid',
-      shadowColor: '', shadowBlur: '', shadowSpread: '', shadowX: '', shadowY: '',
-      opacity: ''
-    };
-  }
-  if (key === 'opacity') {
-    sectionAdvancedStyles[sId][key] = val === '100' ? '' : val;
-  } else if (key === 'borderWidth' || key === 'shadowBlur' || key === 'shadowSpread' || key === 'shadowX' || key === 'shadowY') {
-    sectionAdvancedStyles[sId][key] = val === '' ? '' : parseInt(val, 10);
-  } else {
-    sectionAdvancedStyles[sId][key] = val;
-  }
-  saveState();
-  applyAdvancedStylesToPreview();
-}
-
-function applyAdvancedStylesToPreview() {
-  var doc = getPreviewDoc();
-  if (!doc) return;
-  var tag = doc.getElementById('builder-advanced-css');
-  if (!tag) { tag = doc.createElement('style'); tag.id = 'builder-advanced-css'; doc.head.appendChild(tag); }
-  var css = '';
-  Object.keys(sectionAdvancedStyles).forEach(function(sId) {
-    var adv = sectionAdvancedStyles[sId];
-    if (!adv) return;
-    var props = [];
-    /* 테두리 */
-    if (adv.borderWidth && adv.borderWidth !== '') {
-      props.push('border:' + adv.borderWidth + 'px ' + (adv.borderStyle || 'solid') + ' ' + (adv.borderColor || '#000000') + '!important');
-    }
-    /* 그림자 */
-    if (adv.shadowBlur !== '' || adv.shadowX !== '' || adv.shadowY !== '') {
-      var sx = adv.shadowX === '' ? 0 : adv.shadowX;
-      var sy = adv.shadowY === '' ? 0 : adv.shadowY;
-      var sb = adv.shadowBlur === '' ? 0 : adv.shadowBlur;
-      var ss = adv.shadowSpread === '' ? 0 : adv.shadowSpread;
-      props.push('box-shadow:' + sx + 'px ' + sy + 'px ' + sb + 'px ' + ss + 'px ' + (adv.shadowColor || '#000000') + '!important');
-    }
-    /* 투명도 */
-    if (adv.opacity !== '' && adv.opacity !== '100') {
-      props.push('opacity:' + (adv.opacity / 100) + '!important');
-    }
-    if (props.length) css += '[data-builder-section="' + sId + '"]{' + props.join(';') + '}';
-  });
-  tag.textContent = css;
-}
+/* v0.26.5: ST4 고급 스타일(테두리/그림자/투명도) 패널 + 적용 함수 제거 */
 
 function applyBtnStylesToPreview() {
   var doc = getPreviewDoc();
@@ -4399,7 +4279,6 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyTabsToPreview();
   applySpacingToPreview();
   applyBgImagesToPreview();
-  applyAdvancedStylesToPreview();
   applyAosToPreview();
   applyVisualRightToPreview();
   applyLogoImagesToPreview();
@@ -4471,7 +4350,6 @@ function applyToPreview() {
 
   applyBtnStylesToPreview();
   applyPosterLayout(doc);
-  applyAdvancedStylesToPreview();
   if (!editMode) applyAllFieldsToPreview(); // 편집 모드 중엔 contenteditable 덮어쓰기 방지
 }
 
@@ -4781,6 +4659,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 15:31 (v0.26.5)',
+    items: [
+      '<strong>[v0.26.5]</strong> 채용관 탭1 지역 미노출 근본 원인 해결 — temp.html 의 <code>jQuery(".s-remove").remove();</code> 가 PC 지역 ul + 모바일 지역 swiper를 DOM에서 통째로 삭제하던 문제. 빌더 호환 위해 해당 라인 주석 처리.',
+      '<strong>[v0.26.5]</strong> 모든 섹션의 고급 스타일(테두리/그림자/투명도) 패널 제거 — 사용자 요청 (의미 없음). UI/상태/적용 함수/save·load/template 전부 정리.',
+      '<strong>[v0.26.5]</strong> 제거된 코드: buildAdvancedStylePanel, updateAdvancedStyle, applyAdvancedStylesToPreview, sectionAdvancedStyles 변수, save/load 마이그레이션, 템플릿 advancedStyles 필드, iframe load 호출 2건',
+    ]
+  },
   {
     date: '2026.04.28 15:22 (v0.26.4)',
     items: [
