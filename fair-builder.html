@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.22.2</span>
+  <span id="ver-badge" title="배포 버전">v0.22.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1351,10 +1351,23 @@ function applyTabsToPreview() {
     inputs[firstEnabledIdx].checked = true;
   }
 
-  /* v0.21.4: 탭별 게시판 형식 토글 — 각 tab_content 안의 광고형/리스트형 display 제어 */
+  /* v0.21.4/0.22.3: 탭별 게시판 형식 토글 + 마크업 자동 클론 */
   joblistTabs.forEach(function(tab, i) {
     if (!contents[i]) return;
     var boardType = tab.boardType || 'list';
+    /* v0.22.3: 선택한 boardType 마크업이 없으면 다른 탭에서 reference 클론 */
+    var needSel = boardType === 'ad' ? '.n_job_list_new.highest' : '.cPrdlists_wrap';
+    if (!contents[i].querySelector(needSel)) {
+      var ref = sec.querySelector(needSel);
+      if (ref) {
+        var refClone = ref.cloneNode(true);
+        refClone.removeAttribute('id');
+        refClone.style.removeProperty('display');
+        /* .wr 안에 추가 (sub-section 회피, 게시판은 .wr 직접 자식) */
+        var targetWr = contents[i].querySelector(':scope > .wr') || contents[i];
+        targetWr.appendChild(refClone);
+      }
+    }
     var adBoards   = contents[i].querySelectorAll('.n_job_list_new.highest');
     var listBoards = contents[i].querySelectorAll('.cPrdlists_wrap');
     adBoards.forEach(function(b) {
@@ -4724,6 +4737,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 10:00 (v0.22.3)',
+    items: [
+      '<strong>[v0.22.3]</strong> 채용관 5순위 Stage 5: 게시판 마크업 자동 클론 — 5순위 모두 완료 ✓',
+      '<strong>[v0.22.3]</strong> 사용자가 boardType=광고형 선택했지만 .n_job_list_new 마크업 없는 탭에 → 다른 탭에서 reference 클론하여 추가',
+      '<strong>[v0.22.3]</strong> boardType=리스트형도 동일 (.cPrdlists_wrap 마크업)',
+      '<strong>[v0.22.3]</strong> 클론 시 id 제거(중복 방지) + display 강제 해제',
+      '<strong>[v0.22.3]</strong> 채용관 5순위 완료: 1뎁스 탭 / 2뎁스 sub-tab / 검색 직종·지역 / 게시판 광고·리스트 / 마크업 클론',
+    ]
+  },
   {
     date: '2026.04.28 09:48 (v0.22.2)',
     items: [
