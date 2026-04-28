@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.26.0</span>
+  <span id="ver-badge" title="배포 버전">v0.26.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1378,8 +1378,10 @@ function applyTabsToPreview() {
     else lbl.classList.remove('last');
   });
 
-  /* === 모드별 분기 === */
-  if (joblistMenuEnabled) {
+  /* === 모드별 분기 (v0.26.1: 모든 탭 disabled or 0개 → 자동 OFF 모드 fallback) === */
+  var hasAnyEnabled = joblistTabs.some(function(t) { return t.enabled !== false; });
+  var effectiveOn = joblistMenuEnabled && joblistTabs.length > 0 && hasAnyEnabled;
+  if (effectiveOn) {
     /* === 탭 메뉴 ON === */
     /* 라벨/라디오/컨텐츠 enabled 동기 (v0.25.2: !important로 CSS 충돌 방지) */
     joblistTabs.forEach(function(tab, i) {
@@ -1395,13 +1397,11 @@ function applyTabsToPreview() {
       }
       if (contents[i] && !enabled) contents[i].style.setProperty('display', 'none', 'important');
     });
-    /* v0.25.2: 모든 탭 disabled 시 강제 표시 제거 — 사용자 의도 존중 */
+    /* v0.26.1: 현재 checked가 비활성이면 첫 활성으로 (effectiveOn 분기로 들어왔으니 활성 탭 1개 이상 보장) */
     var firstEn = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
-    var allDisabled = firstEn < 0;
     var currentCheckedIdx = inputs.findIndex(function(inp) { return inp.checked; });
     var currentEnabled = currentCheckedIdx >= 0 && joblistTabs[currentCheckedIdx] && joblistTabs[currentCheckedIdx].enabled !== false;
-    if (!allDisabled && !currentEnabled) {
-      /* 일부 활성 + 현재 checked가 비활성 → 첫 활성으로 */
+    if (!currentEnabled) {
       if (inputs[firstEn]) {
         inputs.forEach(function(inp) { inp.checked = false; });
         inputs[firstEn].checked = true;
@@ -1414,12 +1414,11 @@ function applyTabsToPreview() {
       applySearchToContent(contents[i], tab.search || { job: true, local: true, keyword: true });
       applyBoardToContent(contents[i], tab.boardType || 'ad', sec);
     });
-    /* v0.25.2: 모두 disabled면 모든 탭 컨텐츠 숨김. 아니면 active 탭만 표시 */
+    /* v0.26.1: active 탭만 표시 */
     var activeIdx = inputs.findIndex(function(inp) { return inp.checked; });
     if (activeIdx < 0) activeIdx = firstEn;
     contents.forEach(function(c, i) {
-      if (allDisabled) c.style.setProperty('display', 'none', 'important');
-      else if (i === activeIdx) c.style.setProperty('display', 'block', 'important');
+      if (i === activeIdx) c.style.setProperty('display', 'block', 'important');
       else c.style.setProperty('display', 'none', 'important');
     });
     /* v0.25.0: 라디오 변경 시 우리 apply 재실행 (temp.html JS의 inline display 덮어쓰기 회복) */
@@ -4764,6 +4763,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 15:11 (v0.26.1)',
+    items: [
+      '<strong>[v0.26.1]</strong> 모든 탭 disabled (또는 0개) 시 자동으로 탭 없는 케이스(글로벌 설정)로 fallback',
+      '<strong>[v0.26.1]</strong> 분기 단순화: effectiveOn = (joblistMenuEnabled && tabs.length>0 && hasAnyEnabled) — false면 OFF 모드 동일 처리',
+      '<strong>[v0.26.1]</strong> 사용자 시나리오: 탭메뉴 ON + 모든 탭 끄기 → 빈 화면 ❌ → 글로벌 설정으로 단일 게시판 표시 ✓',
+    ]
+  },
   {
     date: '2026.04.28 14:59 (v0.26.0)',
     items: [
