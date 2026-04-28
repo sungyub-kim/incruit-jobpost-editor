@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.26.2</span>
+  <span id="ver-badge" title="배포 버전">v0.26.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1266,12 +1266,13 @@ function applySearchToContent(content, search, sec) {
     var uls = divided ? divided.querySelectorAll(':scope > ul.search_cont') : [];
     var ulJob = uls[0] || null;   /* 1번째 = 직종 */
     var ulLocal = uls[1] || null; /* 2번째 = 지역 */
+    /* v0.26.3: PC 직종/지역 — !important 강제 (원본 지역 ul에 display:none + CSS .s-remove 룰 회피) */
     if (ulJob) {
-      if (search.job) ulJob.style.removeProperty('display');
+      if (search.job) ulJob.style.setProperty('display', 'block', 'important');
       else ulJob.style.setProperty('display', 'none', 'important');
     }
     if (ulLocal) {
-      if (search.local) ulLocal.style.removeProperty('display');
+      if (search.local) ulLocal.style.setProperty('display', 'block', 'important');
       else ulLocal.style.setProperty('display', 'none', 'important');
     }
     if (search.job || search.local) {
@@ -1296,10 +1297,9 @@ function applySearchToContent(content, search, sec) {
   }
 }
 
-/* v0.25.0: 헬퍼 — tab_content에 게시판 적용 (마크업 보장 + !important display) */
+/* v0.26.3: 게시판 적용 — 클론 시 .wr로 감싸 삽입 (스펙: <div class="wr"><div class="n_job_list_new highest">) */
 function applyBoardToContent(content, boardType, sec) {
   if (!content) return;
-  /* 마크업 보장 */
   ['.n_job_list_new.highest', '.cPrdlists_wrap'].forEach(function(sel) {
     if (!content.querySelector(sel)) {
       var ref = sec.querySelector(sel);
@@ -1307,7 +1307,11 @@ function applyBoardToContent(content, boardType, sec) {
         var clone = ref.cloneNode(true);
         clone.removeAttribute('id');
         clone.style.removeProperty('display');
-        content.appendChild(clone);
+        var doc = content.ownerDocument;
+        var wrap = doc.createElement('div');
+        wrap.className = 'wr';
+        wrap.appendChild(clone);
+        content.appendChild(wrap);
       }
     }
   });
@@ -4777,6 +4781,13 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 15:20 (v0.26.3)',
+    items: [
+      '<strong>[v0.26.3]</strong> PC 지역 ul 토글 무동작 수정 — removeProperty(display)로는 원본 inline display:none + CSS .s-remove 룰 회피 불가 → !important block 강제',
+      '<strong>[v0.26.3]</strong> 게시판 클론 시 .wr로 감싸 삽입 — 스펙: <div class="wr"><div class="n_job_list_new highest">...</div></div>',
+    ]
+  },
   {
     date: '2026.04.28 15:17 (v0.26.2)',
     items: [
