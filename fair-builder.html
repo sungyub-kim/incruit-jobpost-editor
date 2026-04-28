@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.26.1</span>
+  <span id="ver-badge" title="배포 버전">v0.26.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1088,54 +1088,58 @@ function renderTabPanel() {
   if (!el) return;
   var html = '';
 
-  /* v0.22.4: 1뎁스 탭 메뉴 자체 사용 여부 토글 (최상단) */
+  /* v0.26.2: 1단계 — 1뎁스 탭 메뉴 사용 토글 (최상단) */
   html += '<div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +
     '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e5e7eb;font-weight:600;">' +
       '<span>📋 1뎁스 탭 메뉴 사용</span>' +
       '<label class="toggle" style="margin-left:auto;"><input type="checkbox" ' + (joblistMenuEnabled ? 'checked' : '') + ' onchange="toggleJoblistMenu(this.checked)"><span class="toggle-slider"></span></label>' +
     '</label>' +
-    '<div style="font-size:10px;color:#9ca3af;margin-top:4px;">' + (joblistMenuEnabled ? '탭 2~5개 사용 (각 탭마다 검색/게시판 설정)' : '탭 없이 단일 게시판 표시') + '</div>' +
+    '<div style="font-size:10px;color:#9ca3af;margin-top:4px;">' +
+      (joblistMenuEnabled ? '탭 1~3개 사용 (각 탭마다 검색/게시판 설정)' : '탭 없이 단일 게시판 표시 (아래 전체 설정 적용)') +
+    '</div>' +
   '</div>';
 
-  /* v0.26.0: 탭 메뉴 OFF — 단일 글로벌 카드 (검색 + 게시판) */
+  /* v0.26.2: 2단계 OFF 모드 — 전체(글로벌) 검색/게시판 컨트롤 */
   if (!joblistMenuEnabled) {
     var g = joblistGlobal;
-    html += '<div style="background:rgba(30,41,59,0.5);border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +
+    html += '<div style="background:rgba(30,41,59,0.5);border:1px solid #1e40af;border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +
+      '<div style="font-size:11px;color:#93c5fd;font-weight:700;margin-bottom:6px;">⚙️ 전체 설정 (탭 없이 단일 표시)</div>' +
       buildSearchToggleHtml(g.search, 'toggleGlobalSearch', null) +
       buildBoardTypeHtml(g.boardType, 'setGlobalBoardType', null) +
     '</div>';
-    el.innerHTML = html;
-    return;
   }
 
-  /* 탭 메뉴 on일 때 기존 탭 카드 목록 표시 */
-  if (!joblistTabs.length) {
-    html = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>';
-  } else {
-    html = joblistTabs.map(function(tab, i) {
+  /* v0.26.2: 3단계 — 탭 카드들 (항상 표시, OFF 시 비활성 시각) */
+  var disabledMode = !joblistMenuEnabled;
+  if (joblistTabs.length) {
+    html += '<div style="font-size:10px;color:#9ca3af;margin-bottom:4px;">' +
+      (disabledMode ? '탭 설정 (OFF 상태 — 비활성)' : '탭별 설정') + '</div>';
+    html += joblistTabs.map(function(tab, i) {
       var isActive = tab.enabled !== false;
       var boardType = tab.boardType || 'list';
-      return '<div class="logo-input-wrap" style="padding:6px 8px;position:relative;background:' + (isActive ? '' : '#0d1117') + ';opacity:' + (isActive ? '1' : '0.55') + ';">' +
-        /* v0.21.0: 제거 버튼 (최소 2개 유지) */
-        (joblistTabs.length > JOBLIST_TAB_MIN
+      var deactivated = disabledMode || !isActive;
+      var blockStyle = 'padding:6px 8px;position:relative;background:' + (deactivated ? '#0d1117' : '') + ';opacity:' + (deactivated ? '0.45' : '1') + (disabledMode ? ';pointer-events:none;' : ';');
+      return '<div class="logo-input-wrap" style="' + blockStyle + '">' +
+        (joblistTabs.length > JOBLIST_TAB_MIN && !disabledMode
           ? '<button class="nav-link-remove" title="이 탭 제거" onclick="removeJoblistTab(' + i + ')" style="position:absolute;top:4px;right:4px;background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:20px;height:20px;cursor:pointer;font-size:11px;line-height:18px;padding:0;">✕</button>'
           : '') +
         '<label style="display:flex;align-items:center;gap:6px;">' +
           '<span>탭 ' + (i+1) + '</span>' +
-          /* v0.21.0: on/off 토글 */
           '<label class="toggle" style="margin-left:auto;margin-right:24px;"><input type="checkbox" ' + (isActive ? 'checked' : '') + ' onchange="toggleJoblistTab(' + i + ',this.checked)"><span class="toggle-slider"></span></label>' +
         '</label>' +
         '<input type="text" value="' + esc(tab.name) + '" oninput="updateJoblistTab(' + i + ',this.value)">' +
-        /* v0.26.0: 탭별 검색/게시판 (sub-tab 제거) */
         buildSearchToggleHtml(tab.search || {}, 'toggleJoblistSearch', i) +
         buildBoardTypeHtml(boardType, 'setJoblistBoardType', i) +
       '</div>';
     }).join('');
-  }
-  /* v0.21.0: 추가 버튼 (최대 5개) */
-  if (joblistTabs.length < JOBLIST_TAB_MAX) {
-    html += '<button class="ep-add-btn" style="width:100%;background:#059669;color:#fff;border:none;border-radius:4px;padding:6px;margin-top:6px;cursor:pointer;font-size:11px;font-weight:600;" onclick="addJoblistTab()">+ 탭 추가 (' + joblistTabs.length + '/' + JOBLIST_TAB_MAX + ')</button>';
   } else {
+    html += '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>';
+  }
+
+  /* 탭 추가 버튼 (ON 모드일 때만) */
+  if (!disabledMode && joblistTabs.length < JOBLIST_TAB_MAX) {
+    html += '<button class="ep-add-btn" style="width:100%;background:#059669;color:#fff;border:none;border-radius:4px;padding:6px;margin-top:6px;cursor:pointer;font-size:11px;font-weight:600;" onclick="addJoblistTab()">+ 탭 추가 (' + joblistTabs.length + '/' + JOBLIST_TAB_MAX + ')</button>';
+  } else if (!disabledMode) {
     html += '<div style="font-size:11px;color:#6b7280;padding:6px;text-align:center;">최대 ' + JOBLIST_TAB_MAX + '개까지 추가 가능</div>';
   }
   el.innerHTML = html;
@@ -1241,12 +1245,22 @@ function removeJoblistTab(i) {
 
 /* v0.21.0: 채용관 탭 동기 — 텍스트 + on/off + DOM 추가/제거 */
 /* v0.26.0: 검색 영역 적용 — PC 직종/지역은 societyGroupTab-divided 안 ul 순서로 구분 (1=직종, 2=지역) */
-function applySearchToContent(content, search) {
+function applySearchToContent(content, search, sec) {
   if (!content || !search) return;
   var pcSearch = content.querySelector('.search_job_tab');
   var mJob = content.querySelector('.swiper-container.societyGroupTab.job');
   var mLocal = content.querySelector('.swiper-container.societyGroupTab.local');
+  /* v0.26.2: search-form-wrap 마크업 보장 (탭3에는 원본에 없음 → 클론) */
   var keywordWrap = content.querySelector('.search-form-wrap');
+  if (!keywordWrap && sec) {
+    var refKw = sec.querySelector('.search-form-wrap');
+    if (refKw) {
+      keywordWrap = refKw.cloneNode(true);
+      var firstWr = content.querySelector(':scope > .wr');
+      if (firstWr) firstWr.appendChild(keywordWrap);
+      else content.appendChild(keywordWrap);
+    }
+  }
   if (pcSearch) {
     var divided = pcSearch.querySelector('.societyGroupTab-divided');
     var uls = divided ? divided.querySelectorAll(':scope > ul.search_cont') : [];
@@ -1411,7 +1425,7 @@ function applyTabsToPreview() {
     joblistTabs.forEach(function(tab, i) {
       if (!contents[i]) return;
       hideSubTabMarkup(contents[i]);
-      applySearchToContent(contents[i], tab.search || { job: true, local: true, keyword: true });
+      applySearchToContent(contents[i], tab.search || { job: true, local: true, keyword: true }, sec);
       applyBoardToContent(contents[i], tab.boardType || 'ad', sec);
     });
     /* v0.26.1: active 탭만 표시 */
@@ -1446,7 +1460,7 @@ function applyTabsToPreview() {
     }
     if (contents[0]) {
       hideSubTabMarkup(contents[0]);
-      applySearchToContent(contents[0], joblistGlobal.search);
+      applySearchToContent(contents[0], joblistGlobal.search, sec);
       applyBoardToContent(contents[0], joblistGlobal.boardType, sec);
     }
   }
@@ -4763,6 +4777,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 15:17 (v0.26.2)',
+    items: [
+      '<strong>[v0.26.2]</strong> 채용관 패널 레이아웃 재구성 — 1단계(메뉴 토글) → OFF 시 전체 설정 카드 → 탭 카드 (항상 표시, OFF 시 비활성)',
+      '<strong>[v0.26.2]</strong> OFF 모드에서도 탭 카드 visible (opacity 0.45 + pointer-events:none) — 사용자가 탭 구성 확인 가능',
+      '<strong>[v0.26.2]</strong> OFF 모드: ⚙️ 전체 설정 카드 표시 (강조 테두리 + 안내 라벨)',
+      '<strong>[v0.26.2]</strong> 탭3 키워드 검색 토글 무동작 수정 — temp.html에 .search-form-wrap 누락 → applySearchToContent에서 자동 클론 (게시판 마크업 보장과 동일 패턴)',
+      '<strong>[v0.26.2]</strong> 안내 텍스트: "탭 2~5개" → "탭 1~3개" (스펙 일치)',
+    ]
+  },
   {
     date: '2026.04.28 15:11 (v0.26.1)',
     items: [
