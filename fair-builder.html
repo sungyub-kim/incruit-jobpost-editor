@@ -398,7 +398,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.29.1</span>
+  <span id="ver-badge" title="배포 버전">v0.29.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -843,6 +843,12 @@ function loadState() {
           if (b.target === undefined) b.target = '_blank';
         });
       });
+    }
+    /* v0.29.2: 로드 후 팔레트 → 버튼 1회 동기 (override 안 한 버튼만) */
+    var bg = buttonStyles && buttonStyles.section_gradient;
+    if (bg) {
+      if (bg[0] && !bg[0].bgColorOverride && cssColors['--s-color3']) bg[0].bgColor = cssColors['--s-color3'];
+      if (bg[1] && !bg[1].bgColorOverride && cssColors['--s-color4']) bg[1].bgColor = cssColors['--s-color4'];
     }
     if (s.sectionData) {
       sectionData = s.sectionData;
@@ -2234,6 +2240,8 @@ function updateBtn(i, key, val) {
   var bs = buttonStyles['section_gradient'];
   if (!bs || !bs[i]) return;
   bs[i][key] = val;
+  /* v0.29.2: 사용자가 bgColor 명시 변경 시 override 표시 — 이후 팔레트 변경 시 덮어쓰지 않음 */
+  if (key === 'bgColor') bs[i].bgColorOverride = true;
   saveState();
   applyBtnStylesToPreview();
 }
@@ -3791,6 +3799,7 @@ function updateBtnField(idx, key, val) {
   var bs = buttonStyles['section_gradient'];
   if (!bs || bs[idx] === undefined) return;
   bs[idx][key] = val;
+  if (key === 'bgColor') bs[idx].bgColorOverride = true;  /* v0.29.2 */
   saveState();
   syncBtnDOM();
   if (key === 'text') {
@@ -3835,6 +3844,7 @@ function onColorChange(input) {
   wrap.querySelector('.hex-input').value = hex;
   saveState();
   applyColorToPreview(varName, hex);
+  syncPaletteToButtons(varName, hex);  /* v0.29.2 */
 }
 
 function onHexChange(input) {
@@ -3847,6 +3857,19 @@ function onHexChange(input) {
   wrap.querySelector('.color-preview').style.background = hex;
   saveState();
   applyColorToPreview(varName, hex);
+  syncPaletteToButtons(varName, hex);  /* v0.29.2 */
+}
+
+/* v0.29.2: 팔레트 색 → 버튼 색 동기 (사용자가 우측 드로어에서 버튼 색을 override 안 했을 때만) */
+function syncPaletteToButtons(varName, hex) {
+  if (varName !== '--s-color3' && varName !== '--s-color4') return;
+  var idx = (varName === '--s-color3') ? 0 : 1;
+  var btns = buttonStyles && buttonStyles.section_gradient;
+  if (!btns || !btns[idx]) return;
+  if (btns[idx].bgColorOverride) return;  /* override면 디폴트 적용 안 함 */
+  btns[idx].bgColor = hex;
+  saveState();
+  applyBtnStylesToPreview();
 }
 
 function applyColorToPreview(varName, value) {
@@ -4846,6 +4869,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 17:06 (v0.29.2)',
+    items: [
+      '<strong>[v0.29.2]</strong> 좌측 스타일 팔레트 → 버튼1/2 색상 디폴트 동기 — applyBtnStylesToPreview의 inline bgColor가 CSS 변수보다 우선해서 팔레트 변경 무시되던 문제 해결',
+      '<strong>[v0.29.2]</strong> syncPaletteToButtons() 신규 — --s-color3 → 버튼1, --s-color4 → 버튼2 자동 동기',
+      '<strong>[v0.29.2]</strong> bgColorOverride 플래그 — 사용자가 우측 드로어에서 버튼 색 직접 변경 시 true. 이후 팔레트 변경해도 덮어쓰지 않음',
+      '<strong>[v0.29.2]</strong> loadState 시 1회 동기 — 기존 localStorage에 팔레트만 변경된 경우에도 비override 버튼 색이 팔레트 따라 갱신',
+    ]
+  },
   {
     date: '2026.04.28 17:01 (v0.29.1)',
     items: [
