@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.22.4</span>
+  <span id="ver-badge" title="배포 버전">v0.22.5</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1339,6 +1339,10 @@ function applyTabsToPreview() {
   if (joblistMenuEnabled) tabsWrap.style.removeProperty('display');
   else tabsWrap.style.setProperty('display', 'none', 'important');
 
+  /* v0.22.5: cleanup — 이전 toggle 상태(display:none) 모두 초기화 → 후속 forEach에서 재계산 */
+  var allContents = sec.querySelectorAll('.tabs > .tab_content');
+  allContents.forEach(function(c) { c.style.removeProperty('display'); });
+
   /* 현재 DOM의 라디오/라벨/컨텐츠 수집 */
   var inputs = Array.prototype.slice.call(tabsWrap.querySelectorAll('input[type=radio]'));
   var labels = Array.prototype.slice.call(tabsWrap.querySelectorAll('label.tab_item'));
@@ -1418,18 +1422,23 @@ function applyTabsToPreview() {
     inputs[firstEnabledIdx].checked = true;
   }
 
-  /* v0.22.4: 탭 메뉴 off 시 첫 활성 탭만 표시, 나머지 .tab_content는 숨김 */
+  /* v0.22.4/0.22.5: 탭 메뉴 off 시 첫 활성 탭만 표시 + 글로벌 설정 적용 */
   if (!joblistMenuEnabled) {
     var firstEnIdx = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
     if (firstEnIdx < 0) firstEnIdx = 0;
     contents.forEach(function(c, i) {
-      if (i === firstEnIdx) c.style.removeProperty('display');
-      else c.style.setProperty('display', 'none', 'important');
+      if (i === firstEnIdx) {
+        c.style.setProperty('display', 'block', 'important');  /* 강제 표시 */
+      } else {
+        c.style.setProperty('display', 'none', 'important');
+      }
     });
-    /* 글로벌 boardType / search를 첫 탭에 적용 */
+    /* 글로벌 boardType / search를 첫 탭에 적용 (forEach 처리 위해) */
     if (joblistTabs[firstEnIdx]) {
       joblistTabs[firstEnIdx].boardType = joblistGlobalBoardType;
       joblistTabs[firstEnIdx].search = Object.assign({}, joblistGlobalSearch);
+      /* 단일 모드는 sub-tab 비활성 — 충돌 방지 */
+      joblistTabs[firstEnIdx].subTabsEnabled = false;
     }
   }
 
@@ -4819,6 +4828,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 10:25 (v0.22.5)',
+    items: [
+      '<strong>[v0.22.5]</strong> 사용자 보고 4건 핫픽스 ─ 단일 모드 빈 화면 + sub-tab 모드 토글 무동작',
+      '<strong>[v0.22.5]</strong> applyTabsToPreview 시작에 cleanup 추가: 모든 .tab_content의 display 초기화 → 이전 toggle 잔존 방지',
+      '<strong>[v0.22.5]</strong> 단일 모드 첫 활성 탭 강제 표시 (display:block !important)',
+      '<strong>[v0.22.5]</strong> 단일 모드 진입 시 첫 탭의 subTabsEnabled=false 강제 (충돌 방지)',
+      '<strong>[v0.22.5]</strong> 미해결 보고 시 Ctrl+Shift+R 한 번 후 v0.22.5 배지 확인 부탁',
+    ]
+  },
   {
     date: '2026.04.28 10:11 (v0.22.4)',
     items: [
