@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.22.6</span>
+  <span id="ver-badge" title="배포 버전">v0.22.7</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1335,13 +1335,15 @@ function applyTabsToPreview() {
   var tabsContainer = sec.querySelector('.tabs');             /* tab_content들의 부모 */
   if (!tabsWrap || !tabsContainer) return;
 
-  /* v0.22.4: 탭 메뉴 사용 여부 (라디오/라벨 컨테이너 .wr 표시 토글) */
-  if (joblistMenuEnabled) tabsWrap.style.removeProperty('display');
-  else tabsWrap.style.setProperty('display', 'none', 'important');
-
-  /* v0.22.5: cleanup — 이전 toggle 상태(display:none) 모두 초기화 → 후속 forEach에서 재계산 */
+  /* v0.22.7: cleanup 강화 — 모든 inline display 초기화 (이전 상태 잔존 완전 제거) */
+  tabsWrap.style.removeProperty('display');
+  tabsWrap.querySelectorAll('input[type=radio]').forEach(function(inp) { inp.style.removeProperty('display'); });
+  tabsWrap.querySelectorAll('label.tab_item').forEach(function(l) { l.style.removeProperty('display'); });
   var allContents = sec.querySelectorAll('.tabs > .tab_content');
   allContents.forEach(function(c) { c.style.removeProperty('display'); });
+
+  /* v0.22.4: 탭 메뉴 사용 여부 (라디오/라벨 컨테이너 .wr 표시 토글) */
+  if (!joblistMenuEnabled) tabsWrap.style.setProperty('display', 'none', 'important');
 
   /* 현재 DOM의 라디오/라벨/컨텐츠 수집 */
   var inputs = Array.prototype.slice.call(tabsWrap.querySelectorAll('input[type=radio]'));
@@ -1417,6 +1419,13 @@ function applyTabsToPreview() {
 
   /* 첫 활성화 탭을 자동 checked */
   var firstEnabledIdx = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
+  /* v0.22.7: 모든 탭 disabled여도 첫 번째 탭 강제 표시 (빈 화면 방지) */
+  if (firstEnabledIdx < 0) {
+    firstEnabledIdx = 0;
+    if (inputs[0]) inputs[0].style.removeProperty('display');
+    if (labels[0]) labels[0].style.removeProperty('display');
+    if (contents[0]) contents[0].style.removeProperty('display');
+  }
   if (firstEnabledIdx >= 0 && inputs[firstEnabledIdx]) {
     inputs.forEach(function(inp) { inp.checked = false; });
     inputs[firstEnabledIdx].checked = true;
@@ -4845,6 +4854,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 10:55 (v0.22.7)',
+    items: [
+      '<strong>[v0.22.7]</strong> cleanup 강화 + 안전 fallback ─ 탭 라벨 사라짐 방지',
+      '<strong>[v0.22.7]</strong> applyTabsToPreview 시작에 모든 inline display 초기화: tabsWrap / inputs / labels / contents 모두',
+      '<strong>[v0.22.7]</strong> 모든 탭이 disabled여도 첫 탭 강제 표시 (빈 화면 안전 fallback)',
+      '<strong>[v0.22.7]</strong> ⚠️ Ctrl+Shift+R 후 v0.22.7 배지 확인 — 캐시 의심 시 시크릿 모드 권장',
+    ]
+  },
   {
     date: '2026.04.28 10:47 (v0.22.6)',
     items: [
