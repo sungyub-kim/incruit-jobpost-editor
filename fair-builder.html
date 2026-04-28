@@ -398,7 +398,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.29.0</span>
+  <span id="ver-badge" title="배포 버전">v0.29.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -427,13 +427,10 @@
       <div id="tab-sections" class="tab-panel active">
         <div class="p-section-header">헤더 설정</div>
         <div class="logo-input-wrap">
-          <label>기업 로고 링크 URL</label>
-          <input type="text" id="logo-href" placeholder="https://...">
-        </div>
-        <div class="logo-input-wrap">
           <label>기업명 (title 속성)</label>
-          <input type="text" id="logo-title" placeholder="기업명 입력">
+          <input type="text" id="logo-title" placeholder="기업명 입력" oninput="saveState();applyLogoLinksToPreview()">
         </div>
+        <!-- v0.29.1: 로고1/2 별도 링크 + target -->
         <div class="logo-input-wrap">
           <label>로고 1 이미지 <span class="ep-hint">(.logo_f)</span></label>
           <div class="ep-bgimg-row">
@@ -442,6 +439,15 @@
             <button class="ep-bgimg-clear" onclick="updateLogoImage('logo1','');document.getElementById('logo-url-logo1').value=''" style="display:none" id="logo-clear-logo1">✕</button>
           </div>
           <img id="logo-thumb-logo1" class="ep-bgimg-thumb" style="display:none">
+          <label style="margin-top:6px;">로고 1 링크 URL</label>
+          <input type="text" id="logo-href-logo1" placeholder="https://..." oninput="updateLogoLink('logo1','href',this.value)">
+          <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+            <label style="font-size:11px;color:#9ca3af;">열기 방식</label>
+            <select id="logo-target-logo1" onchange="updateLogoLink('logo1','target',this.value)" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e5e7eb;font-size:11px;padding:3px 5px;">
+              <option value="_blank">새창 (_blank)</option>
+              <option value="_self">현재창 (_self)</option>
+            </select>
+          </div>
         </div>
         <div class="logo-input-wrap">
           <label>로고 2 이미지 <span class="ep-hint">(.logo_f2)</span></label>
@@ -451,6 +457,15 @@
             <button class="ep-bgimg-clear" onclick="updateLogoImage('logo2','');document.getElementById('logo-url-logo2').value=''" style="display:none" id="logo-clear-logo2">✕</button>
           </div>
           <img id="logo-thumb-logo2" class="ep-bgimg-thumb" style="display:none">
+          <label style="margin-top:6px;">로고 2 링크 URL</label>
+          <input type="text" id="logo-href-logo2" placeholder="https://..." oninput="updateLogoLink('logo2','href',this.value)">
+          <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+            <label style="font-size:11px;color:#9ca3af;">열기 방식</label>
+            <select id="logo-target-logo2" onchange="updateLogoLink('logo2','target',this.value)" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e5e7eb;font-size:11px;padding:3px 5px;">
+              <option value="_blank">새창 (_blank)</option>
+              <option value="_self">현재창 (_self)</option>
+            </select>
+          </div>
         </div>
 
         <!-- S2: 네비게이션 -->
@@ -620,6 +635,7 @@ var sectionTopTextEnabled = {};  /* v0.27.0: { sId: false } — true는 기본 (
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
+var logoLinks  = { logo1: { href: '', target: '_blank' }, logo2: { href: '', target: '_blank' } };  /* v0.29.1: 헤더 로고 링크 */
 var exportSettings = { imgBasePath: '/ui/static/image/specialty/', fairName: '' }; /* X1: 내보내기 설정 */
 var cssColors = {};
 var openEditPanelId = null;
@@ -734,8 +750,8 @@ Object.keys(FAIR_BUILDER_COLORS).forEach(function(v) {
 function saveState() {
   localStorage.setItem(STATE_KEY, JSON.stringify({
     fairCode:       document.getElementById('fair-code').value,
-    logoHref:       document.getElementById('logo-href').value,
     logoTitle:      document.getElementById('logo-title').value,
+    logoLinks:      logoLinks,  /* v0.29.1 */
     sectionOrder:   sectionOrder,
     sectionEnabled: sectionEnabled,
     sectionBgColors:sectionBgColors,
@@ -767,8 +783,17 @@ function loadState() {
   try {
     var s = JSON.parse(raw);
     if (s.fairCode)  document.getElementById('fair-code').value  = s.fairCode;
-    if (s.logoHref)  document.getElementById('logo-href').value  = s.logoHref;
     if (s.logoTitle) document.getElementById('logo-title').value = s.logoTitle;
+    /* v0.29.1: logoLinks 복원 + 구버전 logoHref 마이그레이션 */
+    if (s.logoLinks) {
+      logoLinks = {
+        logo1: Object.assign({ href:'', target:'_blank' }, (s.logoLinks.logo1 || {})),
+        logo2: Object.assign({ href:'', target:'_blank' }, (s.logoLinks.logo2 || {}))
+      };
+    } else if (s.logoHref) {
+      logoLinks.logo1.href = s.logoHref;
+      logoLinks.logo2.href = s.logoHref;
+    }
     if (s.sectionOrder) {
       sectionOrder = s.sectionOrder;
       FAIR_BUILDER_DEFAULT_ORDER.forEach(function(id) {
@@ -2245,6 +2270,34 @@ window.onLogoImgFile = function(input, key) {
   };
   reader.readAsDataURL(file);
 };
+
+/* v0.29.1: 헤더 로고 링크 적용 — .logo_f / .logo_f2 의 href + target 동기 */
+function applyLogoLinksToPreview() {
+  var doc = getPreviewDoc(); if (!doc) return;
+  var titleEl = document.getElementById('logo-title');
+  var title = titleEl ? titleEl.value : '';
+  ['logo1','logo2'].forEach(function(key) {
+    var sel = key === 'logo1' ? '.logo_f' : '.logo_f2';
+    var cfg = logoLinks[key] || { href: '', target: '_blank' };
+    doc.querySelectorAll(sel).forEach(function(a) {
+      if (cfg.href) {
+        a.setAttribute('href', cfg.href);
+        a.setAttribute('data-orig-href', cfg.href);  /* builder-attrs 룰 — export 시 href로 복원 */
+      } else {
+        a.setAttribute('href', '#');
+        a.removeAttribute('data-orig-href');
+      }
+      a.setAttribute('target', cfg.target || '_blank');
+      if (title) a.setAttribute('title', title);
+    });
+  });
+}
+function updateLogoLink(key, prop, val) {
+  if (!logoLinks[key]) logoLinks[key] = { href: '', target: '_blank' };
+  logoLinks[key][prop] = val;
+  applyLogoLinksToPreview();
+  saveState();
+}
 
 /* ── X1: 내보내기 설정 ── */
 function updateExportSetting(key, val) {
@@ -4415,6 +4468,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyAosToPreview();
   applyVisualRightToPreview();
   applyLogoImagesToPreview();
+  applyLogoLinksToPreview();  /* v0.29.1 */
   renderVisualTexts();  /* Step 2: 메인 비주얼 텍스트 요소 렌더링 */
   applyMediaModesToPreview();  /* v0.16.0: 비주얼 영역 이미지/텍스트 모드 복원 */
   renderNavPanel();
@@ -4792,6 +4846,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 17:01 (v0.29.1)',
+    items: [
+      '<strong>[v0.29.1]</strong> 헤더 로고 링크 logo1/logo2 분리 + target (새창/현재창) 옵션',
+      '<strong>[v0.29.1]</strong> 단일 logo-href 입력 → logo-href-logo1 / logo-href-logo2 + logo-target-logo1 / logo-target-logo2',
+      '<strong>[v0.29.1]</strong> 신규: logoLinks 상태 + applyLogoLinksToPreview() / updateLogoLink() — 입력 즉시 iframe .logo_f / .logo_f2 의 href + target 적용 + saveState',
+      '<strong>[v0.29.1]</strong> 마이그레이션: 기존 logoHref → logoLinks.logo1.href / logoLinks.logo2.href 양쪽 자동 복사',
+      '<strong>[v0.29.1]</strong> 페이지 로드 시 입력 필드/select 값 자동 복원',
+      '<strong>[v0.29.1]</strong> 미해결 이슈 메모리 등록: 색상 팔레트 커스텀 (브라우저 네이티브 picker 제어 불가) — 향후 작업',
+    ]
+  },
   {
     date: '2026.04.28 16:54 (v0.29.0)',
     items: [
@@ -5762,6 +5827,14 @@ document.addEventListener('click', function(e) {
 (function() {
   if (logoImages.logo1) { var el=document.getElementById('logo-url-logo1'); if(el) el.value=logoImages.logo1; var t=document.getElementById('logo-thumb-logo1'); if(t){t.src=logoImages.logo1;t.style.display='block';} }
   if (logoImages.logo2) { var el=document.getElementById('logo-url-logo2'); if(el) el.value=logoImages.logo2; var t=document.getElementById('logo-thumb-logo2'); if(t){t.src=logoImages.logo2;t.style.display='block';} }
+  /* v0.29.1: 로고 링크/타겟 UI 복원 */
+  ['logo1','logo2'].forEach(function(key) {
+    var lk = (logoLinks && logoLinks[key]) || { href:'', target:'_blank' };
+    var hi = document.getElementById('logo-href-' + key);
+    var ti = document.getElementById('logo-target-' + key);
+    if (hi) hi.value = lk.href || '';
+    if (ti) ti.value = lk.target || '_blank';
+  });
 })();
 </script>
 
