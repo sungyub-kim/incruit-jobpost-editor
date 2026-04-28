@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.22.7</span>
+  <span id="ver-badge" title="배포 버전">v0.23.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -635,10 +635,15 @@ var previewBreakpoint = 'desktop';  /* R3: 반응형 미리보기 선택 breakpo
 var posterConfig = 'both'; /* 'both' | 'online' | 'offline' */
 var navLinks    = [];  /* S2: 네비게이션 링크 [{text,href}] */
 var navHoverStyle = { color: '', bgColor: '' };  /* v0.19.0: nav 호버 색상/배경 */
-var joblistTabs = [];  /* S1: 채용공고 탭 [{name, enabled, boardType, subTabsEnabled, subTabs:[{name}]}] */
+var joblistTabs = [];  /* S1: 채용공고 탭 [{name, enabled, boardType, subTabsEnabled, subTabs:[{name}], search:{job,local}}] */
 var joblistMenuEnabled = true;     /* v0.22.4: 1뎁스 탭 메뉴 자체 사용 여부 */
-var joblistGlobalBoardType = 'ad'; /* v0.22.4: 탭 메뉴 off일 때 단일 게시판 타입 */
-var joblistGlobalSearch = { job: true, local: true }; /* v0.22.4: 탭 off 시 검색 영역 */
+/* v0.23.0: 탭 off 시 글로벌 단일 설정 (joblistTabs[i]와 동일 구조) */
+var joblistGlobal = {
+  search: { job: true, local: true },
+  boardType: 'ad',
+  subTabsEnabled: false,
+  subTabs: []
+};
 var JOBLIST_TAB_MAX = 5;
 var JOBLIST_TAB_MIN = 2;
 var SUBTAB_MAX = 5;
@@ -745,8 +750,7 @@ function saveState() {
     navHoverStyle:  navHoverStyle,
     joblistTabs:    joblistTabs,
     joblistMenuEnabled: joblistMenuEnabled,
-    joblistGlobalBoardType: joblistGlobalBoardType,
-    joblistGlobalSearch: joblistGlobalSearch
+    joblistGlobal:  joblistGlobal
   }));
 }
 
@@ -840,10 +844,23 @@ function loadState() {
       });
     }
     if (s.navHoverStyle) navHoverStyle = Object.assign({ color:'', bgColor:'' }, s.navHoverStyle);
-    /* v0.22.4: 글로벌 탭 메뉴 상태 마이그레이션 */
+    /* v0.22.4/v0.23.0: 글로벌 탭 메뉴 상태 마이그레이션 */
     if (s.joblistMenuEnabled !== undefined) joblistMenuEnabled = s.joblistMenuEnabled;
-    if (s.joblistGlobalBoardType) joblistGlobalBoardType = s.joblistGlobalBoardType;
-    if (s.joblistGlobalSearch) joblistGlobalSearch = Object.assign({ job: true, local: true }, s.joblistGlobalSearch);
+    /* v0.23.0: 신구 데이터 흡수 — joblistGlobal 통합 객체 */
+    if (s.joblistGlobal) {
+      joblistGlobal = Object.assign({
+        search: { job: true, local: true },
+        boardType: 'ad',
+        subTabsEnabled: false,
+        subTabs: []
+      }, s.joblistGlobal);
+      if (!joblistGlobal.search || typeof joblistGlobal.search !== 'object')
+        joblistGlobal.search = { job: true, local: true };
+      if (!Array.isArray(joblistGlobal.subTabs)) joblistGlobal.subTabs = [];
+    }
+    /* v0.22.x 분리 변수 흡수 (호환) */
+    if (s.joblistGlobalBoardType) joblistGlobal.boardType = s.joblistGlobalBoardType;
+    if (s.joblistGlobalSearch) joblistGlobal.search = Object.assign({ job: true, local: true }, s.joblistGlobalSearch);
     if (s.joblistTabs) {
       joblistTabs = s.joblistTabs;
       /* v0.21.0: enabled 마이그레이션 — 기존 데이터에 없으면 true */
@@ -1113,18 +1130,28 @@ function renderTabPanel() {
     '<div style="font-size:10px;color:#9ca3af;margin-top:4px;">' + (joblistMenuEnabled ? '탭 2~5개 사용 (각 탭마다 검색/게시판 설정)' : '탭 없이 단일 게시판 표시') + '</div>' +
   '</div>';
 
-  /* v0.22.4: 탭 메뉴 off일 때 글로벌 게시판/검색 컨트롤 */
+  /* v0.23.0: 탭 메뉴 off일 때 글로벌 단일 카드 (검색/게시판/sub-tab 모두 포함) */
   if (!joblistMenuEnabled) {
+    var g = joblistGlobal;
     html += '<div style="background:rgba(30,41,59,0.5);border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +
-      '<div style="font-size:11px;color:#9ca3af;font-weight:600;margin-bottom:6px;">검색 영역</div>' +
+      /* 2뎁스 탭 사용 토글 */
+      '<label style="display:flex;align-items:center;gap:6px;font-size:11px;color:#9ca3af;font-weight:600;margin-bottom:8px;">' +
+        '<span>2뎁스 탭 사용</span>' +
+        '<label class="toggle" style="margin-left:auto;"><input type="checkbox" ' + (g.subTabsEnabled ? 'checked' : '') + ' onchange="toggleGlobalSubTabs(this.checked)"><span class="toggle-slider"></span></label>' +
+      '</label>' +
+      /* sub-tab 항목 (활성 시) */
+      (g.subTabsEnabled ? buildGlobalSubTabsUI(g.subTabs) : '') +
+      /* 검색 */
+      '<div style="font-size:11px;color:#9ca3af;font-weight:600;margin:8px 0 6px;">검색 영역</div>' +
       '<div style="display:flex;gap:4px;margin-bottom:10px;">' +
-        '<button onclick="toggleGlobalSearch(\'job\')" style="flex:1;padding:5px;background:' + (joblistGlobalSearch.job ? '#2563eb' : '#0f172a') + ';color:' + (joblistGlobalSearch.job ? '#fff' : '#64748b') + ';border:1px solid ' + (joblistGlobalSearch.job ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + (joblistGlobalSearch.job ? '700' : '400') + ';">' + (joblistGlobalSearch.job ? '✓ ' : '') + '🏢 직종</button>' +
-        '<button onclick="toggleGlobalSearch(\'local\')" style="flex:1;padding:5px;background:' + (joblistGlobalSearch.local ? '#2563eb' : '#0f172a') + ';color:' + (joblistGlobalSearch.local ? '#fff' : '#64748b') + ';border:1px solid ' + (joblistGlobalSearch.local ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + (joblistGlobalSearch.local ? '700' : '400') + ';">' + (joblistGlobalSearch.local ? '✓ ' : '') + '📍 지역</button>' +
+        '<button onclick="toggleGlobalSearch(\'job\')" style="flex:1;padding:5px;background:' + (g.search.job ? '#2563eb' : '#0f172a') + ';color:' + (g.search.job ? '#fff' : '#64748b') + ';border:1px solid ' + (g.search.job ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + (g.search.job ? '700' : '400') + ';">' + (g.search.job ? '✓ ' : '') + '🏢 직종</button>' +
+        '<button onclick="toggleGlobalSearch(\'local\')" style="flex:1;padding:5px;background:' + (g.search.local ? '#2563eb' : '#0f172a') + ';color:' + (g.search.local ? '#fff' : '#64748b') + ';border:1px solid ' + (g.search.local ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + (g.search.local ? '700' : '400') + ';">' + (g.search.local ? '✓ ' : '') + '📍 지역</button>' +
       '</div>' +
+      /* 게시판 */
       '<div style="font-size:11px;color:#9ca3af;font-weight:600;margin-bottom:6px;">게시판 형식</div>' +
       '<div style="display:flex;gap:4px;">' +
-        '<button onclick="setGlobalBoardType(\'ad\')" style="flex:1;padding:6px;background:' + (joblistGlobalBoardType === 'ad' ? '#2563eb' : '#0f172a') + ';color:' + (joblistGlobalBoardType === 'ad' ? '#fff' : '#64748b') + ';border:1px solid ' + (joblistGlobalBoardType === 'ad' ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (joblistGlobalBoardType === 'ad' ? '700' : '400') + ';">' + (joblistGlobalBoardType === 'ad' ? '✓ ' : '') + '🎯 광고형</button>' +
-        '<button onclick="setGlobalBoardType(\'list\')" style="flex:1;padding:6px;background:' + (joblistGlobalBoardType === 'list' ? '#2563eb' : '#0f172a') + ';color:' + (joblistGlobalBoardType === 'list' ? '#fff' : '#64748b') + ';border:1px solid ' + (joblistGlobalBoardType === 'list' ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (joblistGlobalBoardType === 'list' ? '700' : '400') + ';">' + (joblistGlobalBoardType === 'list' ? '✓ ' : '') + '📋 리스트형</button>' +
+        '<button onclick="setGlobalBoardType(\'ad\')" style="flex:1;padding:6px;background:' + (g.boardType === 'ad' ? '#2563eb' : '#0f172a') + ';color:' + (g.boardType === 'ad' ? '#fff' : '#64748b') + ';border:1px solid ' + (g.boardType === 'ad' ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (g.boardType === 'ad' ? '700' : '400') + ';">' + (g.boardType === 'ad' ? '✓ ' : '') + '🎯 광고형</button>' +
+        '<button onclick="setGlobalBoardType(\'list\')" style="flex:1;padding:6px;background:' + (g.boardType === 'list' ? '#2563eb' : '#0f172a') + ';color:' + (g.boardType === 'list' ? '#fff' : '#64748b') + ';border:1px solid ' + (g.boardType === 'list' ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (g.boardType === 'list' ? '700' : '400') + ';">' + (g.boardType === 'list' ? '✓ ' : '') + '📋 리스트형</button>' +
       '</div>' +
     '</div>';
     el.innerHTML = html;
@@ -1195,17 +1222,48 @@ function toggleJoblistMenu(enabled) {
   saveState();
 }
 
-/* v0.22.4: 글로벌 검색 토글 (탭 메뉴 off일 때) */
+/* v0.23.0: 글로벌 컨트롤 (탭 메뉴 off 시) — joblistGlobal 객체 직접 조작 */
 function toggleGlobalSearch(key) {
-  joblistGlobalSearch[key] = !joblistGlobalSearch[key];
+  joblistGlobal.search[key] = !joblistGlobal.search[key];
   applyTabsToPreview();
   renderTabPanel();
   saveState();
 }
-
-/* v0.22.4: 글로벌 게시판 타입 (탭 메뉴 off일 때) */
 function setGlobalBoardType(type) {
-  joblistGlobalBoardType = type;
+  joblistGlobal.boardType = type;
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+function toggleGlobalSubTabs(enabled) {
+  joblistGlobal.subTabsEnabled = enabled;
+  if (enabled && joblistGlobal.subTabs.length < SUBTAB_MIN) {
+    while (joblistGlobal.subTabs.length < SUBTAB_MIN) {
+      joblistGlobal.subTabs.push({ name: '서브탭 ' + (joblistGlobal.subTabs.length + 1) });
+    }
+  }
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+function updateGlobalSubTab(j, val) {
+  if (joblistGlobal.subTabs[j]) {
+    joblistGlobal.subTabs[j].name = val;
+    applyTabsToPreview();
+    saveState();
+  }
+}
+function addGlobalSubTab() {
+  if (joblistGlobal.subTabs.length >= SUBTAB_MAX) return;
+  joblistGlobal.subTabs.push({ name: '서브탭 ' + (joblistGlobal.subTabs.length + 1) });
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+function removeGlobalSubTab(j) {
+  if (joblistGlobal.subTabs.length <= SUBTAB_MIN) return;
+  if (!confirm('"' + (joblistGlobal.subTabs[j].name || '서브탭') + '" 제거?')) return;
+  joblistGlobal.subTabs.splice(j, 1);
   applyTabsToPreview();
   renderTabPanel();
   saveState();
@@ -1235,6 +1293,25 @@ function toggleJoblistSubTabs(i, enabled) {
   applyTabsToPreview();
   renderTabPanel();
   saveState();
+}
+
+/* v0.23.0: 글로벌 sub-tab 항목 UI (탭 메뉴 off 시) */
+function buildGlobalSubTabsUI(subTabs) {
+  var html = '<div style="margin-top:6px;padding:6px;background:rgba(15,23,42,0.5);border-radius:4px;">' +
+    '<div style="font-size:10px;color:#9ca3af;margin-bottom:4px;">2뎁스 탭 항목</div>';
+  subTabs.forEach(function(st, j) {
+    html += '<div style="display:flex;gap:4px;margin-bottom:3px;align-items:center;">' +
+      '<input type="text" value="' + esc(st.name) + '" oninput="updateGlobalSubTab(' + j + ',this.value)" style="flex:1;font-size:11px;padding:3px 6px;">' +
+      (subTabs.length > SUBTAB_MIN
+        ? '<button onclick="removeGlobalSubTab(' + j + ')" style="background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:20px;height:22px;cursor:pointer;font-size:10px;padding:0;">✕</button>'
+        : '') +
+    '</div>';
+  });
+  if (subTabs.length < SUBTAB_MAX) {
+    html += '<button onclick="addGlobalSubTab()" style="width:100%;background:#1e40af;color:#fff;border:none;border-radius:3px;padding:4px;cursor:pointer;font-size:10px;font-weight:600;margin-top:2px;">+ 서브탭 추가 (' + subTabs.length + '/' + SUBTAB_MAX + ')</button>';
+  }
+  html += '</div>';
+  return html;
 }
 
 /* v0.22.1: 2뎁스 탭 항목 UI */
@@ -1326,65 +1403,150 @@ function removeJoblistTab(i) {
 }
 
 /* v0.21.0: 채용관 탭 동기 — 텍스트 + on/off + DOM 추가/제거 */
+/* v0.23.0: 헬퍼 — tab_content에 검색 영역 적용 */
+function applySearchToContent(content, search) {
+  if (!content || !search) return;
+  var pcSearch = content.querySelector('.search_job_tab');
+  var mJob = content.querySelector('.swiper-container.societyGroupTab.job');
+  var mLocal = content.querySelector('.swiper-container.societyGroupTab.local');
+  if (pcSearch) {
+    if (search.job || search.local) {
+      pcSearch.style.removeProperty('display');
+      if (search.job && search.local) pcSearch.classList.add('margin');
+      else pcSearch.classList.remove('margin');
+    } else {
+      pcSearch.style.setProperty('display', 'none', 'important');
+    }
+  }
+  if (mJob) {
+    if (search.job) mJob.style.removeProperty('display');
+    else mJob.style.setProperty('display', 'none', 'important');
+  }
+  if (mLocal) {
+    if (search.local) mLocal.style.removeProperty('display');
+    else mLocal.style.setProperty('display', 'none', 'important');
+  }
+}
+
+/* v0.23.0: 헬퍼 — tab_content에 게시판 적용 (마크업 보장 + display 토글) */
+function applyBoardToContent(content, boardType, sec) {
+  if (!content) return;
+  /* 마크업 보장: 광고형/리스트형 둘 다 보장 (boardType 토글 즉시 동작) */
+  ['.n_job_list_new.highest', '.cPrdlists_wrap'].forEach(function(sel) {
+    if (!content.querySelector(sel)) {
+      var ref = sec.querySelector(sel);
+      if (ref) {
+        var clone = ref.cloneNode(true);
+        clone.removeAttribute('id');
+        clone.style.removeProperty('display');
+        content.appendChild(clone);  /* .tab_content 직접 자식 */
+      }
+    }
+  });
+  /* display 토글 */
+  content.querySelectorAll('.n_job_list_new.highest').forEach(function(b) {
+    if (boardType === 'ad') b.style.removeProperty('display');
+    else b.style.setProperty('display', 'none', 'important');
+  });
+  content.querySelectorAll('.cPrdlists_wrap').forEach(function(b) {
+    if (boardType === 'list') b.style.removeProperty('display');
+    else b.style.setProperty('display', 'none', 'important');
+  });
+}
+
+/* v0.23.0: 헬퍼 — tab_content에 2뎁스 sub-tab 적용 */
+function applySubTabsToContent(content, config, sec) {
+  if (!content) return;
+  var subTab = content.querySelector('.sub-tab');
+  if (config.subTabsEnabled) {
+    if (!subTab) {
+      var ref = sec.querySelector('.sub-tab');
+      if (ref) {
+        subTab = ref.cloneNode(true);
+        var firstWr = content.querySelector(':scope > .wr');
+        if (firstWr) firstWr.parentNode.insertBefore(subTab, firstWr.nextSibling);
+        else content.insertBefore(subTab, content.firstChild);
+      }
+    }
+    if (subTab) {
+      subTab.style.removeProperty('display');
+      var container = subTab.querySelector('.container') || subTab;
+      var items = Array.prototype.slice.call(container.querySelectorAll(':scope > .sub-tab__item'));
+      var subTabsList = config.subTabs || [];
+      if (items.length > 0 && subTabsList.length > items.length) {
+        var lastItem = items[items.length - 1];
+        while (items.length < subTabsList.length) {
+          var itemClone = lastItem.cloneNode(true);
+          container.appendChild(itemClone);
+          items.push(itemClone);
+        }
+      } else if (subTabsList.length < items.length) {
+        for (var k = items.length - 1; k >= subTabsList.length; k--) {
+          if (items[k].parentNode) items[k].parentNode.removeChild(items[k]);
+        }
+        items.length = subTabsList.length;
+      }
+      items.forEach(function(it, k) {
+        var a = it.querySelector('.sub-tab__link');
+        if (a && subTabsList[k]) {
+          a.textContent = subTabsList[k].name;
+          if (k === 0) a.classList.add('on');
+          else a.classList.remove('on');
+        }
+      });
+    }
+  } else if (subTab) {
+    subTab.style.setProperty('display', 'none', 'important');
+  }
+}
+
+/* v0.23.0: 재구조화 — 탭 메뉴 ON/OFF 분기 명확 + 헬퍼 분리 */
 function applyTabsToPreview() {
   var doc = getPreviewDoc();
-  if (!doc || !joblistTabs.length) return;
+  if (!doc) return;
   var sec = doc.querySelector('[data-builder-section="section_joblist"]');
   if (!sec) return;
-  var tabsWrap = sec.querySelector('.tabs > .wr');           /* input + label 컨테이너 */
-  var tabsContainer = sec.querySelector('.tabs');             /* tab_content들의 부모 */
+  var tabsWrap = sec.querySelector('.tabs > .wr');
+  var tabsContainer = sec.querySelector('.tabs');
   if (!tabsWrap || !tabsContainer) return;
 
-  /* v0.22.7: cleanup 강화 — 모든 inline display 초기화 (이전 상태 잔존 완전 제거) */
+  /* === Cleanup: 모든 inline display 초기화 === */
   tabsWrap.style.removeProperty('display');
-  tabsWrap.querySelectorAll('input[type=radio]').forEach(function(inp) { inp.style.removeProperty('display'); });
-  tabsWrap.querySelectorAll('label.tab_item').forEach(function(l) { l.style.removeProperty('display'); });
+  tabsWrap.querySelectorAll('input[type=radio], label.tab_item').forEach(function(el) {
+    el.style.removeProperty('display');
+  });
   var allContents = sec.querySelectorAll('.tabs > .tab_content');
   allContents.forEach(function(c) { c.style.removeProperty('display'); });
 
-  /* v0.22.4: 탭 메뉴 사용 여부 (라디오/라벨 컨테이너 .wr 표시 토글) */
-  if (!joblistMenuEnabled) tabsWrap.style.setProperty('display', 'none', 'important');
-
-  /* 현재 DOM의 라디오/라벨/컨텐츠 수집 */
+  /* === DOM 수집 === */
   var inputs = Array.prototype.slice.call(tabsWrap.querySelectorAll('input[type=radio]'));
   var labels = Array.prototype.slice.call(tabsWrap.querySelectorAll('label.tab_item'));
   var contents = Array.prototype.slice.call(tabsContainer.querySelectorAll(':scope > .tab_content'));
 
-  /* DOM 개수 < 데이터 개수: 마지막 input/label/content 클론하여 추가 */
+  /* === DOM 동기 (joblistTabs.length에 맞게) === */
   while (inputs.length < joblistTabs.length) {
     var newIdx = inputs.length + 1;
-    var newId = 'cont' + newIdx;
-    var newContId = 't_cont' + newIdx;
-    /* input 클론 */
     var inpClone = inputs[inputs.length - 1].cloneNode(false);
-    inpClone.id = newId;
+    inpClone.id = 'cont' + newIdx;
     inpClone.checked = false;
-    /* label 클론 */
     var lblClone = labels[labels.length - 1].cloneNode(true);
-    lblClone.setAttribute('for', newId);
+    lblClone.setAttribute('for', 'cont' + newIdx);
     lblClone.classList.remove('last');
-    /* tab_content 클론 (마지막 것 — 동일 구조) */
     var contClone = null;
     if (contents.length) {
       contClone = contents[contents.length - 1].cloneNode(true);
-      contClone.id = newContId;
-      contClone.style.display = 'none';
+      contClone.id = 't_cont' + newIdx;
     }
-    /* 마지막 label 뒤에 input + label 추가 */
     var lastLabel = labels[labels.length - 1];
     lastLabel.parentNode.insertBefore(inpClone, lastLabel.nextSibling);
     inpClone.parentNode.insertBefore(lblClone, inpClone.nextSibling);
-    /* 마지막 tab_content 뒤에 content 추가 */
     if (contClone) {
-      var lastCont = contents[contents.length - 1];
-      lastCont.parentNode.insertBefore(contClone, lastCont.nextSibling);
+      contents[contents.length - 1].parentNode.insertBefore(contClone, contents[contents.length - 1].nextSibling);
       contents.push(contClone);
     }
     inputs.push(inpClone);
     labels.push(lblClone);
   }
-
-  /* DOM 개수 > 데이터 개수: 초과분 제거 */
   while (inputs.length > joblistTabs.length) {
     var rmInp = inputs.pop();
     var rmLbl = labels.pop();
@@ -1395,183 +1557,63 @@ function applyTabsToPreview() {
       if (rmCont && rmCont.parentNode) rmCont.parentNode.removeChild(rmCont);
     }
   }
-
-  /* 마지막 라벨에만 .last 클래스 적용 */
+  /* 마지막 라벨에만 .last */
   labels.forEach(function(lbl, i) {
     if (i === labels.length - 1) lbl.classList.add('last');
     else lbl.classList.remove('last');
   });
 
-  /* 텍스트 + on/off 동기 */
-  joblistTabs.forEach(function(tab, i) {
-    var enabled = tab.enabled !== false;
-    if (labels[i]) labels[i].textContent = tab.name;
-    if (inputs[i]) inputs[i].style.display = enabled ? '' : 'none';
-    if (labels[i]) labels[i].style.display = enabled ? '' : 'none';
-    if (contents[i]) {
-      if (!enabled) contents[i].style.setProperty('display', 'none', 'important');
-      /* enabled면 라디오 :checked CSS가 결정 — 강제 display 해제 */
-      else if (contents[i].style.getPropertyPriority('display') === 'important') {
-        contents[i].style.removeProperty('display');
-      }
+  /* === 모드별 분기 === */
+  if (joblistMenuEnabled) {
+    /* === 탭 메뉴 ON === */
+    /* 라벨/라디오/컨텐츠 enabled 동기 */
+    joblistTabs.forEach(function(tab, i) {
+      var enabled = tab.enabled !== false;
+      if (labels[i]) labels[i].textContent = tab.name;
+      if (inputs[i]) inputs[i].style.display = enabled ? '' : 'none';
+      if (labels[i]) labels[i].style.display = enabled ? '' : 'none';
+      if (contents[i] && !enabled) contents[i].style.setProperty('display', 'none', 'important');
+    });
+    /* 첫 활성 라디오 checked (모두 disabled여도 첫 탭 강제 표시) */
+    var firstEn = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
+    if (firstEn < 0) {
+      firstEn = 0;
+      if (inputs[0]) inputs[0].style.removeProperty('display');
+      if (labels[0]) labels[0].style.removeProperty('display');
+      if (contents[0]) contents[0].style.removeProperty('display');
     }
-  });
-
-  /* 첫 활성화 탭을 자동 checked */
-  var firstEnabledIdx = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
-  /* v0.22.7: 모든 탭 disabled여도 첫 번째 탭 강제 표시 (빈 화면 방지) */
-  if (firstEnabledIdx < 0) {
-    firstEnabledIdx = 0;
-    if (inputs[0]) inputs[0].style.removeProperty('display');
-    if (labels[0]) labels[0].style.removeProperty('display');
-    if (contents[0]) contents[0].style.removeProperty('display');
-  }
-  if (firstEnabledIdx >= 0 && inputs[firstEnabledIdx]) {
-    inputs.forEach(function(inp) { inp.checked = false; });
-    inputs[firstEnabledIdx].checked = true;
-  }
-
-  /* v0.22.4/0.22.5/0.22.6: 탭 메뉴 off 시 첫 활성 탭만 표시 + 글로벌 설정 적용 */
-  if (!joblistMenuEnabled) {
-    var firstEnIdx = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
-    if (firstEnIdx < 0) firstEnIdx = 0;
+    if (inputs[firstEn]) {
+      inputs.forEach(function(inp) { inp.checked = false; });
+      inputs[firstEn].checked = true;
+    }
+    /* 각 탭에 자체 설정 적용 (검색/게시판/sub-tab) */
+    joblistTabs.forEach(function(tab, i) {
+      if (!contents[i]) return;
+      applySearchToContent(contents[i], tab.search || { job: true, local: true });
+      applyBoardToContent(contents[i], tab.boardType || 'list', sec);
+      applySubTabsToContent(contents[i], tab, sec);
+    });
+  } else {
+    /* === 탭 메뉴 OFF === */
+    /* 라디오/라벨 컨테이너 hide */
+    tabsWrap.style.setProperty('display', 'none', 'important');
+    /* 첫 .tab_content만 강제 표시, 나머지 hide */
     contents.forEach(function(c, i) {
-      if (i === firstEnIdx) {
-        c.style.setProperty('display', 'block', 'important');
-      } else {
-        c.style.setProperty('display', 'none', 'important');
-      }
+      if (i === 0) c.style.setProperty('display', 'block', 'important');
+      else c.style.setProperty('display', 'none', 'important');
     });
-    if (joblistTabs[firstEnIdx]) {
-      joblistTabs[firstEnIdx].boardType = joblistGlobalBoardType;
-      joblistTabs[firstEnIdx].search = Object.assign({}, joblistGlobalSearch);
-      joblistTabs[firstEnIdx].subTabsEnabled = false;
+    /* 첫 라디오 checked (CSS :checked 백업) */
+    if (inputs[0]) {
+      inputs.forEach(function(inp) { inp.checked = false; });
+      inputs[0].checked = true;
     }
-    /* v0.22.6: 단일 모드 첫 탭에 광고형/리스트형 마크업 둘 다 보장 (boardType 토글 가능) */
-    if (contents[firstEnIdx]) {
-      ['.n_job_list_new.highest', '.cPrdlists_wrap'].forEach(function(s) {
-        if (!contents[firstEnIdx].querySelector(s)) {
-          var ref = sec.querySelector(s);
-          if (ref) {
-            var clone = ref.cloneNode(true);
-            clone.removeAttribute('id');
-            clone.style.removeProperty('display');
-            contents[firstEnIdx].appendChild(clone);
-          }
-        }
-      });
-    }
-    /* 첫 라디오 강제 checked (CSS :checked 기반 .tab_content 표시 백업) */
-    var inps = tabsWrap.querySelectorAll('input[type=radio]');
-    if (inps[firstEnIdx]) {
-      inps.forEach(function(inp) { inp.checked = false; });
-      inps[firstEnIdx].checked = true;
+    /* 첫 .tab_content에 글로벌 설정 적용 */
+    if (contents[0]) {
+      applySearchToContent(contents[0], joblistGlobal.search);
+      applyBoardToContent(contents[0], joblistGlobal.boardType, sec);
+      applySubTabsToContent(contents[0], joblistGlobal, sec);
     }
   }
-
-  /* v0.21.4/0.22.3: 탭별 게시판 형식 토글 + 마크업 자동 클론 */
-  joblistTabs.forEach(function(tab, i) {
-    if (!contents[i]) return;
-    var boardType = tab.boardType || 'list';
-    /* v0.22.3/0.22.6: 선택한 boardType 마크업이 없으면 다른 탭에서 reference 클론
-     *                  → .tab_content 직접 자식으로 추가 (원본 temp.html 마크업 위치) */
-    var needSel = boardType === 'ad' ? '.n_job_list_new.highest' : '.cPrdlists_wrap';
-    if (!contents[i].querySelector(needSel)) {
-      var ref = sec.querySelector(needSel);
-      if (ref) {
-        var refClone = ref.cloneNode(true);
-        refClone.removeAttribute('id');
-        refClone.style.removeProperty('display');
-        contents[i].appendChild(refClone);  /* .tab_content 직접 자식 */
-      }
-    }
-    var adBoards   = contents[i].querySelectorAll('.n_job_list_new.highest');
-    var listBoards = contents[i].querySelectorAll('.cPrdlists_wrap');
-    adBoards.forEach(function(b) {
-      if (boardType === 'ad') b.style.removeProperty('display');
-      else b.style.setProperty('display', 'none', 'important');
-    });
-    listBoards.forEach(function(b) {
-      if (boardType === 'list') b.style.removeProperty('display');
-      else b.style.setProperty('display', 'none', 'important');
-    });
-    /* v0.22.0/0.22.1: 2뎁스 sub-tab — 마크업 자동 클론 + 항목 동기 */
-    var subTab = contents[i].querySelector('.sub-tab');
-    if (tab.subTabsEnabled) {
-      /* sub-tab 마크업 없으면 다른 탭에서 reference 클론 */
-      if (!subTab) {
-        var refSubTab = sec.querySelector('.sub-tab');
-        if (refSubTab) {
-          var clone = refSubTab.cloneNode(true);
-          /* 기존 wr 다음에 삽입 (wr 내부가 아니라 .tab_content 직접 자식) */
-          var firstWr = contents[i].querySelector('.wr');
-          if (firstWr && firstWr.parentNode === contents[i]) {
-            firstWr.parentNode.insertBefore(clone, firstWr.nextSibling);
-          } else {
-            contents[i].insertBefore(clone, contents[i].firstChild);
-          }
-          subTab = clone;
-        }
-      }
-      if (subTab) {
-        subTab.style.removeProperty('display');
-        /* 항목 동기 */
-        var container = subTab.querySelector('.container') || subTab;
-        var items = Array.prototype.slice.call(container.querySelectorAll(':scope > .sub-tab__item'));
-        var subTabsList = tab.subTabs || [];
-        /* 길이 맞추기: 부족하면 마지막 클론, 초과면 제거 */
-        if (items.length > 0 && subTabsList.length > items.length) {
-          var lastItem = items[items.length - 1];
-          while (items.length < subTabsList.length) {
-            var itemClone = lastItem.cloneNode(true);
-            container.appendChild(itemClone);
-            items.push(itemClone);
-          }
-        } else if (subTabsList.length < items.length) {
-          for (var k = items.length - 1; k >= subTabsList.length; k--) {
-            if (items[k].parentNode) items[k].parentNode.removeChild(items[k]);
-          }
-          items.length = subTabsList.length;
-        }
-        /* 텍스트 + 첫 항목 .on 부여 */
-        items.forEach(function(it, k) {
-          var a = it.querySelector('.sub-tab__link');
-          if (a && subTabsList[k]) {
-            a.textContent = subTabsList[k].name;
-            if (k === 0) a.classList.add('on');
-            else a.classList.remove('on');
-          }
-        });
-      }
-    } else if (subTab) {
-      subTab.style.setProperty('display', 'none', 'important');
-    }
-
-    /* v0.22.2: 검색 영역 직종/지역 토글 */
-    var search = tab.search || { job: true, local: true };
-    var pcSearch = contents[i].querySelector('.search_job_tab');
-    var mJob = contents[i].querySelector('.swiper-container.societyGroupTab.job');
-    var mLocal = contents[i].querySelector('.swiper-container.societyGroupTab.local');
-    /* PC: search_job_tab — 직종 또는 지역이 하나라도 있으면 표시, 둘 다면 .margin */
-    if (pcSearch) {
-      if (search.job || search.local) {
-        pcSearch.style.removeProperty('display');
-        if (search.job && search.local) pcSearch.classList.add('margin');
-        else pcSearch.classList.remove('margin');
-      } else {
-        pcSearch.style.setProperty('display', 'none', 'important');
-      }
-    }
-    /* 모바일 swiper: 직종 / 지역 각각 토글 */
-    if (mJob) {
-      if (search.job) mJob.style.removeProperty('display');
-      else mJob.style.setProperty('display', 'none', 'important');
-    }
-    if (mLocal) {
-      if (search.local) mLocal.style.removeProperty('display');
-      else mLocal.style.setProperty('display', 'none', 'important');
-    }
-  });
 }
 
 /* 공통: 고정 패널 토글 */
@@ -4854,6 +4896,18 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 11:30 (v0.23.0)',
+    items: [
+      '<strong>[v0.23.0]</strong> 채용관 재설계 — 5단계 작업 완료 (검색/게시판은 탭과 별개로 항상 노출)',
+      '<strong>[v0.23.0]</strong> Step 1: joblistGlobalBoardType/Search 분리 변수 → joblistGlobal 객체로 통합 (joblistTabs[i]와 동일 구조)',
+      '<strong>[v0.23.0]</strong> Step 2: 헬퍼 함수 분리 — applySearchToContent / applyBoardToContent / applySubTabsToContent (재사용 가능)',
+      '<strong>[v0.23.0]</strong> Step 3: applyTabsToPreview 재구조화 — 탭 ON/OFF 분기 명확화 + 헬퍼 호출',
+      '<strong>[v0.23.0]</strong> Step 4: 단일 모드 카드에 sub-tab 토글/항목 UI 추가 + buildGlobalSubTabsUI / toggleGlobalSubTabs 등 함수',
+      '<strong>[v0.23.0]</strong> 단일 모드: 검색/게시판/sub-tab 모두 적용 가능 (이전엔 sub-tab 강제 false였음)',
+      '<strong>[v0.23.0]</strong> v0.22.x 분리 변수는 loadState에서 자동 흡수 (호환)',
+    ]
+  },
   {
     date: '2026.04.28 10:52 (v0.22.7)',
     items: [
