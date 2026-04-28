@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.25.1</span>
+  <span id="ver-badge" title="배포 버전">v0.25.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1459,7 +1459,7 @@ function removeJoblistTab(i) {
 }
 
 /* v0.21.0: 채용관 탭 동기 — 텍스트 + on/off + DOM 추가/제거 */
-/* v0.25.1: 헬퍼 — tab_content에 검색 영역 적용 (PC 직종/지역 개별 토글) */
+/* v0.25.2: 헬퍼 — 검색 영역 적용 (CSS responsive 살리기 위해 ON 시 display 제거) */
 function applySearchToContent(content, search) {
   if (!content || !search) return;
   var pcSearch = content.querySelector('.search_job_tab');
@@ -1467,37 +1467,38 @@ function applySearchToContent(content, search) {
   var mLocal = content.querySelector('.swiper-container.societyGroupTab.local');
   var keywordWrap = content.querySelector('.search-form-wrap');
   if (pcSearch) {
-    /* v0.25.1: PC 직종/지역 개별 토글 — societyGroupTab-divided 안의 두 ul 각각 제어 */
     var divided = pcSearch.querySelector('.societyGroupTab-divided');
     var ulJob = divided ? divided.querySelector(':scope > ul.search_cont:not(.s-remove)') : null;
     var ulLocal = divided ? divided.querySelector(':scope > ul.search_cont.s-remove') : null;
+    /* PC 직종 ul: ON이면 display 제거 (CSS 기본), OFF면 강제 숨김 */
     if (ulJob) {
-      if (search.job) ulJob.style.setProperty('display', 'block', 'important');
+      if (search.job) ulJob.style.removeProperty('display');
       else ulJob.style.setProperty('display', 'none', 'important');
     }
     if (ulLocal) {
-      if (search.local) ulLocal.style.setProperty('display', 'block', 'important');
+      if (search.local) ulLocal.style.removeProperty('display');
       else ulLocal.style.setProperty('display', 'none', 'important');
     }
     /* PC 컨테이너 자체는 둘 다 off일 때만 숨김 */
     if (search.job || search.local) {
-      pcSearch.style.setProperty('display', 'block', 'important');
+      pcSearch.style.removeProperty('display');
       if (search.job && search.local) pcSearch.classList.add('margin');
       else pcSearch.classList.remove('margin');
     } else {
       pcSearch.style.setProperty('display', 'none', 'important');
     }
   }
+  /* 모바일 swiper: ON 시 display 제거 → CSS .mb_mView 미디어쿼리가 PC에서 자동 숨김 */
   if (mJob) {
-    if (search.job) mJob.style.setProperty('display', 'block', 'important');
+    if (search.job) mJob.style.removeProperty('display');
     else mJob.style.setProperty('display', 'none', 'important');
   }
   if (mLocal) {
-    if (search.local) mLocal.style.setProperty('display', 'block', 'important');
+    if (search.local) mLocal.style.removeProperty('display');
     else mLocal.style.setProperty('display', 'none', 'important');
   }
   if (keywordWrap) {
-    if (search.keyword !== false) keywordWrap.style.setProperty('display', 'block', 'important');
+    if (search.keyword !== false) keywordWrap.style.removeProperty('display');
     else keywordWrap.style.setProperty('display', 'none', 'important');
   }
 }
@@ -1667,26 +1668,27 @@ function applyTabsToPreview() {
   /* === 모드별 분기 === */
   if (joblistMenuEnabled) {
     /* === 탭 메뉴 ON === */
-    /* 라벨/라디오/컨텐츠 enabled 동기 */
+    /* 라벨/라디오/컨텐츠 enabled 동기 (v0.25.2: !important로 CSS 충돌 방지) */
     joblistTabs.forEach(function(tab, i) {
       var enabled = tab.enabled !== false;
       if (labels[i]) labels[i].textContent = tab.name;
-      if (inputs[i]) inputs[i].style.display = enabled ? '' : 'none';
-      if (labels[i]) labels[i].style.display = enabled ? '' : 'none';
+      if (inputs[i]) {
+        if (enabled) inputs[i].style.removeProperty('display');
+        else inputs[i].style.setProperty('display', 'none', 'important');
+      }
+      if (labels[i]) {
+        if (enabled) labels[i].style.removeProperty('display');
+        else labels[i].style.setProperty('display', 'none', 'important');
+      }
       if (contents[i] && !enabled) contents[i].style.setProperty('display', 'none', 'important');
     });
-    /* v0.24.1: 현재 checked 탭 보존 — 활성이면 유지, 비활성이거나 없으면만 첫 활성으로 */
+    /* v0.25.2: 모든 탭 disabled 시 강제 표시 제거 — 사용자 의도 존중 */
     var firstEn = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
-    if (firstEn < 0) {
-      firstEn = 0;
-      if (inputs[0]) inputs[0].style.removeProperty('display');
-      if (labels[0]) labels[0].style.removeProperty('display');
-      if (contents[0]) contents[0].style.removeProperty('display');
-    }
+    var allDisabled = firstEn < 0;
     var currentCheckedIdx = inputs.findIndex(function(inp) { return inp.checked; });
     var currentEnabled = currentCheckedIdx >= 0 && joblistTabs[currentCheckedIdx] && joblistTabs[currentCheckedIdx].enabled !== false;
-    if (!currentEnabled) {
-      /* 현재 checked가 비활성이거나 없을 때만 첫 활성으로 */
+    if (!allDisabled && !currentEnabled) {
+      /* 일부 활성 + 현재 checked가 비활성 → 첫 활성으로 */
       if (inputs[firstEn]) {
         inputs.forEach(function(inp) { inp.checked = false; });
         inputs[firstEn].checked = true;
@@ -1699,11 +1701,12 @@ function applyTabsToPreview() {
       applyBoardToContent(contents[i], tab.boardType || 'ad', sec);
       applySubTabsToContent(contents[i], tab, sec, 'tab' + i);
     });
-    /* v0.25.0: 현재 checked 탭 강제 표시 (cleanup이 inline display 제거 → CSS hidden 방지) */
+    /* v0.25.2: 모두 disabled면 모든 탭 컨텐츠 숨김. 아니면 active 탭만 표시 */
     var activeIdx = inputs.findIndex(function(inp) { return inp.checked; });
     if (activeIdx < 0) activeIdx = firstEn;
     contents.forEach(function(c, i) {
-      if (i === activeIdx) c.style.setProperty('display', 'block', 'important');
+      if (allDisabled) c.style.setProperty('display', 'none', 'important');
+      else if (i === activeIdx) c.style.setProperty('display', 'block', 'important');
       else c.style.setProperty('display', 'none', 'important');
     });
     /* v0.25.0: 라디오 변경 시 우리 apply 재실행 (temp.html JS의 inline display 덮어쓰기 회복) */
@@ -5048,6 +5051,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 14:17 (v0.25.2)',
+    items: [
+      '<strong>[v0.25.2]</strong> 채용관 핫픽스 — PC에서 모바일 swiper 동시 노출 + 탭 전부 disable 시 첫 탭 강제 잔존 해결',
+      '<strong>[v0.25.2]</strong> applySearchToContent: ON 시 display 제거 (CSS .mb_mView 미디어쿼리가 PC에서 모바일 swiper 자동 숨김 → 회복)',
+      '<strong>[v0.25.2]</strong> 이전 v0.25.0의 setProperty(display,block,!important) → CSS 미디어쿼리 무력화 부작용 → removeProperty로 변경',
+      '<strong>[v0.25.2]</strong> 모든 탭 disabled 시 첫 탭 강제 표시 코드 제거 — allDisabled 조건으로 모든 contents/labels 숨김',
+      '<strong>[v0.25.2]</strong> 라벨/라디오 enabled 동기에 !important 추가 (CSS .tab_item display:block과 충돌 방지)',
+    ]
+  },
   {
     date: '2026.04.28 14:09 (v0.25.1)',
     items: [
