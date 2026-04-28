@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.22.3</span>
+  <span id="ver-badge" title="배포 버전">v0.22.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -636,6 +636,9 @@ var posterConfig = 'both'; /* 'both' | 'online' | 'offline' */
 var navLinks    = [];  /* S2: 네비게이션 링크 [{text,href}] */
 var navHoverStyle = { color: '', bgColor: '' };  /* v0.19.0: nav 호버 색상/배경 */
 var joblistTabs = [];  /* S1: 채용공고 탭 [{name, enabled, boardType, subTabsEnabled, subTabs:[{name}]}] */
+var joblistMenuEnabled = true;     /* v0.22.4: 1뎁스 탭 메뉴 자체 사용 여부 */
+var joblistGlobalBoardType = 'ad'; /* v0.22.4: 탭 메뉴 off일 때 단일 게시판 타입 */
+var joblistGlobalSearch = { job: true, local: true }; /* v0.22.4: 탭 off 시 검색 영역 */
 var JOBLIST_TAB_MAX = 5;
 var JOBLIST_TAB_MIN = 2;
 var SUBTAB_MAX = 5;
@@ -740,7 +743,10 @@ function saveState() {
     sectionTemplates: sectionTemplates,
     navLinks:       navLinks,
     navHoverStyle:  navHoverStyle,
-    joblistTabs:    joblistTabs
+    joblistTabs:    joblistTabs,
+    joblistMenuEnabled: joblistMenuEnabled,
+    joblistGlobalBoardType: joblistGlobalBoardType,
+    joblistGlobalSearch: joblistGlobalSearch
   }));
 }
 
@@ -834,6 +840,10 @@ function loadState() {
       });
     }
     if (s.navHoverStyle) navHoverStyle = Object.assign({ color:'', bgColor:'' }, s.navHoverStyle);
+    /* v0.22.4: 글로벌 탭 메뉴 상태 마이그레이션 */
+    if (s.joblistMenuEnabled !== undefined) joblistMenuEnabled = s.joblistMenuEnabled;
+    if (s.joblistGlobalBoardType) joblistGlobalBoardType = s.joblistGlobalBoardType;
+    if (s.joblistGlobalSearch) joblistGlobalSearch = Object.assign({ job: true, local: true }, s.joblistGlobalSearch);
     if (s.joblistTabs) {
       joblistTabs = s.joblistTabs;
       /* v0.21.0: enabled 마이그레이션 — 기존 데이터에 없으면 true */
@@ -1093,6 +1103,35 @@ function renderTabPanel() {
   var el = document.getElementById('joblist-tab-list');
   if (!el) return;
   var html = '';
+
+  /* v0.22.4: 1뎁스 탭 메뉴 자체 사용 여부 토글 (최상단) */
+  html += '<div style="background:#1e293b;border:1px solid #334155;border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +
+    '<label style="display:flex;align-items:center;gap:8px;font-size:12px;color:#e5e7eb;font-weight:600;">' +
+      '<span>📋 1뎁스 탭 메뉴 사용</span>' +
+      '<label class="toggle" style="margin-left:auto;"><input type="checkbox" ' + (joblistMenuEnabled ? 'checked' : '') + ' onchange="toggleJoblistMenu(this.checked)"><span class="toggle-slider"></span></label>' +
+    '</label>' +
+    '<div style="font-size:10px;color:#9ca3af;margin-top:4px;">' + (joblistMenuEnabled ? '탭 2~5개 사용 (각 탭마다 검색/게시판 설정)' : '탭 없이 단일 게시판 표시') + '</div>' +
+  '</div>';
+
+  /* v0.22.4: 탭 메뉴 off일 때 글로벌 게시판/검색 컨트롤 */
+  if (!joblistMenuEnabled) {
+    html += '<div style="background:rgba(30,41,59,0.5);border-radius:6px;padding:10px 12px;margin-bottom:10px;">' +
+      '<div style="font-size:11px;color:#9ca3af;font-weight:600;margin-bottom:6px;">검색 영역</div>' +
+      '<div style="display:flex;gap:4px;margin-bottom:10px;">' +
+        '<button onclick="toggleGlobalSearch(\'job\')" style="flex:1;padding:5px;background:' + (joblistGlobalSearch.job ? '#2563eb' : '#0f172a') + ';color:' + (joblistGlobalSearch.job ? '#fff' : '#64748b') + ';border:1px solid ' + (joblistGlobalSearch.job ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + (joblistGlobalSearch.job ? '700' : '400') + ';">' + (joblistGlobalSearch.job ? '✓ ' : '') + '🏢 직종</button>' +
+        '<button onclick="toggleGlobalSearch(\'local\')" style="flex:1;padding:5px;background:' + (joblistGlobalSearch.local ? '#2563eb' : '#0f172a') + ';color:' + (joblistGlobalSearch.local ? '#fff' : '#64748b') + ';border:1px solid ' + (joblistGlobalSearch.local ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:10px;font-weight:' + (joblistGlobalSearch.local ? '700' : '400') + ';">' + (joblistGlobalSearch.local ? '✓ ' : '') + '📍 지역</button>' +
+      '</div>' +
+      '<div style="font-size:11px;color:#9ca3af;font-weight:600;margin-bottom:6px;">게시판 형식</div>' +
+      '<div style="display:flex;gap:4px;">' +
+        '<button onclick="setGlobalBoardType(\'ad\')" style="flex:1;padding:6px;background:' + (joblistGlobalBoardType === 'ad' ? '#2563eb' : '#0f172a') + ';color:' + (joblistGlobalBoardType === 'ad' ? '#fff' : '#64748b') + ';border:1px solid ' + (joblistGlobalBoardType === 'ad' ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (joblistGlobalBoardType === 'ad' ? '700' : '400') + ';">' + (joblistGlobalBoardType === 'ad' ? '✓ ' : '') + '🎯 광고형</button>' +
+        '<button onclick="setGlobalBoardType(\'list\')" style="flex:1;padding:6px;background:' + (joblistGlobalBoardType === 'list' ? '#2563eb' : '#0f172a') + ';color:' + (joblistGlobalBoardType === 'list' ? '#fff' : '#64748b') + ';border:1px solid ' + (joblistGlobalBoardType === 'list' ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (joblistGlobalBoardType === 'list' ? '700' : '400') + ';">' + (joblistGlobalBoardType === 'list' ? '✓ ' : '') + '📋 리스트형</button>' +
+      '</div>' +
+    '</div>';
+    el.innerHTML = html;
+    return;
+  }
+
+  /* 탭 메뉴 on일 때 기존 탭 카드 목록 표시 */
   if (!joblistTabs.length) {
     html = '<div style="font-size:11px;color:#4b5563;padding:4px 0;">미리보기 로드 후 표시됩니다.</div>';
   } else {
@@ -1145,6 +1184,30 @@ function updateJoblistTab(i, val) {
   if (!joblistTabs[i]) return;
   joblistTabs[i].name = val;
   applyTabsToPreview();
+  saveState();
+}
+
+/* v0.22.4: 1뎁스 탭 메뉴 자체 사용 여부 토글 */
+function toggleJoblistMenu(enabled) {
+  joblistMenuEnabled = enabled;
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+
+/* v0.22.4: 글로벌 검색 토글 (탭 메뉴 off일 때) */
+function toggleGlobalSearch(key) {
+  joblistGlobalSearch[key] = !joblistGlobalSearch[key];
+  applyTabsToPreview();
+  renderTabPanel();
+  saveState();
+}
+
+/* v0.22.4: 글로벌 게시판 타입 (탭 메뉴 off일 때) */
+function setGlobalBoardType(type) {
+  joblistGlobalBoardType = type;
+  applyTabsToPreview();
+  renderTabPanel();
   saveState();
 }
 
@@ -1272,6 +1335,10 @@ function applyTabsToPreview() {
   var tabsContainer = sec.querySelector('.tabs');             /* tab_content들의 부모 */
   if (!tabsWrap || !tabsContainer) return;
 
+  /* v0.22.4: 탭 메뉴 사용 여부 (라디오/라벨 컨테이너 .wr 표시 토글) */
+  if (joblistMenuEnabled) tabsWrap.style.removeProperty('display');
+  else tabsWrap.style.setProperty('display', 'none', 'important');
+
   /* 현재 DOM의 라디오/라벨/컨텐츠 수집 */
   var inputs = Array.prototype.slice.call(tabsWrap.querySelectorAll('input[type=radio]'));
   var labels = Array.prototype.slice.call(tabsWrap.querySelectorAll('label.tab_item'));
@@ -1349,6 +1416,21 @@ function applyTabsToPreview() {
   if (firstEnabledIdx >= 0 && inputs[firstEnabledIdx]) {
     inputs.forEach(function(inp) { inp.checked = false; });
     inputs[firstEnabledIdx].checked = true;
+  }
+
+  /* v0.22.4: 탭 메뉴 off 시 첫 활성 탭만 표시, 나머지 .tab_content는 숨김 */
+  if (!joblistMenuEnabled) {
+    var firstEnIdx = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
+    if (firstEnIdx < 0) firstEnIdx = 0;
+    contents.forEach(function(c, i) {
+      if (i === firstEnIdx) c.style.removeProperty('display');
+      else c.style.setProperty('display', 'none', 'important');
+    });
+    /* 글로벌 boardType / search를 첫 탭에 적용 */
+    if (joblistTabs[firstEnIdx]) {
+      joblistTabs[firstEnIdx].boardType = joblistGlobalBoardType;
+      joblistTabs[firstEnIdx].search = Object.assign({}, joblistGlobalSearch);
+    }
   }
 
   /* v0.21.4/0.22.3: 탭별 게시판 형식 토글 + 마크업 자동 클론 */
@@ -4737,6 +4819,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 10:15 (v0.22.4)',
+    items: [
+      '<strong>[v0.22.4]</strong> 채용관 5순위 누락 보강: 1뎁스 탭 메뉴 자체 on/off + 단일 모드 게시판 컨트롤',
+      '<strong>[v0.22.4]</strong> 사용자 보고 — "탭 메뉴 없을 때 게시판 타입 선택이 없다" 누락 발견',
+      '<strong>[v0.22.4]</strong> joblistMenuEnabled / joblistGlobalBoardType / joblistGlobalSearch 글로벌 상태 신규 + 마이그레이션',
+      '<strong>[v0.22.4]</strong> 우측 드로어 최상단: 📋 1뎁스 탭 메뉴 사용 토글 (off 시 단일 모드 컨트롤 노출)',
+      '<strong>[v0.22.4]</strong> 단일 모드 컨트롤: 검색(직종/지역) + 게시판(광고형/리스트형)',
+      '<strong>[v0.22.4]</strong> applyTabsToPreview: 탭 메뉴 off 시 .tabs > .wr 숨김 + 첫 활성 탭만 표시 + 글로벌 설정 적용',
+    ]
+  },
   {
     date: '2026.04.28 09:52 (v0.22.3)',
     items: [
