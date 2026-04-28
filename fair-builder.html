@@ -396,7 +396,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.28.0</span>
+  <span id="ver-badge" title="배포 버전">v0.28.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -477,6 +477,13 @@
 
       <!-- 스타일 탭 -->
       <div id="tab-style" class="tab-panel">
+        <div class="p-section-header">레이블</div>
+        <div id="label-toggles" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+          <div class="color-item">
+            <label style="flex:1;">서브타이틀 (전체)</label>
+            <label class="toggle"><input type="checkbox" id="global-subtitle-toggle" onchange="toggleAllSubTitles(this.checked)"><span class="toggle-slider"></span></label>
+          </div>
+        </div>
         <div class="p-section-header">CSS 색상 토큰</div>
         <div id="color-list">
           <!-- JS로 렌더링 -->
@@ -731,6 +738,7 @@ function saveState() {
     sectionBgImages:sectionBgImages,
     sectionSpacing: sectionSpacing,
     sectionTopTextEnabled: sectionTopTextEnabled,
+    globalSubTitleEnabled: window.globalSubTitleEnabled !== false,
     aosEnabled:          aosEnabled,
     visualRightVisible:  visualRightVisible,
     logoImages:          logoImages,
@@ -790,6 +798,7 @@ function loadState() {
     }
     /* v0.26.5: sectionAdvancedStyles 제거 — 기존 데이터는 silently 무시 */
     if (s.sectionTopTextEnabled) sectionTopTextEnabled = s.sectionTopTextEnabled;
+    if (s.globalSubTitleEnabled !== undefined) window.globalSubTitleEnabled = s.globalSubTitleEnabled;
     if (s.cssColors) {
       cssColors = s.cssColors;
       Object.keys(FAIR_BUILDER_COLORS).forEach(function(v) {
@@ -3080,14 +3089,20 @@ function buildSpacingPanel(sId) {
 
 /* v0.26.5: ST4 고급 스타일(테두리/그림자/투명도) 패널 + 적용 함수 제거 */
 
-/* v0.27.0: 섹션 상단 영문 텍스트(.sec_txt.basic.top) on/off */
+/* v0.27.0/v0.28.1: 섹션 상단 영문 텍스트(.sec_txt.basic.top) on/off
+ * - 글로벌 토글 OFF → 모든 섹션 숨김
+ * - 섹션별 토글 OFF → 해당 섹션만 숨김
+ * - 텍스트 내용이 비어있으면 자동 숨김 */
 function applyTopTextToPreview() {
   var doc = getPreviewDoc(); if (!doc) return;
   doc.querySelectorAll('[data-builder-section]').forEach(function(sec) {
     var id = sec.getAttribute('data-builder-section');
     var top = sec.querySelector(':scope > .sec_txt.basic.top');
     if (!top) return;
-    if (sectionTopTextEnabled[id] === false) top.style.setProperty('display', 'none', 'important');
+    var globalOff = window.globalSubTitleEnabled === false;
+    var sectionOff = sectionTopTextEnabled[id] === false;
+    var textEmpty = !(top.textContent || '').trim();
+    if (globalOff || sectionOff || textEmpty) top.style.setProperty('display', 'none', 'important');
     else top.style.removeProperty('display');
   });
 }
@@ -3096,7 +3111,12 @@ function toggleSectionTopText(sId, enabled) {
   applyTopTextToPreview();
   saveState();
 }
-/* 미리보기에서 해당 섹션이 .sec_txt.basic.top 마크업을 가지고 있는지 체크 */
+/* v0.28.1: 글로벌 서브타이틀 (전체) 토글 — 좌측 스타일 탭 */
+function toggleAllSubTitles(enabled) {
+  window.globalSubTitleEnabled = !!enabled;
+  applyTopTextToPreview();
+  saveState();
+}
 function sectionHasTopText(sId) {
   var doc = getPreviewDoc(); if (!doc) return false;
   var sec = doc.querySelector('[data-builder-section="' + sId + '"]');
@@ -4350,6 +4370,15 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applySpacingToPreview();
   applyBgImagesToPreview();
   applyTopTextToPreview();  /* v0.27.0 */
+  /* v0.28.1: contenteditable로 .sec_txt.basic.top 텍스트 지우면 자동 숨김 */
+  try {
+    var doc = this.contentDocument;
+    doc.querySelectorAll('.sec_txt.basic.top').forEach(function(el) {
+      if (el.dataset.builderEmptyHide) return;
+      el.dataset.builderEmptyHide = '1';
+      el.addEventListener('input', function() { applyTopTextToPreview(); });
+    });
+  } catch(e) {}
   applyAosToPreview();
   applyVisualRightToPreview();
   applyLogoImagesToPreview();
@@ -4730,6 +4759,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 16:21 (v0.28.1)',
+    items: [
+      '<strong>[v0.28.1]</strong> 좌측 스타일 탭에 "서브타이틀 (전체)" 글로벌 토글 추가 — 모든 섹션의 .sec_txt.basic.top 일괄 on/off',
+      '<strong>[v0.28.1]</strong> .sec_txt.basic.top 텍스트 비우면 자동 숨김 (contenteditable input 리스너로 즉시 반영)',
+      '<strong>[v0.28.1]</strong> 우선순위: 글로벌 OFF > 섹션별 OFF > 텍스트 비어있음 → 모두 hide 조건',
+      '<strong>[v0.28.1]</strong> 신규 함수: toggleAllSubTitles(enabled) + globalSubTitleEnabled 상태 + save/load',
+    ]
+  },
   {
     date: '2026.04.28 15:54 (v0.28.0)',
     items: [
@@ -5646,6 +5684,11 @@ function togglePatchNotes() {
 loadState();
 renderSectionList();
 renderColorList();
+/* v0.28.1: 글로벌 서브타이틀 토글 체크박스 초기 상태 반영 */
+(function() {
+  var chk = document.getElementById('global-subtitle-toggle');
+  if (chk) chk.checked = window.globalSubTitleEnabled !== false;
+})();
 
 /* v0.16.1: 편집 드로어 이미지 미리보기 클릭 → 새창 (이벤트 위임) */
 document.addEventListener('click', function(e) {
