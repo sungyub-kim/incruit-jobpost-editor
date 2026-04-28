@@ -4,6 +4,33 @@
 <meta charset="UTF-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name ="viewport" content= "width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+<!-- v0.30.6: 빌더 iframe 가드 — AOS lib을 no-op으로 미리 정의 (jobfair_gwangju.js의 AOS.init() 무력화). 새 창/실 배포에서는 window.parent===window라 무영향. -->
+<script>
+(function() {
+  try {
+    if (window.parent !== window && window.parent !== null) {
+      document.documentElement.classList.add('builder-iframe-mode');
+      var noopAOS = { init: function(){}, refresh: function(){}, refreshHard: function(){} };
+      Object.defineProperty(window, 'AOS', {
+        configurable: true,
+        get: function() { return noopAOS; },
+        set: function() { /* lib의 window.AOS 할당 무시 */ }
+      });
+    }
+  } catch(e) {}
+})();
+</script>
+<style>
+/* v0.30.6: 빌더 iframe 모드 — AOS 애니메이션 완전 비활성 (사전 baked-in aos-animate 클래스 포함) */
+.builder-iframe-mode [data-aos],
+.builder-iframe-mode [class*="aos-"] {
+  opacity: 1 !important;
+  transform: none !important;
+  transition: none !important;
+  animation: none !important;
+  visibility: visible !important;
+}
+</style>
 <link rel="canonical" href="https://www.incruit.com/"><!-- 도메인 대표url -->
 <title>박람회</title> <!-- 15자 내외로 입력 -->
 <link rel="preconnect" href="https://fonts.googleapis.com">

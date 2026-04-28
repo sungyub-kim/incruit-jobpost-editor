@@ -402,7 +402,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.30.5</span>
+  <span id="ver-badge" title="배포 버전">v0.30.6</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3020,60 +3020,13 @@ function applyVisualRightToPreview() {
 }
 
 /* ── ST3: AOS 애니메이션 토글 ── */
-/* v0.30.4: AOS 완전 차단 — 라이브러리 무력화 + 속성 제거 + 강제 스타일 + MutationObserver */
+/* v0.30.6: AOS 차단은 temp.html 가드 스크립트가 처리. 여기는 백업 안전망(CSS) + UI 동기화만. */
 function applyAosToPreview() {
   var doc = getPreviewDoc();
   if (!doc) return;
-  var styleId = 'builder-aos-disable';
-  if (!doc.getElementById(styleId)) {
-    var tag = doc.createElement('style');
-    tag.id = styleId;
-    tag.textContent =
-      '[data-aos],[data-aos-disabled],[class*="aos-"]{' +
-        'opacity:1!important;transform:none!important;transition:none!important;animation:none!important;visibility:visible!important;' +
-      '}';
-    doc.head.appendChild(tag);
-  }
-  /* AOS 라이브러리 객체 무력화 (이미 init 됐어도 추가 동작 차단) */
-  try {
-    var win = doc.defaultView;
-    if (win && win.AOS) {
-      win.AOS.init = function() {};
-      win.AOS.refresh = function() {};
-      win.AOS.refreshHard = function() {};
-    }
-  } catch(e) {}
-  /* data-aos 속성 제거(백업) + 모든 aos-* 클래스 제거 + inline 강제 */
-  doc.querySelectorAll('[data-aos]').forEach(function(el) {
-    var v = el.getAttribute('data-aos');
-    el.setAttribute('data-aos-disabled', v);
-    el.removeAttribute('data-aos');
-  });
-  doc.querySelectorAll('[data-aos-disabled],[class*="aos-"]').forEach(function(el) {
-    /* 모든 aos-* 클래스 제거 */
-    var classes = (el.className && el.className.split) ? el.className.split(/\s+/) : [];
-    classes.forEach(function(c) { if (c.indexOf('aos-') === 0) el.classList.remove(c); });
-    el.style.setProperty('opacity', '1', 'important');
-    el.style.setProperty('transform', 'none', 'important');
-    el.style.setProperty('transition', 'none', 'important');
-    el.style.setProperty('animation', 'none', 'important');
-  });
-  /* MutationObserver — AOS lib이 클래스 추가하면 즉시 제거 */
-  if (!window.__aosObserver) {
-    try {
-      window.__aosObserver = new MutationObserver(function(mutations) {
-        mutations.forEach(function(m) {
-          if (m.attributeName === 'class' && m.target.className && m.target.className.indexOf && m.target.className.indexOf('aos-') !== -1) {
-            var t = m.target;
-            var classes = t.className.split(/\s+/);
-            classes.forEach(function(c) { if (c.indexOf('aos-') === 0) t.classList.remove(c); });
-            t.style.setProperty('opacity', '1', 'important');
-            t.style.setProperty('transform', 'none', 'important');
-          }
-        });
-      });
-      window.__aosObserver.observe(doc.body, { attributes: true, attributeFilter: ['class'], subtree: true });
-    } catch(e) {}
+  /* 안전망: builder-iframe-mode 클래스가 어떤 이유로든 누락된 경우 강제 추가 */
+  if (doc.documentElement && !doc.documentElement.classList.contains('builder-iframe-mode')) {
+    doc.documentElement.classList.add('builder-iframe-mode');
   }
   var chk = document.getElementById('aos-toggle-chk');
   if (chk) { chk.checked = false; chk.disabled = true; }
@@ -3086,22 +3039,17 @@ function openPreviewWindow() {
   if (!doc) { alert('미리보기가 로드되지 않았습니다.'); return; }
   /* 깊은 복제 후 정리 */
   var rootClone = doc.documentElement.cloneNode(true);
-  /* 1. 빌더 주입 스타일 태그 제거 */
-  ['builder-aos-disable','builder-edit-css','builder-spacing-css','builder-bgimage-css','builder-logo-css','builder-btn-styles','builder-poster-layout','builder-webfonts-css','builder-nav-hover-css','builder-advanced-css'].forEach(function(id) {
+  /* 1. 빌더 주입 스타일 태그 제거 (builder-aos-disable은 v0.30.6부터 미사용) */
+  ['builder-edit-css','builder-spacing-css','builder-bgimage-css','builder-logo-css','builder-btn-styles','builder-poster-layout','builder-webfonts-css','builder-nav-hover-css'].forEach(function(id) {
     var t = rootClone.querySelector('#' + id);
     if (t && t.parentNode) t.parentNode.removeChild(t);
-  });
-  /* 2. data-aos-disabled → data-aos 복원 (AOS 작동) */
-  rootClone.querySelectorAll('[data-aos-disabled]').forEach(function(el) {
-    el.setAttribute('data-aos', el.getAttribute('data-aos-disabled'));
-    el.removeAttribute('data-aos-disabled');
-    el.style.removeProperty('opacity');
-    el.style.removeProperty('transform');
   });
   /* 3. 빌더 UI / 편집 흔적 제거 */
   rootClone.querySelectorAll('[data-builder-ui],[data-handle-for]').forEach(function(el) { el.remove(); });
   rootClone.querySelectorAll('.builder-section-active').forEach(function(el) { el.classList.remove('builder-section-active'); });
   rootClone.classList.remove('builder-edit-mode');
+  /* v0.30.6: builder-iframe-mode 클래스 제거 — 새 창은 top-level 이라 가드 불필요, 클래스 남으면 CSS로 AOS 비활성됨 */
+  rootClone.classList.remove('builder-iframe-mode');
   /* body 클래스 정리 */
   var bodyEl = rootClone.querySelector('body');
   if (bodyEl) bodyEl.classList.remove('builder-edit-mode');
@@ -5006,6 +4954,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 18:02 (v0.30.6)',
+    items: [
+      '<strong>[v0.30.6]</strong> AOS 차단 — 깊은 root cause 해결: jobfair_gwangju.js 의 AOS.init() 호출이 원인',
+      '<strong>[v0.30.6]</strong> temp.html 가드 스크립트 추가 — window.parent !== window 일 때 (=빌더 iframe) AOS 객체를 no-op으로 미리 정의 (Object.defineProperty로 lib 할당까지 무시) + .builder-iframe-mode 클래스 + CSS로 [data-aos]/[class*=aos-] 강제 정적화',
+      '<strong>[v0.30.6]</strong> 새 창은 top-level (window.parent===window) → 가드 미동작 → AOS 정상 작동. openPreviewWindow는 .builder-iframe-mode 클래스만 제거',
+      '<strong>[v0.30.6]</strong> 빌더 측 applyAosToPreview 단순화 (CSS+클래스만), data-aos 속성 제거 로직 폐기, MutationObserver 제거',
+      '<strong>[v0.30.6]</strong> 실 배포 ASP에서는 가드 스크립트가 무영향 (window.parent===window)',
+    ]
+  },
   {
     date: '2026.04.28 17:44 (v0.30.5)',
     items: [
