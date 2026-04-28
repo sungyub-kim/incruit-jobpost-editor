@@ -75,6 +75,75 @@
 </header>
 
 <!-- ====================================================================== -->
+<!-- 2026-04-28 (화) -->
+<!-- ====================================================================== -->
+<div class="day-card">
+  <div class="day-head">
+    <h2>04월 28일 (화)</h2>
+    <span class="ver-tag">v0.21.0 → v0.22.7 (진행 중)</span>
+  </div>
+
+  <div class="tldr">
+    <div class="tldr-label">오늘 핵심</div>
+    <div class="tldr-text">채용관 5순위 본격 진입 (Stage 2-A/2-B/3/5 + 1뎁스 메뉴 토글). 다중 핫픽스 진행 중. 사용자 보고로 검색/게시판이 탭과 별개라는 것 확정 → <strong>재설계 기획안 작성</strong>, 다음 세션 즉시 개발 진입 준비.</div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi feature">
+      <div class="label">신규 기능</div>
+      <div class="value">4</div>
+      <div class="sub">Stage 2-A/2-B/3/5</div>
+    </div>
+    <div class="kpi fix">
+      <div class="label">검수 핫픽스</div>
+      <div class="value">3</div>
+      <div class="sub">v0.22.5/0.22.6/0.22.7</div>
+    </div>
+    <div class="kpi policy">
+      <div class="label">기획 문서</div>
+      <div class="value">1</div>
+      <div class="sub">채용관 재설계</div>
+    </div>
+  </div>
+
+  <div class="cat-grid">
+    <div class="cat-box">
+      <div class="cat-head">
+        <span class="cat-name">🔵 신규 기능</span>
+        <span class="cat-count">5건</span>
+      </div>
+      <ul>
+        <li>v0.22.0 채용관 2뎁스 sub-tab 사용 토글</li>
+        <li>v0.22.1 sub-tab 항목 추가/삭제 + 마크업 클론</li>
+        <li>v0.22.2 검색 직종/지역 토글 (PC + 모바일 swiper)</li>
+        <li>v0.22.3 게시판 마크업 자동 클론</li>
+        <li>v0.22.4 1뎁스 탭 메뉴 자체 on/off + 단일 모드 컨트롤</li>
+      </ul>
+    </div>
+    <div class="cat-box">
+      <div class="cat-head">
+        <span class="cat-name">🟠 검수 핫픽스</span>
+        <span class="cat-count">3건</span>
+      </div>
+      <ul>
+        <li>v0.22.5 cleanup 추가 (.tab_content display 초기화)</li>
+        <li>v0.22.6 게시판 클론 위치 수정 (.wr → .tab_content 직접 자식)</li>
+        <li>v0.22.7 cleanup 강화 (input/label도) + fallback</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="next-box">
+    <div class="next-title">📌 다음 세션 (토큰 재할당 후)</div>
+    <div class="next-text">
+      <strong>채용관 재설계 본격 작업</strong> ─ 메모리 [project_joblist_redesign.md] 5단계 (~1.5h)<br>
+      Step 1 데이터 통합 → Step 2 헬퍼 분리 → Step 3 applyTabsToPreview 재구조화 → Step 4 renderTabPanel 재구조화 → Step 5 검수<br>
+      <span style="font-size:11px;color:#a16207;">※ 시작 전 사용자 확인: 시크릿 모드에서 v0.22.7 동작 확인 결과 + localStorage 초기화 후 변화</span>
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================================== -->
 <!-- 2026-04-27 (월) -->
 <!-- ====================================================================== -->
 <div class="day-card">
