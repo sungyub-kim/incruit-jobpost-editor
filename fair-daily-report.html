@@ -85,14 +85,14 @@
 
   <div class="tldr">
     <div class="tldr-label">오늘 핵심</div>
-    <div class="tldr-text">채용관 5순위 본격 진입 (Stage 2-A/2-B/3/5 + 1뎁스 메뉴 토글). 다중 핫픽스 진행 중. 사용자 보고로 검색/게시판이 탭과 별개라는 것 확정 → <strong>재설계 기획안 작성</strong>, 다음 세션 즉시 개발 진입 준비.</div>
+    <div class="tldr-text">채용관 5순위 마무리 + <strong>v0.23.0 재설계 5단계 완료</strong>. 검색/게시판이 탭과 별개라는 사용자 인사이트 반영 → 데이터 통합 + 헬퍼 함수 추출 + ON/OFF 분기 명확화 + 글로벌 sub-tab 지원. 1차 빌더형 약 35% 진척.</div>
   </div>
 
   <div class="kpi-row">
     <div class="kpi feature">
       <div class="label">신규 기능</div>
-      <div class="value">4</div>
-      <div class="sub">Stage 2-A/2-B/3/5</div>
+      <div class="value">5</div>
+      <div class="sub">v0.22.x + v0.23.0</div>
     </div>
     <div class="kpi fix">
       <div class="label">검수 핫픽스</div>
@@ -100,9 +100,9 @@
       <div class="sub">v0.22.5/0.22.6/0.22.7</div>
     </div>
     <div class="kpi policy">
-      <div class="label">기획 문서</div>
+      <div class="label">대형 리팩토링</div>
       <div class="value">1</div>
-      <div class="sub">채용관 재설계</div>
+      <div class="sub">v0.23.0 재설계</div>
     </div>
   </div>
 
@@ -131,14 +131,27 @@
         <li>v0.22.7 cleanup 강화 (input/label도) + fallback</li>
       </ul>
     </div>
+    <div class="cat-box">
+      <div class="cat-head">
+        <span class="cat-name">🟣 대형 리팩토링</span>
+        <span class="cat-count">1건 (5단계)</span>
+      </div>
+      <ul>
+        <li>v0.23.0 Step 1 — 데이터 통합 (joblistGlobal 단일 객체)</li>
+        <li>v0.23.0 Step 2 — 헬퍼 추출 (applySearch/Board/SubTabs)</li>
+        <li>v0.23.0 Step 3 — applyTabsToPreview ON/OFF 분기</li>
+        <li>v0.23.0 Step 4 — 글로벌 sub-tab 지원 (6 신규 함수)</li>
+        <li>v0.23.0 Step 5 — 배포 + 패치노트 동기 (commit 41e2834)</li>
+      </ul>
+    </div>
   </div>
 
   <div class="next-box">
-    <div class="next-title">📌 다음 세션 (토큰 재할당 후)</div>
+    <div class="next-title">📌 다음 작업</div>
     <div class="next-text">
-      <strong>채용관 재설계 본격 작업</strong> ─ 메모리 [project_joblist_redesign.md] 5단계 (~1.5h)<br>
-      Step 1 데이터 통합 → Step 2 헬퍼 분리 → Step 3 applyTabsToPreview 재구조화 → Step 4 renderTabPanel 재구조화 → Step 5 검수<br>
-      <span style="font-size:11px;color:#a16207;">※ 시작 전 사용자 확인: 시크릿 모드에서 v0.22.7 동작 확인 결과 + localStorage 초기화 후 변화</span>
+      <strong>P0-1 편집 드로어 탭 분리</strong> ─ 메인비주얼 패널을 📝콘텐츠/🎨스타일/✨애니메이션/🖼이미지 4탭으로 재조직<br>
+      후속: 박람회 개요 4순위 (PC/M 분리, 요소 동적, 이미지 다중)<br>
+      <span style="font-size:11px;color:#a16207;">※ 사용자 1차 완료(6/19) 일괄 검수 시 v0.23.0 동작 검수 체크리스트 10항 (project_joblist_redesign.md) 동봉</span>
     </div>
   </div>
 </div>

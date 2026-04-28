@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.23.0</span>
+  <span id="ver-badge" title="배포 버전">v0.24.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2475,146 +2475,177 @@ var DEFAULT_VISUAL_MEDIA_MODES = {
   rightvisual: { mode: 'image', textPc: '', textM: '' }
 };
 
+/* v0.24.0: 메인비주얼 패널 4탭 분리 (📝 콘텐츠 / 🎨 스타일 / ✨ 애니메이션 / 🖼 이미지) */
+function switchVisualPanelTab(tab) {
+  window.visualPanelTab = tab;
+  openEditDrawer('section_visual');
+}
+
 function buildVisualPanel() {
   var doc = getPreviewDoc();
   var sEl = doc ? doc.querySelector('[data-builder-section="section_visual"]') : null;
   var h = '<div class="ep-title">메인 비주얼 편집</div>';
 
-  /* Step 2: 요소 탭 + 추가/삭제 버튼 */
+  /* 요소 선택기 (항상 위, 모든 탭에서 공유) */
   var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
+  var activeIdx = window.visualTextActiveIdx !== undefined ? window.visualTextActiveIdx : 0;
+  var activeText = texts[activeIdx];
+
   h += '<div class="ep-spacing-title">텍스트 요소 (' + texts.length + ')</div>';
   h += '<div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;">';
   texts.forEach(function(t, i) {
-    h += '<button class="ep-add-btn" style="background:#1e3a8a;color:#93c5fd;flex:1;padding:6px;font-size:11px;border:1px solid #3b82f6;cursor:pointer;" onclick="switchVisualTextTab(' + i + ')">' +
-      '요소 ' + (i+1) + '</button>';
+    var isOn = i === activeIdx;
+    h += '<button class="ep-add-btn" style="background:' + (isOn ? '#3b82f6' : '#1e3a8a') + ';color:#fff;flex:1;padding:6px;font-size:11px;border:1px solid #3b82f6;cursor:pointer;font-weight:' + (isOn ? '700' : '400') + ';" onclick="switchVisualTextTab(' + i + ')">' +
+      '요소 ' + (i+1) + (isOn ? ' ✓' : '') + '</button>';
   });
   h += '</div>';
   if (texts.length < 5) {
     h += '<button class="ep-add-btn" style="width:100%;background:#059669;margin-bottom:8px;" onclick="addVisualText()">+ 요소 추가</button>';
   }
 
-  /* Step 1: 선택된 요소의 텍스트 편집 */
-  h += '<div class="ep-spacing-title">제목 텍스트</div>';
-  var activeIdx = window.visualTextActiveIdx !== undefined ? window.visualTextActiveIdx : 0;
-  var activeText = texts[activeIdx];
-  if (activeText) {  /* sEl 체크 제거 — iframe 로드 여부와 무관하게 폰트 드롭다운 표시 */
-    var pcVal = activeText.pcText || '';
-    var mVal = activeText.mText || '';
-    h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(' + activeIdx + ',\'pc\',this.value)"></div>';
-    h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(' + activeIdx + ',\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
+  /* 탭 바 */
+  var tab = window.visualPanelTab || 'content';
+  var TABS = [
+    { id: 'content',   label: '📝 콘텐츠' },
+    { id: 'style',     label: '🎨 스타일' },
+    { id: 'animation', label: '✨ 애니메이션' },
+    { id: 'image',     label: '🖼 이미지' }
+  ];
+  h += '<div class="ep-vp-tabs" style="display:flex;gap:0;margin:14px 0 12px;border-bottom:1px solid #2e3a52;">';
+  TABS.forEach(function(t) {
+    var on = t.id === tab;
+    h += '<button class="ep-vp-tab' + (on ? ' active' : '') + '" style="flex:1;padding:8px 2px;background:' + (on ? '#1e3a8a' : 'transparent') + ';color:' + (on ? '#93c5fd' : '#6b7280') + ';border:none;border-bottom:2px solid ' + (on ? '#3b82f6' : 'transparent') + ';cursor:pointer;font-size:11px;font-weight:' + (on ? '700' : '400') + ';" onclick="switchVisualPanelTab(\'' + t.id + '\')">' + t.label + '</button>';
+  });
+  h += '</div>';
 
-    /* v0.17.2: 폰트/굵기 패널 제거 — 에디터 툴바에서만 제어. 여기는 텍스트/여백만 */
+  /* === 📝 콘텐츠 탭 === */
+  if (tab === 'content') {
+    if (activeText) {
+      var pcVal = activeText.pcText || '';
+      var mVal = activeText.mText || '';
+      h += '<div class="ep-spacing-title">제목 텍스트</div>';
+      h += '<div class="ep-field"><label>PC 제목</label><input type="text" value="' + esc(pcVal) + '" oninput="updateVisualText(' + activeIdx + ',\'pc\',this.value)"></div>';
+      h += '<div class="ep-field"><label>모바일 제목 (줄바꿈은 &lt;br&gt; 사용)</label><textarea class="ep-textarea" oninput="updateVisualText(' + activeIdx + ',\'m\',this.value)">' + esc(mVal) + '</textarea></div>';
 
-    /* v0.18.0: AOS 애니메이션 (요소별 개별 적용) */
-    h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #2e3a52;">' +
-      '<div class="ep-spacing-title">애니메이션 (AOS)</div>' +
-      '<div class="ep-field"><label>효과</label>' +
-        '<select onchange="updateVisualAos(' + activeIdx + ',\'aosEffect\',this.value)">' +
-          AOS_EFFECTS.map(function(e) { return '<option value="' + e.value + '" ' + ((activeText.aosEffect || '') === e.value ? 'selected' : '') + '>' + e.label + '</option>'; }).join('') +
-        '</select></div>' +
-      '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
-        '<label style="width:50px;font-size:10px;">Duration</label>' +
-        '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + (activeText.aosDuration || '') + '" placeholder="800" oninput="updateVisualAos(' + activeIdx + ',\'aosDuration\',this.value)">' +
-        '<span style="font-size:10px;color:#6b7280;">ms</span>' +
-      '</div>' +
-      '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
-        '<label style="width:50px;font-size:10px;">Delay</label>' +
-        '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + (activeText.aosDelay || '') + '" placeholder="0" oninput="updateVisualAos(' + activeIdx + ',\'aosDelay\',this.value)">' +
-        '<span style="font-size:10px;color:#6b7280;">ms</span>' +
-      '</div>' +
-      '<div style="font-size:10px;color:#6b7280;margin-top:4px;">※ 변경 후 미리보기에서 즉시 보려면 페이지 새로고침</div>' +
-    '</div>';
+      /* 요소별 여백 */
+      h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #2e3a52;">' +
+        '<div class="ep-spacing-title">여백 (margin)</div>';
+      ['Top', 'Bottom', 'Left', 'Right'].forEach(function(dir) {
+        var val = activeText['margin' + dir] || '';
+        h += '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
+          '<label style="width:50px;font-size:10px;">' + dir + '</label>' +
+          '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + val + '" placeholder="px" oninput="updateVisualElementSpacing(' + activeIdx + ',\'margin' + dir + '\',this.value)">' +
+          '<span style="font-size:10px;color:#6b7280;">px</span>' +
+        '</div>';
+      });
+      h += '<div class="ep-spacing-title" style="margin-top:10px;">여백 (padding)</div>';
+      ['Top', 'Bottom', 'Left', 'Right'].forEach(function(dir) {
+        var val = activeText['padding' + dir] || '';
+        h += '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
+          '<label style="width:50px;font-size:10px;">' + dir + '</label>' +
+          '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + val + '" placeholder="px" oninput="updateVisualElementSpacing(' + activeIdx + ',\'padding' + dir + '\',this.value)">' +
+          '<span style="font-size:10px;color:#6b7280;">px</span>' +
+        '</div>';
+      });
+      h += '</div>';
 
-    /* Step 3: 여백 설정 */
-    h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid #2e3a52;">' +
-      '<div class="ep-spacing-title">여백 (margin)</div>';
-    ['Top', 'Bottom', 'Left', 'Right'].forEach(function(dir) {
-      var val = activeText['margin' + dir] || '';
-      h += '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
-        '<label style="width:50px;font-size:10px;">' + dir + '</label>' +
-        '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + val + '" placeholder="px" oninput="updateVisualElementSpacing(' + activeIdx + ',\'margin' + dir + '\',this.value)">' +
-        '<span style="font-size:10px;color:#6b7280;">px</span>' +
-      '</div>';
-    });
-    h += '<div class="ep-spacing-title" style="margin-top:10px;">여백 (padding)</div>';
-    ['Top', 'Bottom', 'Left', 'Right'].forEach(function(dir) {
-      var val = activeText['padding' + dir] || '';
-      h += '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
-        '<label style="width:50px;font-size:10px;">' + dir + '</label>' +
-        '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + val + '" placeholder="px" oninput="updateVisualElementSpacing(' + activeIdx + ',\'padding' + dir + '\',this.value)">' +
-        '<span style="font-size:10px;color:#6b7280;">px</span>' +
-      '</div>';
-    });
-    h += '</div>';
-
-    /* 요소 삭제 버튼 */
-    if (texts.length > 1) {
-      h += '<button class="ep-remove-btn" style="width:100%;background:#7f1d1d;color:#fca5a5;padding:6px;margin-top:8px;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;" onclick="removeVisualText(' + activeIdx + ')">이 요소 삭제</button>';
+      if (texts.length > 1) {
+        h += '<button class="ep-remove-btn" style="width:100%;background:#7f1d1d;color:#fca5a5;padding:6px;margin-top:8px;border:none;border-radius:4px;cursor:pointer;font-size:11px;font-weight:600;" onclick="removeVisualText(' + activeIdx + ')">이 요소 삭제</button>';
+      }
+    } else {
+      h += '<div style="color:#6b7280;font-size:12px;padding:20px;text-align:center;">텍스트 요소가 없습니다. 위 [+ 요소 추가]를 누르세요.</div>';
     }
   }
 
-  h += buildBgImagePanel('section_visual');
-  /* V2: 우측 패널 토글 */
-  h += '<div class="ep-row" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #2e3a52;">' +
-    '<label style="font-size:11px;">우측 이미지 패널 표시</label>' +
-    '<label class="toggle"><input type="checkbox" id="visual-right-chk" ' + (visualRightVisible ? 'checked' : '') + ' onchange="toggleVisualRight(this.checked)"><span class="toggle-slider"></span></label>' +
-  '</div>';
-  /* V1: 이미지 필드 목록 */
-  h += '<div class="ep-spacing-title">비주얼 이미지 교체</div>';
+  /* === 🎨 스타일 탭 === */
+  else if (tab === 'style') {
+    h += buildBgImagePanel('section_visual');
+    h += buildSpacingPanel('section_visual');
+  }
 
-  /* 그룹별 on/off 토글 */
-  var modes = (sectionData.section_visual && sectionData.section_visual.mediaModes) || {};
-  VISUAL_IMAGE_GROUPS.forEach(function(group, gIdx) {
-    var isActive = visualImageToggle[group.groupId];
-    var mediaMode = (modes[group.groupId] && modes[group.groupId].mode) || 'image';
-    h += '<div style="margin-bottom:12px;border:1px solid #334155;border-radius:4px;padding:8px;background:#1e293b;">' +
-      '<button style="width:100%;padding:8px;background:' + (isActive ? '#059669' : '#666') + ';color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;" ' +
-        'onclick="toggleVisualImageGroup(\'' + group.groupId + '\')">' +
-        (isActive ? '✓' : '✕') + ' ' + group.label +
-      '</button>';
+  /* === ✨ 애니메이션 탭 === */
+  else if (tab === 'animation') {
+    if (activeText) {
+      h += '<div class="ep-spacing-title">애니메이션 (AOS) — 요소 ' + (activeIdx + 1) + '</div>' +
+        '<div class="ep-field"><label>효과</label>' +
+          '<select onchange="updateVisualAos(' + activeIdx + ',\'aosEffect\',this.value)">' +
+            AOS_EFFECTS.map(function(e) { return '<option value="' + e.value + '" ' + ((activeText.aosEffect || '') === e.value ? 'selected' : '') + '>' + e.label + '</option>'; }).join('') +
+          '</select></div>' +
+        '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
+          '<label style="width:60px;font-size:10px;">Duration</label>' +
+          '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + (activeText.aosDuration || '') + '" placeholder="800" oninput="updateVisualAos(' + activeIdx + ',\'aosDuration\',this.value)">' +
+          '<span style="font-size:10px;color:#6b7280;">ms</span>' +
+        '</div>' +
+        '<div class="ep-field" style="display:flex;align-items:center;gap:6px;">' +
+          '<label style="width:60px;font-size:10px;">Delay</label>' +
+          '<input type="number" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e2e8f0;font-size:11px;padding:3px 5px;" value="' + (activeText.aosDelay || '') + '" placeholder="0" oninput="updateVisualAos(' + activeIdx + ',\'aosDelay\',this.value)">' +
+          '<span style="font-size:10px;color:#6b7280;">ms</span>' +
+        '</div>' +
+        '<div style="font-size:10px;color:#6b7280;margin-top:4px;">※ 변경 후 미리보기에서 즉시 보려면 페이지 새로고침</div>';
+    } else {
+      h += '<div style="color:#6b7280;font-size:12px;padding:20px;text-align:center;">텍스트 요소가 없어 AOS를 설정할 수 없습니다.</div>';
+    }
+  }
 
-    if (isActive) {
-      /* v0.16.0/0.17.4: 이미지/텍스트 모드 전환 — 활성 시 밝은 파랑 + 그림자로 강조 */
-      var imgActive = mediaMode === 'image';
-      var txtActive = mediaMode === 'text';
-      h += '<div style="display:flex;gap:4px;margin-top:8px;">' +
-        '<button style="flex:1;padding:6px;background:' + (imgActive ? '#2563eb' : '#0f172a') + ';color:' + (imgActive ? '#fff' : '#64748b') + ';border:1px solid ' + (imgActive ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (imgActive ? '700' : '400') + ';box-shadow:' + (imgActive ? '0 0 0 1px #3b82f6 inset' : 'none') + ';" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'image\')">' + (imgActive ? '✓ ' : '') + '🖼 이미지</button>' +
-        '<button style="flex:1;padding:6px;background:' + (txtActive ? '#2563eb' : '#0f172a') + ';color:' + (txtActive ? '#fff' : '#64748b') + ';border:1px solid ' + (txtActive ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (txtActive ? '700' : '400') + ';box-shadow:' + (txtActive ? '0 0 0 1px #3b82f6 inset' : 'none') + ';" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'text\')">' + (txtActive ? '✓ ' : '') + 'T 텍스트</button>' +
-      '</div>';
+  /* === 🖼 이미지 탭 === */
+  else if (tab === 'image') {
+    h += '<div class="ep-row" style="margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid #2e3a52;">' +
+      '<label style="font-size:11px;">우측 이미지 패널 표시</label>' +
+      '<label class="toggle"><input type="checkbox" id="visual-right-chk" ' + (visualRightVisible ? 'checked' : '') + ' onchange="toggleVisualRight(this.checked)"><span class="toggle-slider"></span></label>' +
+    '</div>';
+    h += '<div class="ep-spacing-title">비주얼 이미지 교체</div>';
 
-      if (mediaMode === 'image') {
-        group.images.forEach(function(imgDef, iIdx) {
-          var imgIdx = (gIdx * 10) + iIdx;
-          var curSrc = '';
-          if (sEl) { var img = sEl.querySelector(imgDef.sel); if (img) curSrc = img.getAttribute('src') || ''; }
-          h += '<div class="ep-field" style="margin-top:8px;">' +
-            '<label style="font-size:11px;">' + (imgDef.label ? '- ' + imgDef.label : group.label) + '</label>' +
-            '<div class="ep-bgimg-row">' +
-              '<input type="text" class="ep-bgimg-input" id="vi-url-' + imgIdx + '" value="' + esc(curSrc) + '" placeholder="URL" oninput="updateVisualImage(' + gIdx + ',' + iIdx + ',this.value)">' +
-              '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
-                '<input type="file" accept="image/*" style="display:none" onchange="onVisualImgFile(this,' + gIdx + ',' + iIdx + ')">' +
-              '</label>' +
-            '</div>' +
-            (curSrc
-              ? '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" src="' + esc(curSrc) + '">'
-              : '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" style="display:none">') +
-          '</div>';
-        });
-      } else {
-        /* 텍스트 모드: PC/M 분리 입력 (rightvisual은 PC 1개) */
-        var modeData = modes[group.groupId] || { textPc: '', textM: '' };
-        var hasMobile = group.images.some(function(im) { return im.label === 'M'; });
-        h += '<div class="ep-field" style="margin-top:8px;"><label style="font-size:11px;">' + (hasMobile ? 'PC 텍스트' : '텍스트') + '</label>' +
-          '<input type="text" value="' + esc(modeData.textPc || '') + '" oninput="updateVisualMediaText(\'' + group.groupId + '\',\'pc\',this.value)" placeholder="텍스트 입력"></div>';
-        if (hasMobile) {
-          h += '<div class="ep-field" style="margin-top:6px;"><label style="font-size:11px;">모바일 텍스트 (줄바꿈은 &lt;br&gt;)</label>' +
-            '<textarea class="ep-textarea" oninput="updateVisualMediaText(\'' + group.groupId + '\',\'m\',this.value)" placeholder="모바일 텍스트">' + esc(modeData.textM || '') + '</textarea></div>';
+    var modes = (sectionData.section_visual && sectionData.section_visual.mediaModes) || {};
+    VISUAL_IMAGE_GROUPS.forEach(function(group, gIdx) {
+      var isActive = visualImageToggle[group.groupId];
+      var mediaMode = (modes[group.groupId] && modes[group.groupId].mode) || 'image';
+      h += '<div style="margin-bottom:12px;border:1px solid #334155;border-radius:4px;padding:8px;background:#1e293b;">' +
+        '<button style="width:100%;padding:8px;background:' + (isActive ? '#059669' : '#666') + ';color:#fff;border:none;border-radius:4px;cursor:pointer;font-weight:bold;font-size:12px;" ' +
+          'onclick="toggleVisualImageGroup(\'' + group.groupId + '\')">' +
+          (isActive ? '✓' : '✕') + ' ' + group.label +
+        '</button>';
+
+      if (isActive) {
+        var imgActive = mediaMode === 'image';
+        var txtActive = mediaMode === 'text';
+        h += '<div style="display:flex;gap:4px;margin-top:8px;">' +
+          '<button style="flex:1;padding:6px;background:' + (imgActive ? '#2563eb' : '#0f172a') + ';color:' + (imgActive ? '#fff' : '#64748b') + ';border:1px solid ' + (imgActive ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (imgActive ? '700' : '400') + ';box-shadow:' + (imgActive ? '0 0 0 1px #3b82f6 inset' : 'none') + ';" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'image\')">' + (imgActive ? '✓ ' : '') + '🖼 이미지</button>' +
+          '<button style="flex:1;padding:6px;background:' + (txtActive ? '#2563eb' : '#0f172a') + ';color:' + (txtActive ? '#fff' : '#64748b') + ';border:1px solid ' + (txtActive ? '#3b82f6' : '#334155') + ';border-radius:3px;cursor:pointer;font-size:11px;font-weight:' + (txtActive ? '700' : '400') + ';box-shadow:' + (txtActive ? '0 0 0 1px #3b82f6 inset' : 'none') + ';" onclick="setVisualMediaMode(\'' + group.groupId + '\',\'text\')">' + (txtActive ? '✓ ' : '') + 'T 텍스트</button>' +
+        '</div>';
+
+        if (mediaMode === 'image') {
+          group.images.forEach(function(imgDef, iIdx) {
+            var imgIdx = (gIdx * 10) + iIdx;
+            var curSrc = '';
+            if (sEl) { var img = sEl.querySelector(imgDef.sel); if (img) curSrc = img.getAttribute('src') || ''; }
+            h += '<div class="ep-field" style="margin-top:8px;">' +
+              '<label style="font-size:11px;">' + (imgDef.label ? '- ' + imgDef.label : group.label) + '</label>' +
+              '<div class="ep-bgimg-row">' +
+                '<input type="text" class="ep-bgimg-input" id="vi-url-' + imgIdx + '" value="' + esc(curSrc) + '" placeholder="URL" oninput="updateVisualImage(' + gIdx + ',' + iIdx + ',this.value)">' +
+                '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
+                  '<input type="file" accept="image/*" style="display:none" onchange="onVisualImgFile(this,' + gIdx + ',' + iIdx + ')">' +
+                '</label>' +
+              '</div>' +
+              (curSrc
+                ? '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" src="' + esc(curSrc) + '">'
+                : '<img id="vi-thumb-' + imgIdx + '" class="ep-bgimg-thumb" style="display:none">') +
+            '</div>';
+          });
+        } else {
+          var modeData = modes[group.groupId] || { textPc: '', textM: '' };
+          var hasMobile = group.images.some(function(im) { return im.label === 'M'; });
+          h += '<div class="ep-field" style="margin-top:8px;"><label style="font-size:11px;">' + (hasMobile ? 'PC 텍스트' : '텍스트') + '</label>' +
+            '<input type="text" value="' + esc(modeData.textPc || '') + '" oninput="updateVisualMediaText(\'' + group.groupId + '\',\'pc\',this.value)" placeholder="텍스트 입력"></div>';
+          if (hasMobile) {
+            h += '<div class="ep-field" style="margin-top:6px;"><label style="font-size:11px;">모바일 텍스트 (줄바꿈은 &lt;br&gt;)</label>' +
+              '<textarea class="ep-textarea" oninput="updateVisualMediaText(\'' + group.groupId + '\',\'m\',this.value)" placeholder="모바일 텍스트">' + esc(modeData.textM || '') + '</textarea></div>';
+          }
         }
       }
-    }
-    h += '</div>';
-  });
-  h += buildSpacingPanel('section_visual');
+      h += '</div>';
+    });
+  }
+
   return h;
 }
 
@@ -2683,7 +2714,7 @@ function addVisualText() {
 
   window.visualTextActiveIdx = newIdx;
   renderVisualTexts();
-  openEditPanel('section_visual');
+  openEditDrawer('section_visual');
   saveState();
 }
 
@@ -2700,7 +2731,7 @@ function removeVisualText(idx) {
       window.visualTextActiveIdx = sectionData.section_visual.mvisual_texts.length - 1;
     }
     renderVisualTexts();
-    openEditPanel('section_visual');
+    openEditDrawer('section_visual');
     saveState();
   }
 }
@@ -2708,7 +2739,7 @@ function removeVisualText(idx) {
 /* Step 2: 요소 탭 전환 */
 function switchVisualTextTab(idx) {
   window.visualTextActiveIdx = idx;
-  openEditPanel('section_visual');
+  openEditDrawer('section_visual');
 }
 
 function updateVisualImage(gIdx, iIdx, url) {
@@ -2736,7 +2767,7 @@ function updateVisualImage(gIdx, iIdx, url) {
 /* 비주얼 이미지 그룹 on/off 토글 */
 function toggleVisualImageGroup(groupId) {
   visualImageToggle[groupId] = !visualImageToggle[groupId];
-  openEditPanel('section_visual');  /* 패널 새로고침 */
+  openEditDrawer('section_visual'); /* 패널 새로고침 */
 }
 
 /* v0.16.0: 비주얼 영역 미디어 모드 전환 (image | text) */
@@ -2767,7 +2798,7 @@ function setVisualMediaMode(groupId, mode) {
 
   applyMediaModesToPreview();
   saveState();
-  openEditPanel('section_visual');
+  openEditDrawer('section_visual');
 }
 
 /* 텍스트 모드 입력 업데이트 */
@@ -4896,6 +4927,19 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 13:25 (v0.24.0)',
+    items: [
+      '<strong>[v0.24.0]</strong> P0-1 편집 드로어 탭 분리 — 메인비주얼 패널을 📝 콘텐츠 / 🎨 스타일 / ✨ 애니메이션 / 🖼 이미지 4탭으로 재조직',
+      '<strong>[v0.24.0]</strong> 요소 선택기는 모든 탭에서 공유 (활성 요소 ✓ 강조 추가)',
+      '<strong>[v0.24.0]</strong> switchVisualPanelTab(tab) 함수 신규 + window.visualPanelTab 상태 (기본 content)',
+      '<strong>[v0.24.0]</strong> 콘텐츠 탭: PC/M 제목 + 요소별 margin/padding + 요소 삭제',
+      '<strong>[v0.24.0]</strong> 스타일 탭: 배경(이미지/색) + 섹션 spacing',
+      '<strong>[v0.24.0]</strong> 애니메이션 탭: AOS 효과/Duration/Delay (요소별)',
+      '<strong>[v0.24.0]</strong> 이미지 탭: 우측 패널 토글 + 그룹별 이미지/텍스트 모드 + 이미지 교체',
+      '<strong>[v0.24.0]</strong> 잠재 버그 수정 — openEditPanel(미정의) 5건 호출 → openEditDrawer로 교체 (요소 추가/삭제/탭 전환 후 패널 미갱신 해결)',
+    ]
+  },
   {
     date: '2026.04.28 11:52 (v0.23.0)',
     items: [
