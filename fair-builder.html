@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.26.5</span>
+  <span id="ver-badge" title="배포 버전">v0.27.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -605,6 +605,7 @@ var sectionBgColors = {};
 var sectionBgImages = {};  /* ST2: 섹션 배경 이미지 URL */
 var sectionSpacing = {};   /* ST1: { sId: { pt, pb, mpt, mpb } } */
 var sectionTemplates = {};  /* Adv: { templateId: { sectionId, sectionData, bgColor, bgImage, spacing, buttonStyles, timestamp, name } } */
+var sectionTopTextEnabled = {};  /* v0.27.0: { sId: false } — true는 기본 (.sec_txt.basic.top 표시) */
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
@@ -729,6 +730,7 @@ function saveState() {
     sectionBgColors:sectionBgColors,
     sectionBgImages:sectionBgImages,
     sectionSpacing: sectionSpacing,
+    sectionTopTextEnabled: sectionTopTextEnabled,
     aosEnabled:          aosEnabled,
     visualRightVisible:  visualRightVisible,
     logoImages:          logoImages,
@@ -787,6 +789,7 @@ function loadState() {
       });
     }
     /* v0.26.5: sectionAdvancedStyles 제거 — 기존 데이터는 silently 무시 */
+    if (s.sectionTopTextEnabled) sectionTopTextEnabled = s.sectionTopTextEnabled;
     if (s.cssColors) {
       cssColors = s.cssColors;
       Object.keys(FAIR_BUILDER_COLORS).forEach(function(v) {
@@ -2061,6 +2064,14 @@ function buildSectionPanel(sectionId) {
   var data   = sectionData[sectionId] || {};
   var map    = SECTION_DOM_MAP[sectionId] || {};
   var h = '<div class="ep-title">' + schema.name + ' 편집</div>';
+  /* v0.27.0: 상단 영문 텍스트(.sec_txt.basic.top) 토글 — 마크업 있는 섹션만 */
+  if (sectionHasTopText(sectionId)) {
+    var topOn = sectionTopTextEnabled[sectionId] !== false;
+    h += '<div class="ep-row" style="background:rgba(30,41,59,0.5);border-radius:4px;padding:8px 10px;margin-bottom:8px;">' +
+      '<label style="font-size:11px;color:#e5e7eb;flex:1;">상단 영문 텍스트 표시</label>' +
+      '<label class="toggle"><input type="checkbox" ' + (topOn ? 'checked' : '') + ' onchange="toggleSectionTopText(\'' + sectionId + '\',this.checked)"><span class="toggle-slider"></span></label>' +
+    '</div>';
+  }
   h += buildBgImagePanel(sectionId);
   if (sectionId === 'section_event_info') h += buildPosterLayoutCtrl();
   Object.keys(schema.fields).forEach(function(fk) {
@@ -3032,6 +3043,29 @@ function buildSpacingPanel(sId) {
 }
 
 /* v0.26.5: ST4 고급 스타일(테두리/그림자/투명도) 패널 + 적용 함수 제거 */
+
+/* v0.27.0: 섹션 상단 영문 텍스트(.sec_txt.basic.top) on/off */
+function applyTopTextToPreview() {
+  var doc = getPreviewDoc(); if (!doc) return;
+  doc.querySelectorAll('[data-builder-section]').forEach(function(sec) {
+    var id = sec.getAttribute('data-builder-section');
+    var top = sec.querySelector(':scope > .sec_txt.basic.top');
+    if (!top) return;
+    if (sectionTopTextEnabled[id] === false) top.style.setProperty('display', 'none', 'important');
+    else top.style.removeProperty('display');
+  });
+}
+function toggleSectionTopText(sId, enabled) {
+  sectionTopTextEnabled[sId] = !!enabled;
+  applyTopTextToPreview();
+  saveState();
+}
+/* 미리보기에서 해당 섹션이 .sec_txt.basic.top 마크업을 가지고 있는지 체크 */
+function sectionHasTopText(sId) {
+  var doc = getPreviewDoc(); if (!doc) return false;
+  var sec = doc.querySelector('[data-builder-section="' + sId + '"]');
+  return !!(sec && sec.querySelector(':scope > .sec_txt.basic.top'));
+}
 
 function applyBtnStylesToPreview() {
   var doc = getPreviewDoc();
@@ -4279,6 +4313,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyTabsToPreview();
   applySpacingToPreview();
   applyBgImagesToPreview();
+  applyTopTextToPreview();  /* v0.27.0 */
   applyAosToPreview();
   applyVisualRightToPreview();
   applyLogoImagesToPreview();
@@ -4659,6 +4694,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 15:43 (v0.27.0)',
+    items: [
+      '<strong>[v0.27.0]</strong> 7순위 진입 — 각 섹션 상단 영문 텍스트(.sec_txt.basic.top) on/off 토글 추가',
+      '<strong>[v0.27.0]</strong> 적용 대상 (마크업 보유): section_event_info / section_greetings / section_intro_links / section_joblist / section_success',
+      '<strong>[v0.27.0]</strong> 신규: sectionTopTextEnabled 상태 + applyTopTextToPreview / toggleSectionTopText / sectionHasTopText 함수',
+      '<strong>[v0.27.0]</strong> 드로어 패널 상단에 토글 UI (마크업 있는 섹션만 표시)',
+      '<strong>[v0.27.0]</strong> save/load + iframe 로드 시 자동 적용',
+    ]
+  },
   {
     date: '2026.04.28 15:31 (v0.26.5)',
     items: [
