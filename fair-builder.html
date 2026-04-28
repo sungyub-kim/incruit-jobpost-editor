@@ -402,7 +402,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.30.2</span>
+  <span id="ver-badge" title="배포 버전">v0.30.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3020,7 +3020,7 @@ function applyVisualRightToPreview() {
 }
 
 /* ── ST3: AOS 애니메이션 토글 ── */
-/* v0.30.2: AOS 완전 비활성 — CSS 주입 + data-aos 속성 → data-aos-disabled 백업 */
+/* v0.30.4: AOS 완전 차단 — 라이브러리 무력화 + 속성 제거 + 강제 스타일 + MutationObserver */
 function applyAosToPreview() {
   var doc = getPreviewDoc();
   if (!doc) return;
@@ -3029,19 +3029,52 @@ function applyAosToPreview() {
     var tag = doc.createElement('style');
     tag.id = styleId;
     tag.textContent =
-      '[data-aos],[data-aos-disabled]{opacity:1!important;transform:none!important;transition:none!important;animation:none!important;}' +
-      '.aos-animate{opacity:1!important;transform:none!important;}';
+      '[data-aos],[data-aos-disabled],[class*="aos-"]{' +
+        'opacity:1!important;transform:none!important;transition:none!important;animation:none!important;visibility:visible!important;' +
+      '}';
     doc.head.appendChild(tag);
   }
-  /* data-aos 속성 제거(백업) → AOS lib이 처리 못 하도록 */
+  /* AOS 라이브러리 객체 무력화 (이미 init 됐어도 추가 동작 차단) */
+  try {
+    var win = doc.defaultView;
+    if (win && win.AOS) {
+      win.AOS.init = function() {};
+      win.AOS.refresh = function() {};
+      win.AOS.refreshHard = function() {};
+    }
+  } catch(e) {}
+  /* data-aos 속성 제거(백업) + 모든 aos-* 클래스 제거 + inline 강제 */
   doc.querySelectorAll('[data-aos]').forEach(function(el) {
     var v = el.getAttribute('data-aos');
     el.setAttribute('data-aos-disabled', v);
     el.removeAttribute('data-aos');
-    el.classList.remove('aos-animate', 'aos-init');
-    el.style.opacity = '1';
-    el.style.transform = 'none';
   });
+  doc.querySelectorAll('[data-aos-disabled],[class*="aos-"]').forEach(function(el) {
+    /* 모든 aos-* 클래스 제거 */
+    var classes = (el.className && el.className.split) ? el.className.split(/\s+/) : [];
+    classes.forEach(function(c) { if (c.indexOf('aos-') === 0) el.classList.remove(c); });
+    el.style.setProperty('opacity', '1', 'important');
+    el.style.setProperty('transform', 'none', 'important');
+    el.style.setProperty('transition', 'none', 'important');
+    el.style.setProperty('animation', 'none', 'important');
+  });
+  /* MutationObserver — AOS lib이 클래스 추가하면 즉시 제거 */
+  if (!window.__aosObserver) {
+    try {
+      window.__aosObserver = new MutationObserver(function(mutations) {
+        mutations.forEach(function(m) {
+          if (m.attributeName === 'class' && m.target.className && m.target.className.indexOf && m.target.className.indexOf('aos-') !== -1) {
+            var t = m.target;
+            var classes = t.className.split(/\s+/);
+            classes.forEach(function(c) { if (c.indexOf('aos-') === 0) t.classList.remove(c); });
+            t.style.setProperty('opacity', '1', 'important');
+            t.style.setProperty('transform', 'none', 'important');
+          }
+        });
+      });
+      window.__aosObserver.observe(doc.body, { attributes: true, attributeFilter: ['class'], subtree: true });
+    } catch(e) {}
+  }
   var chk = document.getElementById('aos-toggle-chk');
   if (chk) { chk.checked = false; chk.disabled = true; }
 }
@@ -3088,8 +3121,20 @@ function openPreviewWindow() {
     if (el.style.display === 'none') el.style.removeProperty('display');
     if (el.style.backgroundColor) el.style.removeProperty('backgroundColor');
   });
+  /* v0.30.4: <base href> 추가 — Blob URL 환경에서 상대 경로 (예: ui/static/css/...) 가 iframe 도메인 기준으로 해석되도록 */
+  var iframeUrl = document.getElementById('preview-frame').src || window.location.href;
+  var basePath = iframeUrl.substring(0, iframeUrl.lastIndexOf('/') + 1);
+  var headEl = rootClone.querySelector('head');
+  if (headEl) {
+    /* 기존 base 제거 후 새로 삽입 */
+    var oldBase = headEl.querySelector('base');
+    if (oldBase) oldBase.remove();
+    var baseEl = doc.createElement('base');
+    baseEl.setAttribute('href', basePath);
+    headEl.insertBefore(baseEl, headEl.firstChild);
+  }
   var html = '<!DOCTYPE html>\n' + rootClone.outerHTML;
-  /* 6. blob URL로 새창 열기 — about:blank 보다 안정 */
+  /* Blob URL로 새창 열기 */
   try {
     var blob = new Blob([html], { type: 'text/html;charset=utf-8' });
     var url = URL.createObjectURL(blob);
@@ -4961,6 +5006,13 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 17:38 (v0.30.4)',
+    items: [
+      '<strong>[v0.30.4]</strong> AOS 차단 최강화 — ① CSS [class*="aos-"] 까지 포함 visibility/animation 모두 강제 ② window.AOS lib 메서드 no-op 패치 (init/refresh/refreshHard) ③ 모든 aos-* 클래스 제거 + inline opacity/transform/transition/animation !important ④ MutationObserver — AOS lib이 다시 클래스 추가하면 즉시 제거',
+      '<strong>[v0.30.4]</strong> 미리보기 새창 화면 깨짐 수정 — temp.html의 상대 경로 CSS (예: ui/static/css/specialty/fair_2026_temp.css) 가 Blob URL 환경에서 해석 실패. <base href> 동적 삽입 (iframe URL 기준) 으로 상대 경로 정상 해석',
+    ]
+  },
   {
     date: '2026.04.28 17:27 (v0.30.2)',
     items: [
