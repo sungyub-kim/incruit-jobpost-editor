@@ -398,7 +398,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.28.3</span>
+  <span id="ver-badge" title="배포 버전">v0.29.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1579,7 +1579,7 @@ function renderSectionList() {
         '<button class="sec-move-btn" title="위로" onclick="event.stopPropagation();moveSectionOrder(\'' + id + '\',-1)" ' + (isFirst ? 'disabled' : '') + '>▲</button>' +
         '<button class="sec-move-btn" title="아래로" onclick="event.stopPropagation();moveSectionOrder(\'' + id + '\',1)" ' + (isLast ? 'disabled' : '') + '>▼</button>' +
       '</div>' +
-      (mainRepeaterKey && sectionData[id] && sectionData[id][mainRepeaterKey] && sectionData[id][mainRepeaterKey].length < schema.fields[mainRepeaterKey].maxItems
+      (mainRepeaterKey && schema.fields[mainRepeaterKey].addable !== false && sectionData[id] && sectionData[id][mainRepeaterKey] && sectionData[id][mainRepeaterKey].length < schema.fields[mainRepeaterKey].maxItems
         ? '<button class="sec-quick-add-btn" onclick="event.stopPropagation();addRepeaterItem(\'' + id + '\',\'' + mainRepeaterKey + '\');renderSectionList();toggleSectionEdit(\'' + id + '\')" title="빠른 추가">+</button>'
         : '') +
       '<div class="toggle-wrap">' +
@@ -2139,7 +2139,8 @@ function buildSectionPanel(sectionId) {
     if (field.type === 'repeater') {
       var items = data[fk] || [];
       h += '<div class="ep-repeater-label">' + field.label;
-      if (items.length < field.maxItems) {
+      /* v0.29.0: addable === false 면 추가 버튼 숨김 */
+      if (field.addable !== false && items.length < field.maxItems) {
         h += ' <button class="ep-add-btn" onclick="addRepeaterItem(\'' + sectionId + '\',\'' + fk + '\')">+ 추가</button>';
       }
       h += '</div>';
@@ -4791,6 +4792,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 16:54 (v0.29.0)',
+    items: [
+      '<strong>[v0.29.0]</strong> 박람회 개요 (section_event_info) 1차 조정 — 포스터 추가 버튼 숨김 + 로고 이미지 갯수 제한 해제',
+      '<strong>[v0.29.0]</strong> 스키마 신규 플래그 addable:false — repeater 추가 버튼 UI 숨김 (maxItems 데이터 제약은 유지). posters: maxItems 5→2, addable:false',
+      '<strong>[v0.29.0]</strong> 로고: maxItems 4→99 (사실상 무제한), 라벨 변경 "로고 이미지 (주최/유관기관/후원)"',
+      '<strong>[v0.29.0]</strong> 다음 단계 (예정): 행사일시/url/운영/문의처 동적 필드, 신청 버튼 다중, 편집모드 레이아웃 깨짐 (캡처 필요)',
+    ]
+  },
   {
     date: '2026.04.28 16:48 (v0.28.3)',
     items: [

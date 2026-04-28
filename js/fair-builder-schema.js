@@ -79,7 +79,8 @@ const FAIR_BUILDER_SCHEMA = {
         type: 'repeater',
         label: '포스터 박스',
         itemLabel: '포스터',
-        maxItems: 5,
+        maxItems: 2,
+        addable: false, /* v0.29.0: 추가 버튼 숨김 (0~2개 고정) — maxItems만 늘리면 추가 가능 */
         fields: {
           type:      { type: 'text',  label: '유형 (online/offline)', default: 'online' },
           title:     { type: 'text',  label: '제목', default: '온라인 행사안내' },
@@ -93,9 +94,9 @@ const FAIR_BUILDER_SCHEMA = {
             options: [{ value: '_blank', label: '새창 (_blank)' }, { value: '_self', label: '현재창 (_self)' }] },
           logos: {
             type: 'repeater',
-            label: '로고 이미지',
+            label: '로고 이미지 (주최/유관기관/후원)',
             itemLabel: '로고',
-            maxItems: 4,
+            maxItems: 99, /* v0.29.0: 갯수 제한 사실상 해제 */
             fields: {
               src: { type: 'image', label: '이미지 경로', default: '' },
               alt: { type: 'text',  label: 'alt 텍스트',  default: '' },
