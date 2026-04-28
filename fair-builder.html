@@ -397,7 +397,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.24.0</span>
+  <span id="ver-badge" title="배포 버전">v0.24.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1574,7 +1574,7 @@ function applyTabsToPreview() {
       if (labels[i]) labels[i].style.display = enabled ? '' : 'none';
       if (contents[i] && !enabled) contents[i].style.setProperty('display', 'none', 'important');
     });
-    /* 첫 활성 라디오 checked (모두 disabled여도 첫 탭 강제 표시) */
+    /* v0.24.1: 현재 checked 탭 보존 — 활성이면 유지, 비활성이거나 없으면만 첫 활성으로 */
     var firstEn = joblistTabs.findIndex(function(t) { return t.enabled !== false; });
     if (firstEn < 0) {
       firstEn = 0;
@@ -1582,9 +1582,14 @@ function applyTabsToPreview() {
       if (labels[0]) labels[0].style.removeProperty('display');
       if (contents[0]) contents[0].style.removeProperty('display');
     }
-    if (inputs[firstEn]) {
-      inputs.forEach(function(inp) { inp.checked = false; });
-      inputs[firstEn].checked = true;
+    var currentCheckedIdx = inputs.findIndex(function(inp) { return inp.checked; });
+    var currentEnabled = currentCheckedIdx >= 0 && joblistTabs[currentCheckedIdx] && joblistTabs[currentCheckedIdx].enabled !== false;
+    if (!currentEnabled) {
+      /* 현재 checked가 비활성이거나 없을 때만 첫 활성으로 */
+      if (inputs[firstEn]) {
+        inputs.forEach(function(inp) { inp.checked = false; });
+        inputs[firstEn].checked = true;
+      }
     }
     /* 각 탭에 자체 설정 적용 (검색/게시판/sub-tab) */
     joblistTabs.forEach(function(tab, i) {
@@ -4927,6 +4932,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.28 13:43 (v0.24.1)',
+    items: [
+      '<strong>[v0.24.1]</strong> 채용관 핫픽스 — 검색/게시판 토글 시 1번 탭으로 자동 이동 버그 수정',
+      '<strong>[v0.24.1]</strong> applyTabsToPreview: 현재 checked 탭이 활성이면 그대로 유지, 비활성이거나 없을 때만 첫 활성으로 이동',
+      '<strong>[v0.24.1]</strong> 잠재 버그 — 사용자가 탭 2/3 편집 중 검색/게시판 변경 시 탭 1로 강제 점프하던 문제 해결',
+    ]
+  },
   {
     date: '2026.04.28 13:25 (v0.24.0)',
     items: [
