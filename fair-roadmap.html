@@ -25,7 +25,7 @@
     box-shadow: 0 4px 6px rgba(0,0,0,0.07);
   }
   header { position: relative; }
-  header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; padding-right: 360px; }
+  header h1 { font-size: 28px; font-weight: 700; margin-bottom: 8px; padding-right: 460px; }
   header .meta { display: flex; gap: 24px; font-size: 14px; opacity: 0.9; flex-wrap: wrap; }
   header .meta strong { font-weight: 600; }
   .header-links {
@@ -34,6 +34,8 @@
     right: 32px;
     display: flex;
     gap: 8px;
+    flex-wrap: wrap;
+    justify-content: flex-end;
   }
   .header-link {
     display: inline-flex;
@@ -48,12 +50,39 @@
     text-decoration: none;
     box-shadow: 0 2px 6px rgba(0,0,0,0.18);
     transition: transform .15s, box-shadow .15s;
+    white-space: nowrap;
   }
   .header-link:hover { transform: translateY(-1px); box-shadow: 0 4px 10px rgba(0,0,0,0.25); }
   .header-link::after { content: "↗"; font-size: 14px; }
+  .header-link.github { background: #1f2937; color: #fff; }
   .header-link.builder { background: #fbbf24; color: #78350f; }
   .header-link.daily { background: #dbeafe; color: #1e3a8a; }
   .header-link.weekly { background: #d1fae5; color: #065f46; }
+
+  /* 반응형 — 모바일/태블릿 */
+  @media (max-width: 900px) {
+    body { padding: 12px; }
+    header { padding: 20px 24px; }
+    header h1 { font-size: 22px; padding-right: 0; line-height: 1.3; word-break: keep-all; }
+    header .meta { font-size: 12px; gap: 12px; }
+    .header-links {
+      position: static;
+      margin-top: 14px;
+      justify-content: flex-start;
+    }
+    section { padding: 20px 16px; }
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .chart-grid-3 { grid-template-columns: 1fr; gap: 12px; }
+    .chart-box canvas { max-height: 220px; }
+    .phase-plan { grid-template-columns: 1fr; }
+    /* 표 / 타임시트는 가로 스크롤 */
+    .timesheet, table { overflow-x: auto; display: block; }
+  }
+  @media (max-width: 480px) {
+    header h1 { font-size: 18px; }
+    .header-link { padding: 7px 11px; font-size: 12px; }
+    .stats { grid-template-columns: 1fr 1fr; }
+  }
 
   /* Section */
   section {
@@ -310,6 +339,7 @@
 
 <header>
   <div class="header-links">
+    <a href="https://github.com/sungyub-kim/incruit-jobpost-editor" target="_blank" rel="noopener" class="header-link github" title="GitHub 저장소 열기">GitHub</a>
     <a href="fair-builder.html" target="_blank" rel="noopener" class="header-link builder" title="빌더 새 창에서 열기">빌더 열기</a>
     <a href="fair-daily-report.html" target="_blank" rel="noopener" class="header-link daily" title="일일 업무 보고">일일 보고</a>
     <a href="fair-weekly-report.html" target="_blank" rel="noopener" class="header-link weekly" title="주간 업무 보고">주간 보고</a>
