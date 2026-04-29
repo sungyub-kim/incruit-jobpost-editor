@@ -129,6 +129,9 @@
     .color-item .color-preview input[type=color] { position: absolute; inset: -4px; width: calc(100% + 8px); height: calc(100% + 8px); opacity: 0; cursor: pointer; }
     .color-item .hex-input { background: #161c2d; border: 1px solid #2e3a52; border-radius: 4px; color: #e5e7eb; font-size: 11px; padding: 3px 6px; width: 72px; outline: none; font-family: monospace; }
     .color-item .hex-input:focus { border-color: #0066cc; }
+    /* v0.31.0: 폰트 스타일 지정 */
+    .font-row { display: flex; flex-direction: column; gap: 4px; }
+    .font-row > label { font-size: 11px; color: #cbd5e1; font-weight: 500; }
 
     /* 우측 미리보기 + 편집 드로어 */
     #preview-area { flex: 1; display: flex; flex-direction: row; overflow: hidden; position: relative; }
@@ -402,7 +405,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.30.6</span>
+  <span id="ver-badge" title="배포 버전">v0.31.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -508,6 +511,9 @@
             <label class="toggle" style="flex:0 0 auto;display:inline-block;"><input type="checkbox" id="global-subtitle-toggle" onchange="toggleAllSubTitles(this.checked)"><span class="toggle-slider"></span></label>
           </div>
         </div>
+        <!-- v0.31.0: 폰트 스타일 지정 (4단계: 전체/메인/서브/커스텀) — inline style 금지 정책 -->
+        <div class="p-section-header">폰트 스타일 지정</div>
+        <div id="font-style-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
         <div class="p-section-header">CSS 색상 토큰</div>
         <div id="color-list">
           <!-- JS로 렌더링 -->
@@ -645,6 +651,12 @@ var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
 var logoLinks  = { logo1: { href: '', target: '_blank' }, logo2: { href: '', target: '_blank' } };  /* v0.29.1: 헤더 로고 링크 */
 var exportSettings = { imgBasePath: '/ui/static/image/specialty/', fairName: '' }; /* X1: 내보내기 설정 */
 var cssColors = {};
+/* v0.31.0: 폰트 스타일 일원화 — inline style 금지, CSS 룰 동적 주입
+ * - base: body/html/div/p/span 등 기본 요소
+ * - main: 섹션 타이틀 (.sec_tit)
+ * - sub: 섹션 서브 타이틀 (.sec_txt.basic.top)
+ * - custom: [{selector, font}] 사용자 지정 추가 매핑 */
+var cssFonts = { base: '', main: '', sub: '', custom: [] };
 var openEditPanelId = null;
 var sectionData = {
   section_visual: {
@@ -771,6 +783,7 @@ function saveState() {
     logoImages:          logoImages,
     exportSettings:      exportSettings,
     cssColors:      cssColors,
+    cssFonts:       cssFonts,  /* v0.31.0 */
     buttonStyles:   buttonStyles,
     sectionData:    sectionData,
     posterConfig:   posterConfig,
@@ -840,6 +853,11 @@ function loadState() {
       Object.keys(FAIR_BUILDER_COLORS).forEach(function(v) {
         if (cssColors[v] === undefined) cssColors[v] = FAIR_BUILDER_COLORS[v].default;
       });
+    }
+    /* v0.31.0: cssFonts 복원 */
+    if (s.cssFonts) {
+      cssFonts = Object.assign({ base: '', main: '', sub: '', custom: [] }, s.cssFonts);
+      if (!Array.isArray(cssFonts.custom)) cssFonts.custom = [];
     }
     if (s.buttonStyles) {
       buttonStyles = s.buttonStyles;
@@ -3955,6 +3973,110 @@ function applyColorToPreview(varName, value) {
   try { document.getElementById('preview-frame').contentDocument.documentElement.style.setProperty(varName, value); } catch(e) {}
 }
 
+/* v0.31.0: 폰트 CSS 룰 동적 주입 (iframe doc head에 <style id="builder-font-css">) */
+function applyFontsToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var styleId = 'builder-font-css';
+  var tag = doc.getElementById(styleId);
+  if (!tag) { tag = doc.createElement('style'); tag.id = styleId; doc.head.appendChild(tag); }
+  var rules = [];
+  if (cssFonts.base) {
+    /* 전체 기본 — body/html/div/p/span/li/td/a/button/input 등 base 요소 */
+    rules.push("body,html,div,p,span,li,td,a,button,input,textarea,select,h1,h2,h3,h4,h5,h6{font-family:" + cssFonts.base + " !important;}");
+  }
+  if (cssFonts.main) {
+    /* 섹션 메인 타이틀 — .sec_tit (basic 포함) */
+    rules.push(".sec_tit,.sec_tit.basic{font-family:" + cssFonts.main + " !important;}");
+  }
+  if (cssFonts.sub) {
+    /* 섹션 서브 타이틀 — .sec_txt.basic.top */
+    rules.push(".sec_txt,.sec_txt.basic,.sec_txt.basic.top{font-family:" + cssFonts.sub + " !important;}");
+  }
+  /* 커스텀: [{selector, font}] */
+  (cssFonts.custom || []).forEach(function(c) {
+    if (c && c.selector && c.font) rules.push(c.selector + "{font-family:" + c.font + " !important;}");
+  });
+  tag.textContent = rules.join('\n');
+}
+
+function updateFontStyle(key, family) {
+  cssFonts[key] = family || '';
+  applyFontsToPreview();
+  saveState();
+}
+function addCustomFont() {
+  cssFonts.custom = cssFonts.custom || [];
+  cssFonts.custom.push({ selector: '', font: '' });
+  renderFontPanel();
+  saveState();
+}
+function updateCustomFont(idx, field, val) {
+  if (!cssFonts.custom || !cssFonts.custom[idx]) return;
+  cssFonts.custom[idx][field] = val;
+  applyFontsToPreview();
+  saveState();
+}
+function removeCustomFont(idx) {
+  if (!cssFonts.custom) return;
+  cssFonts.custom.splice(idx, 1);
+  applyFontsToPreview();
+  renderFontPanel();
+  saveState();
+}
+
+function buildFontSelectHtml(currentFamily, key, idx) {
+  var current = currentFamily || '';
+  var changeAttr;
+  if (key === 'custom') {
+    changeAttr = 'onchange="updateCustomFont(' + idx + ',\'font\',this.value)"';
+  } else {
+    changeAttr = 'onchange="updateFontStyle(\'' + key + '\',this.value)"';
+  }
+  var html = '<select ' + changeAttr + ' style="width:100%;background:#161c2d;border:1px solid #2e3a52;border-radius:4px;color:#f1f5f9;font-size:12px;padding:5px 7px;outline:none;">';
+  html += '<option value=""' + (current === '' ? ' selected' : '') + '>(미적용 — 템플릿 기본)</option>';
+  WEBFONTS.forEach(function(f) {
+    var family = f.family;
+    html += '<option value="' + esc(family) + '"' + (current === family ? ' selected' : '') + '>' + esc(f.name) + '</option>';
+  });
+  html += '</select>';
+  return html;
+}
+
+function renderFontPanel() {
+  var el = document.getElementById('font-style-list');
+  if (!el) return;
+  var html = '';
+  /* 1. 전체 기본 */
+  html += '<div class="font-row">' +
+    '<label>전체 기본 폰트</label>' +
+    buildFontSelectHtml(cssFonts.base, 'base') +
+  '</div>';
+  /* 2. 메인 (섹션 타이틀) */
+  html += '<div class="font-row">' +
+    '<label>메인 (섹션 타이틀)</label>' +
+    buildFontSelectHtml(cssFonts.main, 'main') +
+  '</div>';
+  /* 3. 서브 (섹션 서브 타이틀) */
+  html += '<div class="font-row">' +
+    '<label>서브 (섹션 서브 타이틀)</label>' +
+    buildFontSelectHtml(cssFonts.sub, 'sub') +
+  '</div>';
+  /* 4. 그외 커스텀 */
+  html += '<div style="margin-top:8px;font-size:11px;color:#9ca3af;font-weight:600;">그외 폰트 지정</div>';
+  (cssFonts.custom || []).forEach(function(c, idx) {
+    html += '<div class="font-row" style="margin-top:4px;display:flex;flex-direction:column;gap:4px;padding:6px;background:rgba(30,41,59,0.5);border-radius:4px;">' +
+      '<div style="display:flex;gap:4px;align-items:center;">' +
+        '<input type="text" value="' + esc(c.selector || '') + '" placeholder="CSS selector (예: .my-text)" oninput="updateCustomFont(' + idx + ',\'selector\',this.value)" style="flex:1;background:#161c2d;border:1px solid #2e3a52;border-radius:4px;color:#f1f5f9;font-size:11px;padding:4px 6px;">' +
+        '<button onclick="removeCustomFont(' + idx + ')" title="제거" style="background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:11px;padding:0;">✕</button>' +
+      '</div>' +
+      buildFontSelectHtml(c.font, 'custom', idx) +
+    '</div>';
+  });
+  html += '<button onclick="addCustomFont()" style="width:100%;background:#1e40af;color:#fff;border:none;border-radius:4px;padding:5px;cursor:pointer;font-size:11px;font-weight:600;margin-top:6px;">+ 커스텀 추가</button>';
+  el.innerHTML = html;
+}
+
 /* ── 포스터 레이아웃 (Step G) ── */
 function applyPosterLayout(doc) {
   var styleId = 'builder-poster-layout';
@@ -4558,6 +4680,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applySpacingToPreview();
   applyBgImagesToPreview();
   applyTopTextToPreview();  /* v0.27.0 */
+  applyFontsToPreview();    /* v0.31.0 — 폰트 스타일 일원화 */
   /* v0.28.1: contenteditable로 .sec_txt.basic.top 텍스트 지우면 자동 숨김 */
   try {
     var doc = this.contentDocument;
@@ -4753,6 +4876,18 @@ function buildOverrideCSS() {
   var varEntries = Object.keys(cssColors).filter(function(k){ return cssColors[k]; })
     .map(function(k) { return '  ' + k + ': ' + cssColors[k] + ';'; });
   if (varEntries.length) css += ':root {\n' + varEntries.join('\n') + '\n}\n\n';
+
+  /* v0.31.0: 폰트 스타일 (전체/메인/서브/커스텀) */
+  if (cssFonts) {
+    var fontRules = [];
+    if (cssFonts.base) fontRules.push('body,html,div,p,span,li,td,a,button,input,textarea,select,h1,h2,h3,h4,h5,h6{font-family:' + cssFonts.base + ' !important;}');
+    if (cssFonts.main) fontRules.push('.sec_tit,.sec_tit.basic{font-family:' + cssFonts.main + ' !important;}');
+    if (cssFonts.sub)  fontRules.push('.sec_txt,.sec_txt.basic,.sec_txt.basic.top{font-family:' + cssFonts.sub + ' !important;}');
+    (cssFonts.custom || []).forEach(function(c) {
+      if (c && c.selector && c.font) fontRules.push(c.selector + '{font-family:' + c.font + ' !important;}');
+    });
+    if (fontRules.length) css += '/* 폰트 스타일 */\n' + fontRules.join('\n') + '\n\n';
+  }
 
   /* 2. 섹션 배경색 */
   Object.keys(sectionBgColors).forEach(function(sId) {
@@ -4954,6 +5089,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 09:09 (v0.31.0)',
+    items: [
+      '<strong>[v0.31.0]</strong> 폰트 스타일 일원화 — 좌측 > 스타일 탭에 "폰트 스타일 지정" 신규. inline style 금지 정책 적용 (CSS 룰 동적 주입)',
+      '<strong>[v0.31.0]</strong> 4단계 위계: ① 전체 기본 (body/html/div/p/span...) ② 메인 (.sec_tit) ③ 서브 (.sec_txt.basic.top) ④ 커스텀 [{selector, font}] 사용자 추가',
+      '<strong>[v0.31.0]</strong> 신규: cssFonts 상태 + applyFontsToPreview() — &lt;style id="builder-font-css"&gt; 동적 주입 + WEBFONTS 11종 select 옵션',
+      '<strong>[v0.31.0]</strong> updateFontStyle / addCustomFont / updateCustomFont / removeCustomFont / renderFontPanel / buildFontSelectHtml 신규',
+      '<strong>[v0.31.0]</strong> save/load + iframe 로드 시 자동 적용 + export buildOverrideCSS 에 폰트 룰 포함',
+      '<strong>[v0.31.0]</strong> 정책: 빌더가 inline style="font-family..."" 직접 주입 금지 — 모든 폰트는 클래스 선택자 기반 CSS 룰로',
+    ]
+  },
   {
     date: '2026.04.28 18:02 (v0.30.6)',
     items: [
@@ -5984,6 +6130,7 @@ function togglePatchNotes() {
 loadState();
 renderSectionList();
 renderColorList();
+renderFontPanel();  /* v0.31.0 */
 /* v0.28.1: 글로벌 서브타이틀 토글 체크박스 초기 상태 반영 */
 (function() {
   var chk = document.getElementById('global-subtitle-toggle');
