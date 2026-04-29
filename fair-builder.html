@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.8</span>
+  <span id="ver-badge" title="배포 버전">v0.34.9</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2427,6 +2427,8 @@ function buildVideoExtraGroupsPanel() {
           ? '<button class="ep-reorder-btn" title="위로" ' + (i === 0 ? 'disabled' : '') + ' onclick="moveVideoExtraGroup(' + i + ',-1)">▲</button>' +
             '<button class="ep-reorder-btn" title="아래로" ' + (i === videoExtraGroups.length - 1 ? 'disabled' : '') + ' onclick="moveVideoExtraGroup(' + i + ',1)">▼</button>'
           : '') +
+        /* v0.34.9: 그룹 복제 버튼 */
+        '<button class="ep-reorder-btn" title="복제" onclick="duplicateVideoExtraGroup(' + i + ')" style="font-size:11px;">⎘</button>' +
         '<button class="ep-remove-btn" title="제거" onclick="removeVideoExtraGroup(' + i + ')">✕</button>' +
       '</div>' +
       '<div class="ep-field"><label>레이아웃 타입</label>' +
@@ -2474,6 +2476,18 @@ function addVideoExtraGroup() {
 
 function removeVideoExtraGroup(i) {
   videoExtraGroups.splice(i, 1);
+  saveState();
+  applyVideoExtraGroupsToPreview();
+  var body = document.getElementById('edit-drawer-body');
+  if (body && openEditPanelId === 'section_videos') body.innerHTML = buildSectionPanel('section_videos');
+}
+
+/* v0.34.9: 영상 그룹 복제 — 같은 인덱스 다음에 깊은 복사본 삽입 */
+function duplicateVideoExtraGroup(i) {
+  var src = videoExtraGroups[i];
+  if (!src) return;
+  var copy = JSON.parse(JSON.stringify(src));
+  videoExtraGroups.splice(i + 1, 0, copy);
   saveState();
   applyVideoExtraGroupsToPreview();
   var body = document.getElementById('edit-drawer-body');
@@ -6037,6 +6051,13 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 16:30 (v0.34.9)',
+    items: [
+      '<strong>[v0.34.9]</strong> 영상 그룹 복제 버튼 ⎘ 추가 — 비슷한 그룹을 빠르게 만들 때 (타이틀/cells 모두 깊은 복사)',
+      '<strong>[v0.34.9]</strong> duplicateVideoExtraGroup(i): JSON deep clone → splice(i+1, 0, copy) → 패널 재구성 + 미리보기 재생성',
+    ]
+  },
   {
     date: '2026.04.29 16:20 (v0.34.8)',
     items: [
