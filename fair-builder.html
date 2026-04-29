@@ -410,7 +410,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.33.0</span>
+  <span id="ver-badge" title="배포 버전">v0.33.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -437,49 +437,7 @@
     <!-- 섹션 탭 -->
     <div class="panel-body">
       <div id="tab-sections" class="tab-panel active">
-        <div class="p-section-header">헤더 설정</div>
-        <div class="logo-input-wrap">
-          <label>기업명 (title 속성)</label>
-          <input type="text" id="logo-title" placeholder="기업명 입력" oninput="saveState();applyLogoLinksToPreview()">
-        </div>
-        <!-- v0.29.1: 로고1/2 별도 링크 + target -->
-        <div class="logo-input-wrap">
-          <label>로고 1 이미지 <span class="ep-hint">(.logo_f)</span></label>
-          <div class="ep-bgimg-row">
-            <input type="text" class="ep-bgimg-input" id="logo-url-logo1" placeholder="URL 또는 파일 업로드" oninput="updateLogoImage('logo1',this.value)">
-            <label class="ep-bgimg-upload" title="파일 업로드">📁<input type="file" accept="image/*" style="display:none" onchange="onLogoImgFile(this,'logo1')"></label>
-            <button class="ep-bgimg-clear" onclick="updateLogoImage('logo1','');document.getElementById('logo-url-logo1').value=''" style="display:none" id="logo-clear-logo1">✕</button>
-          </div>
-          <img id="logo-thumb-logo1" class="ep-bgimg-thumb" style="display:none">
-          <label style="margin-top:6px;">로고 1 링크 URL</label>
-          <input type="text" id="logo-href-logo1" placeholder="https://..." oninput="updateLogoLink('logo1','href',this.value)">
-          <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
-            <label style="font-size:11px;color:#9ca3af;">열기 방식</label>
-            <select id="logo-target-logo1" onchange="updateLogoLink('logo1','target',this.value)" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e5e7eb;font-size:11px;padding:3px 5px;">
-              <option value="_blank">새창 (_blank)</option>
-              <option value="_self">현재창 (_self)</option>
-            </select>
-          </div>
-        </div>
-        <div class="logo-input-wrap">
-          <label>로고 2 이미지 <span class="ep-hint">(.logo_f2)</span></label>
-          <div class="ep-bgimg-row">
-            <input type="text" class="ep-bgimg-input" id="logo-url-logo2" placeholder="URL 또는 파일 업로드" oninput="updateLogoImage('logo2',this.value)">
-            <label class="ep-bgimg-upload" title="파일 업로드">📁<input type="file" accept="image/*" style="display:none" onchange="onLogoImgFile(this,'logo2')"></label>
-            <button class="ep-bgimg-clear" onclick="updateLogoImage('logo2','');document.getElementById('logo-url-logo2').value=''" style="display:none" id="logo-clear-logo2">✕</button>
-          </div>
-          <img id="logo-thumb-logo2" class="ep-bgimg-thumb" style="display:none">
-          <label style="margin-top:6px;">로고 2 링크 URL</label>
-          <input type="text" id="logo-href-logo2" placeholder="https://..." oninput="updateLogoLink('logo2','href',this.value)">
-          <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
-            <label style="font-size:11px;color:#9ca3af;">열기 방식</label>
-            <select id="logo-target-logo2" onchange="updateLogoLink('logo2','target',this.value)" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e5e7eb;font-size:11px;padding:3px 5px;">
-              <option value="_blank">새창 (_blank)</option>
-              <option value="_self">현재창 (_self)</option>
-            </select>
-          </div>
-        </div>
-
+        <!-- v0.33.1: 헤더 설정 → 스타일 탭으로 이동 -->
         <!-- v0.32.2: 네비게이션 → 스타일 탭으로 이동 -->
 
         <!-- v0.21.1: S1 채용공고 탭 패널은 우측 편집 드로어로 이동 -->
@@ -503,6 +461,52 @@
 
       <!-- 스타일 탭 (v0.32.2: 모든 섹션 collapsible — 기본값 열린 상태) -->
       <div id="tab-style" class="tab-panel">
+        <!-- 헤더 설정 (v0.33.1: 섹션 탭에서 이동) -->
+        <div class="p-section-header collapsible-header" onclick="toggleStyleSection('style-header')">
+          <span>헤더 설정</span><span class="collapse-arrow" id="arrow-style-header">▼</span>
+        </div>
+        <div id="style-header" class="collapsible-body" style="margin-bottom:14px;">
+          <div class="logo-input-wrap">
+            <label>기업명 (title 속성)</label>
+            <input type="text" id="logo-title" placeholder="기업명 입력" oninput="saveState();applyLogoLinksToPreview()">
+          </div>
+          <div class="logo-input-wrap">
+            <label>로고 1 이미지 <span class="ep-hint">(.logo_f)</span></label>
+            <div class="ep-bgimg-row">
+              <input type="text" class="ep-bgimg-input" id="logo-url-logo1" placeholder="URL 또는 파일 업로드" oninput="updateLogoImage('logo1',this.value)">
+              <label class="ep-bgimg-upload" title="파일 업로드">📁<input type="file" accept="image/*" style="display:none" onchange="onLogoImgFile(this,'logo1')"></label>
+              <button class="ep-bgimg-clear" onclick="updateLogoImage('logo1','');document.getElementById('logo-url-logo1').value=''" style="display:none" id="logo-clear-logo1">✕</button>
+            </div>
+            <img id="logo-thumb-logo1" class="ep-bgimg-thumb" style="display:none">
+            <label style="margin-top:6px;">로고 1 링크 URL</label>
+            <input type="text" id="logo-href-logo1" placeholder="https://..." oninput="updateLogoLink('logo1','href',this.value)">
+            <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+              <label style="font-size:11px;color:#9ca3af;">열기 방식</label>
+              <select id="logo-target-logo1" onchange="updateLogoLink('logo1','target',this.value)" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e5e7eb;font-size:11px;padding:3px 5px;">
+                <option value="_blank">새창 (_blank)</option>
+                <option value="_self">현재창 (_self)</option>
+              </select>
+            </div>
+          </div>
+          <div class="logo-input-wrap">
+            <label>로고 2 이미지 <span class="ep-hint">(.logo_f2)</span></label>
+            <div class="ep-bgimg-row">
+              <input type="text" class="ep-bgimg-input" id="logo-url-logo2" placeholder="URL 또는 파일 업로드" oninput="updateLogoImage('logo2',this.value)">
+              <label class="ep-bgimg-upload" title="파일 업로드">📁<input type="file" accept="image/*" style="display:none" onchange="onLogoImgFile(this,'logo2')"></label>
+              <button class="ep-bgimg-clear" onclick="updateLogoImage('logo2','');document.getElementById('logo-url-logo2').value=''" style="display:none" id="logo-clear-logo2">✕</button>
+            </div>
+            <img id="logo-thumb-logo2" class="ep-bgimg-thumb" style="display:none">
+            <label style="margin-top:6px;">로고 2 링크 URL</label>
+            <input type="text" id="logo-href-logo2" placeholder="https://..." oninput="updateLogoLink('logo2','href',this.value)">
+            <div style="display:flex;gap:6px;align-items:center;margin-top:4px;">
+              <label style="font-size:11px;color:#9ca3af;">열기 방식</label>
+              <select id="logo-target-logo2" onchange="updateLogoLink('logo2','target',this.value)" style="flex:1;background:#1e293b;border:1px solid #2e3a52;border-radius:4px;color:#e5e7eb;font-size:11px;padding:3px 5px;">
+                <option value="_blank">새창 (_blank)</option>
+                <option value="_self">현재창 (_self)</option>
+              </select>
+            </div>
+          </div>
+        </div>
         <!-- 레이블 -->
         <div class="p-section-header collapsible-header" onclick="toggleStyleSection('style-label')">
           <span>레이블</span><span class="collapse-arrow" id="arrow-style-label">▼</span>
@@ -1584,7 +1588,7 @@ function toggleStyleSection(id) {
 }
 /* 페이지 로드 시 닫힘 상태 복원 — 스크립트가 body 끝에 있어 즉시 실행 (DOMContentLoaded 이미 fired) */
 function restoreStyleCollapse() {
-  ['style-label','style-nav','style-fonts','style-colors','style-export'].forEach(function(id) {
+  ['style-header','style-label','style-nav','style-fonts','style-colors','style-export'].forEach(function(id) {
     try {
       if (localStorage.getItem('fair_style_' + id) === 'closed') {
         var body = document.getElementById(id);
@@ -5361,6 +5365,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 12:00 (v0.33.1)',
+    items: [
+      '<strong>[v0.33.1]</strong> 헤더 설정 (기업명/로고1/로고2) → 스타일 탭으로 이동 (v0.32.2 누락분 보강)',
+      '<strong>[v0.33.1]</strong> 스타일 탭 6개 collapsible 섹션: 헤더 설정 / 레이블 / 네비게이션 / 폰트 / 색상 / 내보내기 (각 접기/펼치기 + localStorage 유지)',
+      '<strong>[v0.33.1]</strong> 섹션 탭에는 섹션 블록과 + 섹션 추가만 남김 (헤더 설정/네비게이션 둘 다 스타일로)',
+    ]
+  },
   {
     date: '2026.04.29 11:26 (v0.33.0)',
     items: [
