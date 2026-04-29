@@ -405,7 +405,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.31.0</span>
+  <span id="ver-badge" title="배포 버전">v0.31.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3057,11 +3057,11 @@ function openPreviewWindow() {
   if (!doc) { alert('미리보기가 로드되지 않았습니다.'); return; }
   /* 깊은 복제 후 정리 */
   var rootClone = doc.documentElement.cloneNode(true);
-  /* 1. 빌더 주입 스타일 태그 제거 (builder-aos-disable은 v0.30.6부터 미사용) */
-  ['builder-edit-css','builder-spacing-css','builder-bgimage-css','builder-logo-css','builder-btn-styles','builder-poster-layout','builder-webfonts-css','builder-nav-hover-css'].forEach(function(id) {
-    var t = rootClone.querySelector('#' + id);
-    if (t && t.parentNode) t.parentNode.removeChild(t);
-  });
+  /* 1. 빌더 주입 스타일 태그 제거 — builder-edit-css만 (편집 outline). 디자인 관련 스타일은 모두 보존
+   * v0.31.0: builder-webfonts-css / builder-font-css 보존 (새창에서 폰트 정상 렌더링)
+   * builder-spacing/bgimage/logo/btn/poster/nav-hover 도 보존 (디자인 토큰) */
+  var t = rootClone.querySelector('#builder-edit-css');
+  if (t && t.parentNode) t.parentNode.removeChild(t);
   /* 3. 빌더 UI / 편집 흔적 제거 */
   rootClone.querySelectorAll('[data-builder-ui],[data-handle-for]').forEach(function(el) { el.remove(); });
   rootClone.querySelectorAll('.builder-section-active').forEach(function(el) { el.classList.remove('builder-section-active'); });
@@ -5089,6 +5089,13 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 09:14 (v0.31.1)',
+    items: [
+      '<strong>[v0.31.1]</strong> 검수 핫픽스 — 미리보기 새창에서 동적 웹폰트 미적용 해결',
+      '<strong>[v0.31.1]</strong> openPreviewWindow: builder-webfonts-css 제거 → 보존 (Cafe24/배민한나 등 @font-face 룰 보존). builder-font-css도 보존. 디자인 관련 스타일 모두 유지, builder-edit-css(편집 outline)만 제거',
+    ]
+  },
   {
     date: '2026.04.29 09:09 (v0.31.0)',
     items: [
