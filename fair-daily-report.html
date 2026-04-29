@@ -80,25 +80,24 @@
 <div class="day-card">
   <div class="day-head">
     <h2>04월 29일 (수)</h2>
-    <span class="ver-tag">v0.31.0 → v0.33.6 (14 버전)</span>
+    <span class="ver-tag">v0.31.0 → v0.34.13 (30 버전)</span>
   </div>
 
   <div class="tldr">
     <div class="tldr-label">오늘 핵심</div>
     <div class="tldr-text">
-      <strong>폰트 시스템 일원화 + 박람회 개요 동적화 + B-1 신 기획(3차 시도)</strong>.
-      좌측 스타일 탭에 "폰트 스타일 지정" (4단계 위계 + inline 금지 정책).
-      포스터 infos[] 동적 (text/logos type, 추가/제거/순서) + 신청 버튼 다중.
-      <strong>B-1: Flatten 정규화 방식</strong> 도입 — wrap 후 즉시 평탄화로 nested span 0 보장.
-      자주 사용 컬러 팔레트 + 메인비주얼 요소 추가 시 편집 손실 수정.
-      <strong>로드맵 기준 1차 빌더형 ~35% 진척</strong> (미진행: AOS/영상/스타일 9순위/10순위/튜토리얼/색상 팔레트 커스텀/이미지 편집 툴/박람회 편집모드/1차 베타).
+      <strong>오전: 폰트 일원화 + 박람회 개요 동적 + B-1 Flatten</strong> (v0.31~v0.33.6, 14건).
+      <strong>오후: 색상 팔레트 커스텀 UI(▾ popover) + 영상 섹션 본격 고도화 9건 + AOS 통합</strong> (v0.33.7~v0.34.13, 16건).
+      영상은 1순위 작업으로 1단계(4타입 on/off) → 그룹 추가/제거 → reorder → 복제 → 그룹별 v-tit/v-bar → enabled → AOS 효과+duration+delay 까지 본격 구축.
+      커스텀 컬러 픽커 통합 풀(자주 사용 18, HEX 직접 입력)이 모든 픽커 위치에 ▾ 트리거로 노출.
+      <strong>로드맵 기준 1차 빌더형 약 45% 진척</strong> (영상 8순위 1+2단계 미리 당김으로 추가 진척).
     </div>
   </div>
 
   <div class="kpi-row">
     <div class="kpi feature">
       <div class="label">신규 기능 (절대)</div>
-      <div class="value">8</div>
+      <div class="value">22</div>
       <div class="sub">건</div>
     </div>
     <div class="kpi fix">
@@ -108,23 +107,23 @@
     </div>
     <div class="kpi policy">
       <div class="label">대형 리팩토링 (절대)</div>
-      <div class="value">2</div>
-      <div class="sub">B-1 + 박람회 동적</div>
+      <div class="value">3</div>
+      <div class="sub">B-1 / 박람회 / 영상</div>
     </div>
     <div class="kpi" style="background:#eff6ff;border:1px solid #2563eb;">
       <div class="label" style="color:#1e40af;">작업 시간</div>
-      <div class="value" style="color:#1e40af;">5h</div>
-      <div class="sub" style="color:#3b82f6;">09:00~14:00</div>
+      <div class="value" style="color:#1e40af;">~8h</div>
+      <div class="sub" style="color:#3b82f6;">09:00~17:30</div>
     </div>
   </div>
 
   <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#78350f;">
-    <strong>📦 패킷 제한 시간 (토큰 리셋)</strong>: 14:00 (마감) — 5h 사용
+    <strong>📦 패킷 제한 시간 (토큰 리셋)</strong>: 오전 14:00 마감 (5h) → 오후 14:00 리셋 / 19:00 마감(추정, ~3h 사용)
   </div>
 
   <div class="cat-grid">
     <div class="cat-box">
-      <div class="cat-head"><span class="cat-name">🔵 신규 기능</span><span class="cat-count">8건</span></div>
+      <div class="cat-head"><span class="cat-name">🔵 신규 기능 — 오전</span><span class="cat-count">8건</span></div>
       <ul>
         <li>v0.31.0 폰트 스타일 일원화 — 4단계 위계 (전체/메인/서브/커스텀) + inline style 금지 정책</li>
         <li>v0.32.0 박람회 개요 동적 infos[] (text/logos) + apply_buttons[] 다중 + 마이그레이션</li>
@@ -136,6 +135,23 @@
       </ul>
     </div>
     <div class="cat-box">
+      <div class="cat-head"><span class="cat-name">🔵 신규 기능 — 오후 (영상 1순위)</span><span class="cat-count">14건</span></div>
+      <ul>
+        <li>v0.34.0 ⭐ <strong>색상 팔레트 커스텀 UI</strong> — ▾ popover (자주 사용 18 통합 풀 + HEX 직접 입력) 5곳 적용</li>
+        <li>v0.34.1 버튼 그림자 색상 변수화 (--s-color3-shadow / --s-color4-shadow)</li>
+        <li>v0.34.3 ⭐ 영상 4가지 레이아웃 타입 on/off (1단계, Phase 6 미리 당김)</li>
+        <li>v0.34.4 패치노트 그룹 헤더 기능 (groupHeader 필드)</li>
+        <li>v0.34.6 영상 v-tit/v-bar 전역 on/off 토글</li>
+        <li>v0.34.7 ⭐ <strong>영상 본격 고도화 — 그룹 추가/제거</strong> (videoExtraGroups, 마크업 클론)</li>
+        <li>v0.34.8 영상 그룹 reorder ▲▼</li>
+        <li>v0.34.9 영상 그룹 복제 ⎘</li>
+        <li>v0.34.10 영상 그룹별 v-tit/v-bar 개별 토글 (전역 AND 결합)</li>
+        <li>v0.34.11 영상 그룹 enabled 토글 (임시 끄기)</li>
+        <li>v0.34.12 ⭐ 영상 그룹별 AOS 효과 select (8종) — 영상+애니메이션 결합</li>
+        <li>v0.34.13 AOS duration / delay (ms) 보강</li>
+      </ul>
+    </div>
+    <div class="cat-box">
       <div class="cat-head"><span class="cat-name">🟠 검수 핫픽스</span><span class="cat-count">6건</span></div>
       <ul>
         <li>v0.31.1 새창 미리보기에서 동적 웹폰트 적용 (builder-webfonts-css 보존)</li>
@@ -143,13 +159,18 @@
         <li>v0.33.4 메인비주얼 요소 추가/삭제/폰트변경 시 다른 요소 편집 보존</li>
         <li>v0.33.5 행사안내 로고 flex-wrap + .mvisual-text-1 width 제거</li>
         <li>v0.33.6 .interview-link-view position:relative 추가</li>
+        <li>v0.33.7 소개 기관 링크 URL 입력 적용 안 됨 수정 (data-orig-href 동기)</li>
+        <li>v0.33.8 미리보기 새창 OFF 섹션 보임 + 배경색 손실 수정</li>
+        <li>v0.34.2 인셋 쉐도우 ▾ 보강 (v0.34.0 누락 보완)</li>
+        <li>v0.34.5 "분석 및 초안 방향" 헤더 위치 정정</li>
       </ul>
     </div>
     <div class="cat-box">
-      <div class="cat-head"><span class="cat-name">🟣 대형 리팩토링</span><span class="cat-count">2건</span></div>
+      <div class="cat-head"><span class="cat-name">🟣 대형 리팩토링</span><span class="cat-count">3건</span></div>
       <ul>
         <li><strong>B-1 부분 드래그 신 기획 (3차)</strong> v0.33.0/2/3 — case 1 폐기 → 부모/자손 병합 → <strong>Flatten 정규화</strong>로 정착. 모든 텍스트 노드의 누적 스타일 계산 + 인접 동일 스타일 segment 병합 + flat 형제 span 재구성으로 nested span 0 보장. selection 텍스트 위치 자동 복원.</li>
         <li><strong>박람회 개요 동적 필드</strong> v0.32.0 — posters[i].infos[] (text/logos type), apply_buttons[] 다중, 16개 신규 함수 (CRUD + reorder + UI), applyEventInfoToPreview 동적 DOM 재생성, migrateEventInfoPosters 자동 변환</li>
+        <li><strong>영상 섹션 본격 고도화</strong> v0.34.3~13 (10건 누적) — 1단계 4타입 on/off → videoExtraGroups 데이터 모델 → 그룹 카드 UI (타입/타이틀/cell URL+barText/v-tit·v-bar 토글/enabled/AOS 효과+duration+delay/reorder/복제) → 마크업 클론 + AOS 속성 통합</li>
       </ul>
     </div>
   </div>
@@ -157,8 +178,8 @@
   <div class="next-box">
     <div class="next-title">📌 다음 작업 (4/30 목)</div>
     <div class="next-text">
-      <strong>🥇 검수 대기</strong>: v0.33.0~3 부분 드래그 / v0.33.3 컬러 팔레트 / v0.33.4 메인비주얼 보존 / v0.32.0 박람회 동적 / v0.31.0 폰트<br>
-      <strong>🥈 미수행</strong>: 편집모드 텍스트 수정 시 레이아웃 깨짐 (캡처 필요) / 색상 팔레트 커스텀 UI / 간이 이미지 편집 툴
+      <strong>🥇 검수 대기 (4/29 누적)</strong>: 30건 — 폰트 일원화 / 박람회 동적 / B-1 Flatten / 색상 픽커 / 영상 섹션 9건 / AOS 통합 / 인프라 보강<br>
+      <strong>🥈 다음 우선순위</strong>: ① 영상 — 기본 4개 li를 그룹으로 통합 (큰 작업) ② 애니메이션 — 다른 섹션 AOS 효과 변경 UI ③ 9순위 컬러 변수별 적용 섹션 / hover shadow / 알파 슬라이더 / 이미지 편집 툴
     </div>
   </div>
 </div>
