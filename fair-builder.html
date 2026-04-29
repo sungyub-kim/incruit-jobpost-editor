@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.9</span>
+  <span id="ver-badge" title="배포 버전">v0.34.10</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2438,7 +2438,15 @@ function buildVideoExtraGroupsPanel() {
           }).join('') +
         '</select>' +
       '</div>' +
-      '<div class="ep-field"><label>그룹 타이틀 (.v-tit)</label>' +
+      '<div class="ep-row" style="display:flex;align-items:center;margin:6px 0;">' +
+        '<label style="flex:1;font-size:11px;color:#9ca3af;">v-tit (그룹 타이틀)</label>' +
+        '<label class="toggle"><input type="checkbox" ' + (g.titleEnabled !== false ? 'checked' : '') + ' onchange="updateVideoExtraGroup(' + i + ',\'titleEnabled\',this.checked)"><span class="toggle-slider"></span></label>' +
+      '</div>' +
+      '<div class="ep-row" style="display:flex;align-items:center;margin:6px 0;">' +
+        '<label style="flex:1;font-size:11px;color:#9ca3af;">v-bar (하단 바)</label>' +
+        '<label class="toggle"><input type="checkbox" ' + (g.barEnabled !== false ? 'checked' : '') + ' onchange="updateVideoExtraGroup(' + i + ',\'barEnabled\',this.checked)"><span class="toggle-slider"></span></label>' +
+      '</div>' +
+      '<div class="ep-field"><label>그룹 타이틀 텍스트 (.v-tit)</label>' +
         '<input type="text" value="' + esc(g.title || '') + '" placeholder="예: 용산" oninput="updateVideoExtraGroup(' + i + ',\'title\',this.value)">' +
       '</div>';
     /* cell 리스트 (URL + barText) */
@@ -2555,13 +2563,17 @@ function applyVideoExtraGroupsToPreview() {
       var cell = (g.cells && g.cells[c]) ? g.cells[c] : { url: '', barText: '' };
       var url = cell.url || 'https://www.youtube.com/embed/vCmn6tg2gNA?controls=0';
       var barText = (cell.barText || '').replace(/</g, '&lt;');
+      /* v0.34.10: 그룹별 v-bar 토글 + 전역 토글 AND */
+      var barShow = videoBarEnabled && (g.barEnabled !== false);
       cellHtml += '<div class="cell-partition-list">' +
         '<div class="video"><iframe width="100%" height="100%" src="' + url.replace(/"/g, '&quot;') + '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>' +
-        '<div class="v-bar" style="' + (videoBarEnabled ? '' : 'display:none') + '"><span>' + barText + '</span></div>' +
+        '<div class="v-bar" style="' + (barShow ? '' : 'display:none') + '"><span>' + barText + '</span></div>' +
       '</div>';
     }
+    /* v0.34.10: 그룹별 토글 + 전역 토글 AND */
+    var titleShow = videoTitleEnabled && (g.titleEnabled !== false);
     li.innerHTML =
-      '<div class="v-tit" style="' + (videoTitleEnabled ? '' : 'display:none') + '">' + (g.title || '').replace(/</g, '&lt;') + '</div>' +
+      '<div class="v-tit" style="' + (titleShow ? '' : 'display:none') + '">' + (g.title || '').replace(/</g, '&lt;') + '</div>' +
       '<div class="cell-partition ' + partitionClass + '">' + cellHtml + '</div>';
     ul.appendChild(li);
   });
@@ -2599,16 +2611,18 @@ function applyVideoTypesToPreview() {
   });
 }
 
-/* v0.34.6: v-tit / v-bar 전역 표시/숨김 */
+/* v0.34.6: v-tit / v-bar 전역 표시/숨김 (기본 li만 — 추가 그룹은 자체 토글 + 전역 AND 로직) */
 function applyVideoTitleBarToPreview() {
   var doc = getPreviewDoc();
   if (!doc) return;
-  doc.querySelectorAll('[data-builder-section="section_videos"] .v-tit').forEach(function(el) {
-    el.style.display = videoTitleEnabled ? '' : 'none';
+  /* v0.34.10: 추가 그룹은 applyVideoExtraGroupsToPreview에서 그룹별 처리 → 여기는 기본 li만 */
+  var basicLis = doc.querySelectorAll('[data-builder-section="section_videos"] .ListVideoFull > li:not([data-builder-extra-video])');
+  basicLis.forEach(function(li) {
+    li.querySelectorAll('.v-tit').forEach(function(el) { el.style.display = videoTitleEnabled ? '' : 'none'; });
+    li.querySelectorAll('.v-bar').forEach(function(el) { el.style.display = videoBarEnabled ? '' : 'none'; });
   });
-  doc.querySelectorAll('[data-builder-section="section_videos"] .v-bar').forEach(function(el) {
-    el.style.display = videoBarEnabled ? '' : 'none';
-  });
+  /* 추가 그룹은 재생성 트리거 (전역 토글이 그룹별과 결합되어야 하므로) */
+  applyVideoExtraGroupsToPreview();
 }
 
 function buildFieldInput(sectionId, path, field, val) {
@@ -6051,6 +6065,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 16:45 (v0.34.10)',
+    items: [
+      '<strong>[v0.34.10]</strong> 영상 그룹별 v-tit / v-bar 개별 토글 추가 — 그룹마다 타이틀/바 끄기 가능',
+      '<strong>[v0.34.10]</strong> 그룹 카드 안에 두 토글 상단 노출 + 데이터 필드 titleEnabled / barEnabled 추가',
+      '<strong>[v0.34.10]</strong> 전역 토글(v0.34.6)과 AND 결합 — 전역 OFF면 무조건 숨김, ON이면 그룹별 따름',
+      '<strong>[v0.34.10]</strong> applyVideoTitleBarToPreview 분기: 기본 li(:not([data-builder-extra-video]))는 전역만, 추가 그룹은 재생성 트리거',
+    ]
+  },
   {
     date: '2026.04.29 16:30 (v0.34.9)',
     items: [
