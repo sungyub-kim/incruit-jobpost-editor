@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.11</span>
+  <span id="ver-badge" title="배포 버전">v0.34.12</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2451,6 +2451,15 @@ function buildVideoExtraGroupsPanel() {
       '</div>' +
       '<div class="ep-field"><label>그룹 타이틀 텍스트 (.v-tit)</label>' +
         '<input type="text" value="' + esc(g.title || '') + '" placeholder="예: 용산" oninput="updateVideoExtraGroup(' + i + ',\'title\',this.value)">' +
+      '</div>' +
+      /* v0.34.12: 그룹별 AOS 효과 설정 */
+      '<div class="ep-field"><label>등장 효과 (AOS) <span class="ep-hint" style="color:#6b7280;font-size:10px;">새창 미리보기에서 확인</span></label>' +
+        '<select onchange="updateVideoExtraGroup(' + i + ',\'aos\',this.value)">' +
+          ['', 'fade-up', 'fade-down', 'fade-left', 'fade-right', 'zoom-in', 'zoom-out', 'flip-up'].map(function(opt) {
+            var label = opt === '' ? '(없음 — 정적)' : opt;
+            return '<option value="' + opt + '" ' + ((g.aos || '') === opt ? 'selected' : '') + '>' + label + '</option>';
+          }).join('') +
+        '</select>' +
       '</div>';
     /* cell 리스트 (URL + barText) */
     var cellCount = videoTypeCellCount(g.type);
@@ -2577,6 +2586,8 @@ function applyVideoExtraGroupsToPreview() {
     var titleShow = videoTitleEnabled && (g.titleEnabled !== false);
     /* v0.34.11: 그룹 자체 enabled false면 li 숨김 */
     if (g.enabled === false) li.style.display = 'none';
+    /* v0.34.12: 그룹별 AOS 효과 — 빌더 iframe은 가드로 무력화, 새창/export에서만 동작 */
+    if (g.aos) li.setAttribute('data-aos', g.aos);
     li.innerHTML =
       '<div class="v-tit" style="' + (titleShow ? '' : 'display:none') + '">' + (g.title || '').replace(/</g, '&lt;') + '</div>' +
       '<div class="cell-partition ' + partitionClass + '">' + cellHtml + '</div>';
@@ -6070,6 +6081,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 17:05 (v0.34.12)',
+    items: [
+      '<strong>[v0.34.12]</strong> 영상 그룹별 AOS 등장 효과 select 추가 — fade-up/down/left/right, zoom-in/out, flip-up, 없음 (정적)',
+      '<strong>[v0.34.12]</strong> 적용: li에 data-aos 속성 동적 부여. 빌더 iframe은 가드로 무력화 → 새창 미리보기 / export에서만 효과 동작',
+      '<strong>[v0.34.12]</strong> 1순위(영상) + 2순위(애니메이션) 결합 — 그룹마다 다른 효과 지정 가능',
+    ]
+  },
   {
     date: '2026.04.29 16:55 (v0.34.11)',
     items: [
