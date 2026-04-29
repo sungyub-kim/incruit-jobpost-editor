@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.10</span>
+  <span id="ver-badge" title="배포 버전">v0.34.11</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2419,9 +2419,12 @@ function buildVideoExtraGroupsPanel() {
   var h = '<div class="ep-spacing-group">' +
     '<div class="ep-spacing-title">영상 그룹 추가</div>';
   videoExtraGroups.forEach(function(g, i) {
-    h += '<div class="ep-btn-card" style="margin-bottom:8px;">' +
+    var disabled = g.enabled === false;
+    h += '<div class="ep-btn-card" style="margin-bottom:8px;' + (disabled ? 'opacity:.5;' : '') + '">' +
       '<div class="ep-btn-header" style="display:flex;align-items:center;gap:6px;">' +
-        '<span style="flex:1;">그룹 ' + (i + 1) + '</span>' +
+        /* v0.34.11: 그룹 단위 enabled 토글 */
+        '<label class="toggle" title="그룹 사용"><input type="checkbox" ' + (disabled ? '' : 'checked') + ' onchange="updateVideoExtraGroup(' + i + ',\'enabled\',this.checked)"><span class="toggle-slider"></span></label>' +
+        '<span style="flex:1;">그룹 ' + (i + 1) + (disabled ? ' (꺼짐)' : '') + '</span>' +
         /* v0.34.8: reorder 버튼 — 2개 이상일 때 */
         (videoExtraGroups.length > 1
           ? '<button class="ep-reorder-btn" title="위로" ' + (i === 0 ? 'disabled' : '') + ' onclick="moveVideoExtraGroup(' + i + ',-1)">▲</button>' +
@@ -2572,6 +2575,8 @@ function applyVideoExtraGroupsToPreview() {
     }
     /* v0.34.10: 그룹별 토글 + 전역 토글 AND */
     var titleShow = videoTitleEnabled && (g.titleEnabled !== false);
+    /* v0.34.11: 그룹 자체 enabled false면 li 숨김 */
+    if (g.enabled === false) li.style.display = 'none';
     li.innerHTML =
       '<div class="v-tit" style="' + (titleShow ? '' : 'display:none') + '">' + (g.title || '').replace(/</g, '&lt;') + '</div>' +
       '<div class="cell-partition ' + partitionClass + '">' + cellHtml + '</div>';
@@ -6065,6 +6070,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 16:55 (v0.34.11)',
+    items: [
+      '<strong>[v0.34.11]</strong> 영상 그룹 단위 enabled 토글 — 그룹을 삭제하지 않고 임시로 끄기 가능',
+      '<strong>[v0.34.11]</strong> 그룹 카드 헤더 좌측에 토글 추가 + 꺼진 그룹은 카드 opacity 0.5 + "(꺼짐)" 표시',
+      '<strong>[v0.34.11]</strong> applyVideoExtraGroupsToPreview에서 g.enabled===false 면 li display:none',
+    ]
+  },
   {
     date: '2026.04.29 16:45 (v0.34.10)',
     items: [
