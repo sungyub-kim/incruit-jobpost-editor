@@ -414,7 +414,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.33.4</span>
+  <span id="ver-badge" title="배포 버전">v0.33.5</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -5551,6 +5551,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 13:41 (v0.33.5)',
+    items: [
+      '<strong>[v0.33.5]</strong> CSS 2건 — 행사안내 로고 wrap + 메인비주얼 width 제거',
+      '<strong>[v0.33.5]</strong> .poster-box__items__dd.logo--type — flex-wrap:wrap 추가 (PC에서 로고 여러개 시 우측 길어짐 → 자동 단락)',
+      '<strong>[v0.33.5]</strong> @media (max-width:1024px) .mvisual-text-1 — width:68.513% 제거 (margin:0 auto만 유지)',
+    ]
+  },
   {
     date: '2026.04.29 13:28 (v0.33.4)',
     items: [
