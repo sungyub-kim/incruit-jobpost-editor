@@ -414,7 +414,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.33.6</span>
+  <span id="ver-badge" title="배포 버전">v0.33.7</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2135,9 +2135,13 @@ function applyFieldsToPreview(sectionId) {
           var fm = m.fields[sfk];
           if (val[i][sfk] === undefined) return;
           /* v0.21.5: target='_self'면 attribute 제거 (글로벌 정책 일관성) */
+          /* v0.33.7: href 변경 시 data-orig-href도 동기 — 편집모드 종료 시 사용자 입력 보존 */
           var setVal = function(el) {
             if (fm.prop === 'target' && val[i][sfk] === '_self') el.removeAttribute('target');
             else el[fm.prop] = val[i][sfk];
+            if (fm.prop === 'href' && el.hasAttribute('data-orig-href')) {
+              el.setAttribute('data-orig-href', val[i][sfk]);
+            }
           };
           if (fm.multi) {
             node.querySelectorAll(fm.sel).forEach(setVal);
@@ -2148,11 +2152,18 @@ function applyFieldsToPreview(sectionId) {
         });
       });
     } else {
+      /* v0.33.7: href 변경 시 data-orig-href 동기 */
+      var setSingleVal = function(e) {
+        e[m.prop] = val;
+        if (m.prop === 'href' && e.hasAttribute('data-orig-href')) {
+          e.setAttribute('data-orig-href', val);
+        }
+      };
       if (m.multi) {
-        sEl.querySelectorAll(m.sel).forEach(function(e) { e[m.prop] = val; });
+        sEl.querySelectorAll(m.sel).forEach(setSingleVal);
       } else {
         var el = sEl.querySelector(m.sel);
-        if (el) el[m.prop] = val;
+        if (el) setSingleVal(el);
       }
     }
   });
@@ -5551,6 +5562,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 13:55 (v0.33.7)',
+    items: [
+      '<strong>[v0.33.7]</strong> 소개 기관 (section_organizations) 링크 URL 입력 적용 안 됨 수정',
+      '<strong>[v0.33.7]</strong> 진단: 편집모드 진입 시 모든 a href를 data-orig-href로 백업 후 제거. 사용자가 드로어에서 URL 입력 시 a.href는 갱신되지만 data-orig-href는 그대로 (원래 값) → 편집모드 종료 시 원래 URL로 복원 → 사용자 입력 손실',
+      '<strong>[v0.33.7]</strong> 수정: applyFieldsToPreview에서 href 설정 시 data-orig-href도 동기 (repeater + 단일 양쪽). v0.30.0의 자동 편집모드 진입과 함께 항상 발생하던 버그',
+    ]
+  },
   {
     date: '2026.04.29 13:43 (v0.33.6)',
     items: [
