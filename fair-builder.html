@@ -405,7 +405,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.32.0</span>
+  <span id="ver-badge" title="배포 버전">v0.32.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1628,7 +1628,7 @@ function renderSectionList() {
       '<span class="drag-handle">⠿</span>' +
       /* 섹션명 버튼: 클릭 → 편집 드로어 열기 */
       /* v0.17.1: sec_title이 있으면 그것을 표시 (미리보기 .sec_tit.basic과 동기화) */
-      '<button class="sec-name-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\')" title="클릭하여 편집 · Shift+클릭 시 미리보기로 스크롤">' + esc((sectionData[id] && sectionData[id].sec_title) || schema.name) + repeaterCount + '</button>' +
+      '<button class="sec-name-btn" onclick="event.stopPropagation();toggleSectionEdit(\'' + id + '\');scrollToSection(\'' + id + '\');" title="클릭하여 편집 + 미리보기 앵커 스크롤">' + esc((sectionData[id] && sectionData[id].sec_title) || schema.name) + repeaterCount + '</button>' +
       (isFixed ? '<span class="section-badge fixed">고정</span>' : '') +
       /* ▲▼ 이동 버튼 (hover 시 표시) */
       '<div class="sec-move-group">' +
@@ -3600,7 +3600,10 @@ window.sectionDragReorder = function(fromId, toId) {
   renderSectionList();
 };
 
+/* v0.32.1: 드래그 섹션 이동 기능 제거 — 좌측 패널의 ▲▼ 버튼으로 이동 가능 (사용자 요청) */
 function injectSectionDragHandles(doc) {
+  return; /* no-op */
+  /* eslint-disable */
   sectionOrder.forEach(function(sId) {
     var sEl = doc.querySelector('[data-builder-section="' + sId + '"]');
     if (!sEl || doc.getElementById('builder-sec-handle-' + sId)) return;
@@ -5352,6 +5355,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 11:08 (v0.32.1)',
+    items: [
+      '<strong>[v0.32.1]</strong> 4/28 추가 요청 2건 처리',
+      '<strong>[v0.32.1]</strong> ① 미리보기 iframe 드래그 섹션 이동 기능 제거 — injectSectionDragHandles no-op (좌측 ▲▼로 이동 가능)',
+      '<strong>[v0.32.1]</strong> ② 좌측 섹션명 클릭 시 미리보기 자동 앵커 스크롤 — toggleSectionEdit + scrollToSection 동시 호출',
+    ]
+  },
   {
     date: '2026.04.29 10:59 (v0.32.0)',
     items: [
