@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.12</span>
+  <span id="ver-badge" title="배포 버전">v0.34.13</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2452,7 +2452,7 @@ function buildVideoExtraGroupsPanel() {
       '<div class="ep-field"><label>그룹 타이틀 텍스트 (.v-tit)</label>' +
         '<input type="text" value="' + esc(g.title || '') + '" placeholder="예: 용산" oninput="updateVideoExtraGroup(' + i + ',\'title\',this.value)">' +
       '</div>' +
-      /* v0.34.12: 그룹별 AOS 효과 설정 */
+      /* v0.34.12: 그룹별 AOS 효과 설정 + v0.34.13: duration / delay */
       '<div class="ep-field"><label>등장 효과 (AOS) <span class="ep-hint" style="color:#6b7280;font-size:10px;">새창 미리보기에서 확인</span></label>' +
         '<select onchange="updateVideoExtraGroup(' + i + ',\'aos\',this.value)">' +
           ['', 'fade-up', 'fade-down', 'fade-left', 'fade-right', 'zoom-in', 'zoom-out', 'flip-up'].map(function(opt) {
@@ -2460,7 +2460,15 @@ function buildVideoExtraGroupsPanel() {
             return '<option value="' + opt + '" ' + ((g.aos || '') === opt ? 'selected' : '') + '>' + label + '</option>';
           }).join('') +
         '</select>' +
-      '</div>';
+      '</div>' +
+      (g.aos ? '<div class="ep-field" style="display:flex;gap:8px;">' +
+        '<div style="flex:1;"><label>duration (ms)</label>' +
+          '<input type="number" min="0" max="3000" step="100" value="' + (g.aosDuration || 800) + '" oninput="updateVideoExtraGroup(' + i + ',\'aosDuration\',parseInt(this.value,10)||0)">' +
+        '</div>' +
+        '<div style="flex:1;"><label>delay (ms)</label>' +
+          '<input type="number" min="0" max="3000" step="100" value="' + (g.aosDelay || 0) + '" oninput="updateVideoExtraGroup(' + i + ',\'aosDelay\',parseInt(this.value,10)||0)">' +
+        '</div>' +
+      '</div>' : '');
     /* cell 리스트 (URL + barText) */
     var cellCount = videoTypeCellCount(g.type);
     for (var c = 0; c < cellCount; c++) {
@@ -2540,6 +2548,12 @@ function updateVideoExtraGroup(i, key, val) {
     var body = document.getElementById('edit-drawer-body');
     if (body && openEditPanelId === 'section_videos') body.innerHTML = buildSectionPanel('section_videos');
   }
+  /* v0.34.11: enabled 토글 시 패널 재구성 (opacity/꺼짐 라벨 동기) */
+  /* v0.34.13: aos 변경 시 패널 재구성 (duration/delay UI 표시/숨김) */
+  if (key === 'enabled' || key === 'titleEnabled' || key === 'barEnabled' || key === 'aos') {
+    var body2 = document.getElementById('edit-drawer-body');
+    if (body2 && openEditPanelId === 'section_videos') body2.innerHTML = buildSectionPanel('section_videos');
+  }
   saveState();
   applyVideoExtraGroupsToPreview();
 }
@@ -2587,7 +2601,12 @@ function applyVideoExtraGroupsToPreview() {
     /* v0.34.11: 그룹 자체 enabled false면 li 숨김 */
     if (g.enabled === false) li.style.display = 'none';
     /* v0.34.12: 그룹별 AOS 효과 — 빌더 iframe은 가드로 무력화, 새창/export에서만 동작 */
-    if (g.aos) li.setAttribute('data-aos', g.aos);
+    if (g.aos) {
+      li.setAttribute('data-aos', g.aos);
+      /* v0.34.13: duration / delay */
+      if (g.aosDuration) li.setAttribute('data-aos-duration', String(g.aosDuration));
+      if (g.aosDelay)    li.setAttribute('data-aos-delay',    String(g.aosDelay));
+    }
     li.innerHTML =
       '<div class="v-tit" style="' + (titleShow ? '' : 'display:none') + '">' + (g.title || '').replace(/</g, '&lt;') + '</div>' +
       '<div class="cell-partition ' + partitionClass + '">' + cellHtml + '</div>';
@@ -6081,6 +6100,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 17:15 (v0.34.13)',
+    items: [
+      '<strong>[v0.34.13]</strong> 영상 그룹별 AOS duration / delay (ms) 입력 추가 — AOS 효과 선택 시에만 노출',
+      '<strong>[v0.34.13]</strong> apply: data-aos-duration / data-aos-delay 속성 동적 부여 (값이 0이 아닐 때만)',
+      '<strong>[v0.34.13]</strong> updateVideoExtraGroup 분기 보강 — enabled/titleEnabled/barEnabled/aos 변경 시 패널 재구성 (UI 동기)',
+    ]
+  },
   {
     date: '2026.04.29 17:05 (v0.34.12)',
     items: [
