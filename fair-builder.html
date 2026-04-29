@@ -238,6 +238,26 @@
     .fmt-recent-color { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #2e3a52; cursor: pointer; padding: 0; transition: transform .12s, border-color .12s; }
     .fmt-recent-color:hover { transform: scale(1.15); border-color: #60a5fa; }
 
+    /* v0.34.0: 커스텀 컬러 픽커 popover */
+    .ccp-trigger { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #111827; border: 1px solid #374151; border-radius: 3px; color: #9ca3af; font-size: 10px; cursor: pointer; padding: 0; flex-shrink: 0; transition: color .12s, border-color .12s; }
+    .ccp-trigger:hover { color: #60a5fa; border-color: #60a5fa; }
+    .ccp-popover { position: fixed; z-index: 9600; background: #1f2937; border: 1px solid #2e3a52; border-radius: 6px; padding: 10px; box-shadow: 0 6px 20px rgba(0,0,0,.6); width: 220px; font-size: 11px; color: #d1d5db; }
+    .ccp-popover.hidden { display: none; }
+    .ccp-section { margin-bottom: 10px; }
+    .ccp-section:last-child { margin-bottom: 0; }
+    .ccp-section-title { color: #9ca3af; font-size: 10px; margin-bottom: 5px; font-weight: 600; }
+    .ccp-recent-grid { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; }
+    .ccp-recent-cell { width: 100%; aspect-ratio: 1; border: 1px solid #374151; border-radius: 3px; cursor: pointer; padding: 0; transition: transform .12s, border-color .12s; }
+    .ccp-recent-cell:hover { transform: scale(1.15); border-color: #60a5fa; }
+    .ccp-recent-empty { color: #4b5563; font-size: 10px; padding: 4px 0; font-style: italic; }
+    .ccp-input-row { display: flex; gap: 6px; align-items: center; }
+    .ccp-input-row input[type=color] { width: 32px; height: 26px; padding: 0; border: 1px solid #374151; border-radius: 3px; background: none; cursor: pointer; flex-shrink: 0; }
+    .ccp-input-row input[type=text] { flex: 1; background: #111827; border: 1px solid #374151; border-radius: 3px; color: #e5e7eb; font-size: 11px; padding: 4px 6px; font-family: monospace; min-width: 0; }
+    .ccp-input-row input[type=text]:focus { outline: none; border-color: #60a5fa; }
+    .ccp-alpha-row { display: flex; gap: 6px; align-items: center; margin-top: 6px; }
+    .ccp-alpha-row input[type=range] { flex: 1; min-width: 0; }
+    .ccp-alpha-row .ccp-alpha-num { width: 44px; text-align: right; color: #9ca3af; font-size: 10px; font-family: monospace; }
+
     /* E3: 섹션 ▲▼ 이동 버튼 (hover 시에만 표시) */
     .sec-move-btn { background: none; border: 1px solid #2e3a52; border-radius: 3px; color: #4b5563; font-size: 10px; width: 16px; height: 16px; cursor: pointer; line-height: 14px; text-align: center; padding: 0; flex-shrink: 0; }
     .sec-move-btn:hover:not(:disabled) { border-color: #60a5fa; color: #60a5fa; }
@@ -414,7 +434,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.33.8</span>
+  <span id="ver-badge" title="배포 버전">v0.34.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1018,12 +1038,14 @@ function renderNavPanel() {
       '<div style="display:flex;gap:4px;align-items:center;">' +
         '<input type="color" value="' + toHexColor(navHoverStyle.color || '#0066cc') + '" oninput="updateNavHover(\'color\',this.value)" style="width:32px;height:24px;padding:0;border:1px solid #2e3a52;border-radius:3px;background:none;cursor:pointer;">' +
         '<input type="text" value="' + esc(navHoverStyle.color || '') + '" placeholder="(없음)" oninput="updateNavHover(\'color\',this.value)" style="flex:1;">' +
+        ccpTriggerHTML("'" + toHexColor(navHoverStyle.color || '#0066cc') + "'", "updateNavHover('color',VAL);renderNavPanel()") +
         (navHoverStyle.color ? '<button onclick="updateNavHover(\'color\',\'\');renderNavPanel()" title="제거" style="background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0;">✕</button>' : '') +
       '</div>' +
       '<label style="margin-top:6px;">배경 색상</label>' +
       '<div style="display:flex;gap:4px;align-items:center;">' +
         '<input type="color" value="' + toHexColor(navHoverStyle.bgColor || '#f3f4f6') + '" oninput="updateNavHover(\'bgColor\',this.value)" style="width:32px;height:24px;padding:0;border:1px solid #2e3a52;border-radius:3px;background:none;cursor:pointer;">' +
         '<input type="text" value="' + esc(navHoverStyle.bgColor || '') + '" placeholder="(없음)" oninput="updateNavHover(\'bgColor\',this.value)" style="flex:1;">' +
+        ccpTriggerHTML("'" + toHexColor(navHoverStyle.bgColor || '#f3f4f6') + "'", "updateNavHover('bgColor',VAL);renderNavPanel()") +
         (navHoverStyle.bgColor ? '<button onclick="updateNavHover(\'bgColor\',\'\');renderNavPanel()" title="제거" style="background:none;border:1px solid #4b5563;color:#9ca3af;border-radius:3px;width:22px;height:22px;cursor:pointer;font-size:10px;padding:0;">✕</button>' : '') +
       '</div>' +
     '</div>' +
@@ -1097,6 +1119,8 @@ function updateNavHover(key, val) {
   navHoverStyle[key] = val;
   applyNavHoverToPreview();
   saveState();
+  /* v0.34.0: 색상 변경 시 자주 사용 풀에 누적 */
+  if (/^#[0-9a-fA-F]{6}$/.test(String(val))) trackAllColor(val);
 }
 
 /* v0.19.0: nav 항목 추가 (마지막 항목 기준 새로 + DOM도 동기) */
@@ -1999,6 +2023,8 @@ function colorRow(i, key, val, label) {
         '<input type="color" value="' + hex + '" oninput="updateBtn(' + i + ',\'' + key + '\',this.value);this.parentNode.style.background=this.value;syncEpHex(this,' + i + ',\'' + key + '\')">' +
       '</div>' +
       '<input type="text" class="ep-hex" id="ep-' + key + '-' + i + '" value="' + hex + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateBtn(' + i + ',\'' + key + '\',this.value)}">' +
+      /* v0.34.0: ▾ 트리거 */
+      ccpTriggerHTML("'" + hex + "'", "onCcpEpColorChange(" + i + ",'" + key + "',VAL)") +
     '</div></div>';
 }
 
@@ -2020,6 +2046,8 @@ function buildGradientPanel() {
           '<input type="color" value="' + sh + '" oninput="updateBtn(' + i + ',\'shadowColor\',this.value);this.parentNode.style.background=this.value;syncEpHex(this,' + i + ',\'shadowColor\')">' +
         '</div>' +
         '<input type="text" class="ep-hex" id="ep-shadowColor-' + i + '" value="' + sh + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateBtn(' + i + ',\'shadowColor\',this.value)}">' +
+        /* v0.34.0: ▾ 트리거 */
+        ccpTriggerHTML("'" + sh + "'", "onCcpEpColorChange(" + i + ",'shadowColor',VAL)") +
       '</div></div>'; })();
     h += '<div class="ep-row"><label>호버 효과</label>' +
       '<label class="toggle"><input type="checkbox" ' + (b.hoverEnabled ? 'checked' : '') + ' onchange="updateBtn(' + i + ',\'hoverEnabled\',this.checked);toggleEpHoverSub(' + i + ',this.checked)"><span class="toggle-slider"></span></label>' +
@@ -2370,6 +2398,25 @@ function updateBtn(i, key, val) {
   if (key === 'bgColor') bs[i].bgColorOverride = true;
   saveState();
   applyBtnStylesToPreview();
+  /* v0.34.0: 자주 사용 컬러 풀 누적 (색상 키만) */
+  if (/Color$/.test(key) && /^#[0-9a-fA-F]{6}$/.test(String(val))) trackAllColor(val);
+}
+
+/* v0.34.0: popover 콜백 — 버튼 colorRow */
+function onCcpEpColorChange(i, key, hex) {
+  updateBtn(i, key, hex);
+  /* DOM 동기 */
+  var hexInput = document.getElementById('ep-' + key + '-' + i);
+  if (hexInput) {
+    hexInput.value = hex;
+    var wrap = hexInput.parentNode;
+    var preview = wrap.querySelector('.ep-color-preview');
+    if (preview) {
+      preview.style.background = hex;
+      var native = preview.querySelector('input[type=color]');
+      if (native) native.value = hex;
+    }
+  }
 }
 
 /* ── X2: 헤더 로고 이미지 교체 ── */
@@ -3310,6 +3357,8 @@ function buildColorPanel(sectionId) {
           '<input type="color" value="' + bgColor + '" oninput="updateSectionColor(\'' + sectionId + '\',this.value);this.parentNode.style.background=this.value;syncSectionColorHex(this,\'' + sectionId + '\')">' +
         '</div>' +
         '<input type="text" class="ep-hex" id="ep-color-' + sectionId + '" value="' + bgColor + '" maxlength="7" oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var p=this.previousElementSibling;p.style.background=this.value;p.querySelector(\'input[type=color]\').value=this.value;updateSectionColor(\'' + sectionId + '\',this.value)}">' +
+        /* v0.34.0: ▾ 트리거 (자주 사용 + HEX 직접 입력) */
+        ccpTriggerHTML("'" + bgColor + "'", "onCcpSectionColorChange('" + sectionId + "',VAL)") +
       '</div>' +
     '</div>' +
   '</div>';
@@ -3320,6 +3369,24 @@ function updateSectionColor(sectionId, hex) {
   sectionBgColors[sectionId] = hex;
   saveState();
   applySectionColorToPreview(sectionId, hex);
+  trackAllColor(hex);  /* v0.34.0 */
+}
+
+/* v0.34.0: popover 콜백 — 섹션 배경 */
+function onCcpSectionColorChange(sectionId, hex) {
+  updateSectionColor(sectionId, hex);
+  /* DOM 동기 */
+  var hexInput = document.getElementById('ep-color-' + sectionId);
+  if (hexInput) {
+    hexInput.value = hex;
+    var wrap = hexInput.parentNode;
+    var preview = wrap.querySelector('.ep-color-preview');
+    if (preview) {
+      preview.style.background = hex;
+      var native = preview.querySelector('input[type=color]');
+      if (native) native.value = hex;
+    }
+  }
 }
 
 function syncSectionColorHex(colorInput, sectionId) {
@@ -3640,6 +3707,8 @@ function trackUsedColor(type, hex) {
   if (type === 'bg') FAIR_USED_BG_COLORS = arr;
   else FAIR_USED_COLORS = arr;
   renderFmtRecentColors();
+  /* v0.34.0: 통합 풀에도 누적 (모든 picker 공유) */
+  trackAllColor(normHex);
 }
 
 function renderFmtRecentColors() {
@@ -3655,6 +3724,121 @@ function renderFmtRecentColors() {
       return '<button class="fmt-recent-color" style="background:' + esc(c) + '" title="' + esc(c) + '" onmousedown="saveIframeSelection();event.preventDefault()" onclick="restoreIframeSelection();applyUnifiedFormatting(\'backgroundColor\',\'' + esc(c) + '\')"></button>';
     }).join('');
   }
+}
+
+/* ============================================================================
+ * v0.34.0: 커스텀 컬러 픽커 (Custom Color Picker)
+ *  - 통합 자주 사용 컬러 풀 (FAIR_USED_COLORS_ALL): text/bg 구분 없이 누적
+ *  - popover 컴포넌트: 자주 사용 18개 + native picker + HEX 직접 입력
+ *  - 사용 위치: cssColors / 섹션 배경 / 버튼 colorRow / nav hover / bspColorSwatch
+ *  - native picker 동작 유지하면서 옆에 ▾ 트리거 추가하는 방식
+ * ============================================================================ */
+var FAIR_USED_COLORS_ALL = [];
+try {
+  FAIR_USED_COLORS_ALL = JSON.parse(localStorage.getItem('fair_used_colors_all') || '[]');
+} catch(e) {}
+
+function trackAllColor(hex) {
+  var n = toHexColor(hex);
+  if (!n || n === '#ffffff') return; /* 기본값/빈값은 누적 안 함 */
+  var i = FAIR_USED_COLORS_ALL.indexOf(n);
+  if (i >= 0) FAIR_USED_COLORS_ALL.splice(i, 1);
+  FAIR_USED_COLORS_ALL.unshift(n);
+  if (FAIR_USED_COLORS_ALL.length > 18) FAIR_USED_COLORS_ALL.length = 18;
+  try { localStorage.setItem('fair_used_colors_all', JSON.stringify(FAIR_USED_COLORS_ALL)); } catch(e) {}
+}
+
+var _ccpPopover = null;
+var _ccpCallback = null;
+
+function ensureCcpPopover() {
+  if (_ccpPopover) return _ccpPopover;
+  _ccpPopover = document.createElement('div');
+  _ccpPopover.className = 'ccp-popover hidden';
+  document.body.appendChild(_ccpPopover);
+  document.addEventListener('mousedown', function(e) {
+    if (!_ccpPopover || _ccpPopover.classList.contains('hidden')) return;
+    if (_ccpPopover.contains(e.target)) return;
+    if (e.target.classList && e.target.classList.contains('ccp-trigger')) return;
+    closeCcpPopover();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && _ccpPopover && !_ccpPopover.classList.contains('hidden')) closeCcpPopover();
+  });
+  window.addEventListener('resize', closeCcpPopover);
+  return _ccpPopover;
+}
+
+function closeCcpPopover() {
+  if (_ccpPopover) _ccpPopover.classList.add('hidden');
+  _ccpCallback = null;
+}
+
+/* 트리거 버튼에서 호출.
+ * @param triggerEl  ▾ 버튼 요소 (위치 기준)
+ * @param currentValue  현재 색상 (hex 또는 rgb)
+ * @param callback  function(hex) — 사용자가 색을 고를 때마다 호출
+ */
+function openCcpPopover(triggerEl, currentValue, callback) {
+  var pop = ensureCcpPopover();
+  _ccpCallback = callback;
+  var hex = toHexColor(currentValue);
+  var recent = FAIR_USED_COLORS_ALL.slice(0, 18);
+  var html = '<div class="ccp-section">' +
+    '<div class="ccp-section-title">자주 사용한 색상</div>' +
+    (recent.length === 0
+      ? '<div class="ccp-recent-empty">아직 사용한 색상이 없습니다</div>'
+      : '<div class="ccp-recent-grid">' +
+          recent.map(function(c) {
+            return '<button type="button" class="ccp-recent-cell" style="background:' + esc(c) + '" title="' + esc(c) + '" onclick="ccpPick(\'' + esc(c) + '\',true)"></button>';
+          }).join('') +
+        '</div>') +
+  '</div>' +
+  '<div class="ccp-section">' +
+    '<div class="ccp-section-title">직접 입력 (HEX)</div>' +
+    '<div class="ccp-input-row">' +
+      '<input id="ccp-native" type="color" value="' + hex + '" oninput="ccpPick(this.value,false)">' +
+      '<input id="ccp-hex" type="text" value="' + hex + '" maxlength="7" placeholder="#000000" ' +
+        'oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){var n=document.getElementById(\'ccp-native\');if(n)n.value=this.value;ccpPick(this.value,false)}">' +
+    '</div>' +
+  '</div>';
+  pop.innerHTML = html;
+  pop.classList.remove('hidden');
+  /* 위치 계산 */
+  var r = triggerEl.getBoundingClientRect();
+  var pw = 220, ph = 200;
+  var top = r.bottom + 4;
+  var left = r.left;
+  if (left + pw > window.innerWidth - 8) left = window.innerWidth - pw - 8;
+  if (left < 8) left = 8;
+  if (top + ph > window.innerHeight - 8) top = r.top - ph - 4;
+  pop.style.top = top + 'px';
+  pop.style.left = left + 'px';
+}
+
+/* 색상 선택. fromRecent=true 면 popover 닫음, false 면 유지(드래그 입력 중) */
+function ccpPick(hex, fromRecent) {
+  var n = toHexColor(hex);
+  if (typeof _ccpCallback === 'function') {
+    _ccpCallback(n);
+    trackAllColor(n);
+  }
+  /* popover 내 hex/native 동기 */
+  var hi = document.getElementById('ccp-hex');
+  var ni = document.getElementById('ccp-native');
+  if (hi) hi.value = n;
+  if (ni) ni.value = n;
+  if (fromRecent) closeCcpPopover();
+}
+
+/* 트리거 버튼 HTML 헬퍼.
+ * @param valueExpr  현재 값을 얻는 JS 표현식 (문자열, e.g. "navHoverStyle.color || '#fff'")
+ * @param applyExpr  hex 적용 표현식 (문자열, VAL 토큰을 hex로 치환, e.g. "updateNavHover('color',VAL)")
+ */
+function ccpTriggerHTML(valueExpr, applyExpr) {
+  var apply = applyExpr.replace(/VAL/g, 'h');
+  return '<button type="button" class="ccp-trigger" title="자주 사용 색상 + HEX 직접 입력" ' +
+    'onclick="openCcpPopover(this,' + valueExpr + ',function(h){' + apply + '})">▾</button>';
 }
 
 /* contenteditable 포맷팅 정리: <font> 태그 제거 + nested [data-fmt-unified] 병합 + 빈 span 제거 */
@@ -4101,7 +4285,30 @@ function bspColorRow(idx, key, val, label) {
     bspColorSwatch(idx, key, hex) +
     '<input type="text" class="bsp-input" value="' + hex + '" maxlength="7" style="width:76px !important;" ' +
     'oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){updateBtnField(' + idx + ',\'' + key + '\',this.value);var sw=this.previousElementSibling;sw.style.background=this.value;sw.querySelector(\'input[type=color]\').value=this.value}">' +
+    /* v0.34.0: ▾ 트리거 */
+    ccpTriggerHTML("'" + hex + "'", "onCcpBspColorChange(" + idx + ",'" + key + "',VAL)") +
     '</div></div>';
+}
+
+/* v0.34.0: popover 콜백 — bspColorRow */
+function onCcpBspColorChange(idx, key, hex) {
+  updateBtnField(idx, key, hex);
+  /* DOM 동기 — bsp 패널은 매번 다시 그려지지만, 그 전까지 시각 동기 위해 처리 */
+  var rows = document.querySelectorAll('.bsp-input');
+  rows.forEach(function(inp) {
+    if (inp.value === hex) return;
+    /* 정확히 어느 input인지 식별이 어려우므로 패널 새로고침에 위임 */
+  });
+  /* 패널이 즉시 다시 그려지지 않으므로 강제 재렌더 */
+  if (typeof openBtnStylePanel === 'function') {
+    /* 기존 패널 갱신은 syncBtnDOM이 처리. swatch 색만 동기 */
+    var swatches = document.querySelectorAll('.bsp-input');
+    swatches.forEach(function(sw) {
+      var prev = sw.previousElementSibling;
+      var native = prev && prev.querySelector ? prev.querySelector('input[type=color]') : null;
+      if (native && sw.value === hex) prev.style.background = hex;
+    });
+  }
 }
 
 function updateBtnField(idx, key, val) {
@@ -4111,6 +4318,8 @@ function updateBtnField(idx, key, val) {
   if (key === 'bgColor') bs[idx].bgColorOverride = true;  /* v0.29.2 */
   saveState();
   syncBtnDOM();
+  /* v0.34.0: 자주 사용 풀 누적 */
+  if (/Color$/.test(key) && /^#[0-9a-fA-F]{6}$/.test(String(val))) trackAllColor(val);
   if (key === 'text') {
     var doc = getPreviewDoc();
     if (doc) {
@@ -4134,14 +4343,34 @@ function renderColorList() {
     var val = toHexColor(cssColors[varName] || cfg.default);  /* v0.28.3: hex 정규화 */
     var item = document.createElement('div');
     item.className = 'color-item';
+    /* v0.34.0: ▾ 트리거 추가 (자주 사용 + HEX 직접 입력) */
     item.innerHTML =
       '<label>' + cfg.label + '<br><span style="color:#4b5563;font-size:10px;">' + varName + '</span></label>' +
       '<div class="color-preview" style="background:' + val + ';">' +
         '<input type="color" value="' + val + '" data-var="' + varName + '" oninput="onColorChange(this)">' +
       '</div>' +
-      '<input class="hex-input" type="text" value="' + val + '" data-var="' + varName + '" maxlength="7" oninput="onHexChange(this)" placeholder="#000000">';
+      '<input class="hex-input" type="text" value="' + val + '" data-var="' + varName + '" maxlength="7" oninput="onHexChange(this)" placeholder="#000000">' +
+      ccpTriggerHTML("'" + val + "'", "onCcpColorChange('" + varName + "',VAL)");
     list.appendChild(item);
   });
+}
+
+/* v0.34.0: popover 콜백 — cssColors 위치 (renderColorList) */
+function onCcpColorChange(varName, hex) {
+  cssColors[varName] = hex;
+  /* DOM 동기 */
+  var inputs = document.querySelectorAll('#color-list input[data-var="' + varName + '"]');
+  inputs.forEach(function(inp) { inp.value = hex; });
+  var hexInputs = document.querySelectorAll('#color-list .hex-input[data-var="' + varName + '"]');
+  hexInputs.forEach(function(inp) { inp.value = hex; });
+  var item = document.querySelector('#color-list input[data-var="' + varName + '"]');
+  if (item) {
+    var preview = item.closest('.color-item').querySelector('.color-preview');
+    if (preview) preview.style.background = hex;
+  }
+  saveState();
+  applyColorToPreview(varName, hex);
+  syncPaletteToButtons(varName, hex);
 }
 
 function onColorChange(input) {
@@ -4154,6 +4383,7 @@ function onColorChange(input) {
   saveState();
   applyColorToPreview(varName, hex);
   syncPaletteToButtons(varName, hex);  /* v0.29.2 */
+  trackAllColor(hex);  /* v0.34.0 */
 }
 
 function onHexChange(input) {
@@ -4167,6 +4397,7 @@ function onHexChange(input) {
   saveState();
   applyColorToPreview(varName, hex);
   syncPaletteToButtons(varName, hex);  /* v0.29.2 */
+  trackAllColor(hex);  /* v0.34.0 */
 }
 
 /* v0.29.2: 팔레트 색 → 버튼 색 동기 (사용자가 우측 드로어에서 버튼 색을 override 안 했을 때만) */
@@ -5558,6 +5789,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 14:30 (v0.34.0)',
+    items: [
+      '<strong>[v0.34.0]</strong> 색상 팔레트 커스텀 UI — 모든 컬러 picker 옆에 ▾ 트리거 추가 (자주 사용 컬러 18개 + HEX 직접 입력 통합 popover)',
+      '<strong>[v0.34.0]</strong> 통합 자주 사용 풀 (FAIR_USED_COLORS_ALL): text/bg 구분 없이 누적 18개 → 모든 picker에서 공유 (localStorage: fair_used_colors_all)',
+      '<strong>[v0.34.0]</strong> popover: 자주 사용 9×2 그리드 + native picker + HEX 직접 입력. ESC/외부 클릭 시 자동 닫힘, 화면 우측/하단 넘침 자동 보정',
+      '<strong>[v0.34.0]</strong> 적용 위치: cssColors 좌측 스타일 탭 / 섹션 배경색 / 버튼 colorRow (배경/쉐도우/호버) / nav hover (텍스트/배경) / 인라인 bspColorRow',
+      '<strong>[v0.34.0]</strong> trackAllColor 통합: updateBtn / updateBtnField / updateNavHover / onColorChange / onHexChange / updateSectionColor / 기존 fmt trackUsedColor 모두에서 호출',
+    ]
+  },
   {
     date: '2026.04.29 14:00 (v0.33.8)',
     items: [
