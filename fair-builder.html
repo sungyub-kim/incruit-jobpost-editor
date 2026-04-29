@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.5</span>
+  <span id="ver-badge" title="배포 버전">v0.34.6</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -699,6 +699,8 @@ var sectionSpacing = {};   /* ST1: { sId: { pt, pb, mpt, mpb } } */
 var sectionTemplates = {};  /* Adv: { templateId: { sectionId, sectionData, bgColor, bgImage, spacing, buttonStyles, timestamp, name } } */
 var sectionTopTextEnabled = {};  /* v0.27.0: { sId: false } — true는 기본 (.sec_txt.basic.top 표시) */
 var videoTypes = { n1_half: true, n1_full: true, n2: true, n3: true };  /* v0.34.3: 영상 4개 타입 on/off */
+var videoTitleEnabled = true;  /* v0.34.6: .v-tit (영상 그룹 타이틀) 전역 표시 */
+var videoBarEnabled = true;    /* v0.34.6: .v-bar (영상 하단 바) 전역 표시 */
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
@@ -832,6 +834,8 @@ function saveState() {
     sectionSpacing: sectionSpacing,
     sectionTopTextEnabled: sectionTopTextEnabled,
     videoTypes:           videoTypes,  /* v0.34.3 */
+    videoTitleEnabled:    videoTitleEnabled,  /* v0.34.6 */
+    videoBarEnabled:      videoBarEnabled,    /* v0.34.6 */
     globalSubTitleEnabled: window.globalSubTitleEnabled !== false,
     aosEnabled:          aosEnabled,
     visualRightVisible:  visualRightVisible,
@@ -903,6 +907,8 @@ function loadState() {
     /* v0.26.5: sectionAdvancedStyles 제거 — 기존 데이터는 silently 무시 */
     if (s.sectionTopTextEnabled) sectionTopTextEnabled = s.sectionTopTextEnabled;
     if (s.videoTypes) videoTypes = Object.assign({ n1_half: true, n1_full: true, n2: true, n3: true }, s.videoTypes);  /* v0.34.3 */
+    if (s.videoTitleEnabled !== undefined) videoTitleEnabled = !!s.videoTitleEnabled;  /* v0.34.6 */
+    if (s.videoBarEnabled !== undefined) videoBarEnabled = !!s.videoBarEnabled;        /* v0.34.6 */
     if (s.globalSubTitleEnabled !== undefined) window.globalSubTitleEnabled = s.globalSubTitleEnabled;
     if (s.cssColors) {
       cssColors = s.cssColors;
@@ -2365,7 +2371,7 @@ function buildSectionPanel(sectionId) {
   return h;
 }
 
-/* v0.34.3: 영상 타입 4개 on/off 패널 */
+/* v0.34.3: 영상 타입 4개 on/off 패널 + v0.34.6: v-tit / v-bar 전역 토글 */
 function buildVideoTypesPanel() {
   var labels = {
     n1_half: '1열 작게 (50% 폭)',
@@ -2384,6 +2390,18 @@ function buildVideoTypesPanel() {
       '</div>';
   });
   h += '</div>';
+  /* v0.34.6: 영상 부가 요소 토글 */
+  h += '<div class="ep-spacing-group">' +
+    '<div class="ep-spacing-title">영상 부가 요소</div>' +
+    '<div class="ep-row" style="display:flex;align-items:center;margin:4px 0;">' +
+      '<label style="flex:1;font-size:11px;color:#e5e7eb;">영상 그룹 타이틀 (.v-tit)</label>' +
+      '<label class="toggle"><input type="checkbox" ' + (videoTitleEnabled ? 'checked' : '') + ' onchange="toggleVideoTitle(this.checked)"><span class="toggle-slider"></span></label>' +
+    '</div>' +
+    '<div class="ep-row" style="display:flex;align-items:center;margin:4px 0;">' +
+      '<label style="flex:1;font-size:11px;color:#e5e7eb;">영상 하단 바 (.v-bar)</label>' +
+      '<label class="toggle"><input type="checkbox" ' + (videoBarEnabled ? 'checked' : '') + ' onchange="toggleVideoBar(this.checked)"><span class="toggle-slider"></span></label>' +
+    '</div>' +
+  '</div>';
   return h;
 }
 
@@ -2391,6 +2409,19 @@ function toggleVideoType(key, on) {
   videoTypes[key] = !!on;
   saveState();
   applyVideoTypesToPreview();
+}
+
+/* v0.34.6 */
+function toggleVideoTitle(on) {
+  videoTitleEnabled = !!on;
+  saveState();
+  applyVideoTitleBarToPreview();
+}
+
+function toggleVideoBar(on) {
+  videoBarEnabled = !!on;
+  saveState();
+  applyVideoTitleBarToPreview();
 }
 
 /* v0.34.3: 영상 타입 li 표시/숨김 */
@@ -2403,6 +2434,18 @@ function applyVideoTypesToPreview() {
     var k = keys[i];
     if (!k) return;
     li.style.display = videoTypes[k] !== false ? '' : 'none';
+  });
+}
+
+/* v0.34.6: v-tit / v-bar 전역 표시/숨김 */
+function applyVideoTitleBarToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  doc.querySelectorAll('[data-builder-section="section_videos"] .v-tit').forEach(function(el) {
+    el.style.display = videoTitleEnabled ? '' : 'none';
+  });
+  doc.querySelectorAll('[data-builder-section="section_videos"] .v-bar').forEach(function(el) {
+    el.style.display = videoBarEnabled ? '' : 'none';
   });
 }
 
@@ -5432,6 +5475,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyBgImagesToPreview();
   applyTopTextToPreview();  /* v0.27.0 */
   applyVideoTypesToPreview();  /* v0.34.3 — 영상 타입 on/off */
+  applyVideoTitleBarToPreview();  /* v0.34.6 — v-tit / v-bar 전역 토글 */
   applyFontsToPreview();    /* v0.31.0 — 폰트 스타일 일원화 */
   try { migrateEventInfoPosters(); applyEventInfoToPreview(); } catch(e) {}  /* v0.32.0 */
   /* v0.28.1: contenteditable로 .sec_txt.basic.top 텍스트 지우면 자동 숨김 */
@@ -5842,6 +5886,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 15:45 (v0.34.6)',
+    items: [
+      '<strong>[v0.34.6]</strong> 영상 섹션 2단계 시작 — v-tit (영상 그룹 타이틀) / v-bar (영상 하단 바) 전역 on/off 토글',
+      '<strong>[v0.34.6]</strong> 신규: videoTitleEnabled / videoBarEnabled 전역 변수 + toggleVideoTitle / toggleVideoBar / applyVideoTitleBarToPreview',
+      '<strong>[v0.34.6]</strong> buildVideoTypesPanel 확장: "영상 부가 요소" 그룹 추가 — 두 토글 노출',
+      '<strong>[v0.34.6]</strong> 후속 (다음 단계): 같은 타입 li 추가/제거 (마크업 클론) + cell 단위 개별 편집',
+    ]
+  },
   {
     date: '2026.04.29 15:30 (v0.34.5)',
     items: [
