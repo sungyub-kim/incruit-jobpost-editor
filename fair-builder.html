@@ -410,7 +410,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.32.3</span>
+  <span id="ver-badge" title="배포 버전">v0.33.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3420,7 +3420,10 @@ function restoreIframeSelection() {
   sel.addRange(_savedRange);
 }
 
-/* 통합 포맷팅: 하나의 span에 모든 style 속성 누적 */
+/* v0.33.0: B-1 신 기획 — Range 기반 부분 드래그 적용
+ * 기존 문제: case 1 shortcut + cleanup의 nested 병합 → 부분 선택이 전체로 확산
+ * 신 방식: 항상 새 span으로 wrap, nested span 보존 (각각 독립적인 부분 스타일)
+ * 결과: 사용자가 드래그한 영역만 정확히 적용 */
 function applyUnifiedFormatting(styleProp, styleValue) {
   var doc = getPreviewDoc();
   if (!doc) return;
@@ -3433,64 +3436,27 @@ function applyUnifiedFormatting(styleProp, styleValue) {
 
   var cssProp = styleProp.replace(/([A-Z])/g, '-$1').toLowerCase();
 
-  /* 양쪽 끝에서 조상 [data-fmt-unified] span 찾기 */
-  var startEl = range.startContainer.nodeType === 3
-    ? range.startContainer.parentElement
-    : range.startContainer;
-  var endEl = range.endContainer.nodeType === 3
-    ? range.endContainer.parentElement
-    : range.endContainer;
-  var startSpan = startEl ? startEl.closest('[data-fmt-unified]') : null;
-  var endSpan = endEl ? endEl.closest('[data-fmt-unified]') : null;
-
-  /* 케이스 1: 선택이 같은 data-fmt-unified span 내부에 있음 → style만 업데이트 */
-  if (startSpan && startSpan === endSpan) {
-    startSpan.style.setProperty(cssProp, styleValue, 'important');
-    /* selection/savedRange 변경 안 함 — 사용자의 드래그 범위 유지 */
-    _savedRange = range.cloneRange();
+  /* 항상 새 span 생성 — 부분 선택을 정확히 wrap. nested span 그대로 보존 */
+  var contents;
+  try {
+    contents = range.extractContents();
+  } catch(e) {
+    /* 추출 실패 시 fallback (드물게 cross-element 문제) */
     return;
-  }
-
-  /* 케이스 2: 새 span 생성 — range 내 nested span의 style을 병합 */
-  var contents = range.extractContents();
-
-  /* 추출된 콘텐츠에 이미 [data-fmt-unified] span이 있으면 unwrap + style 병합 */
-  var inheritedStyles = {};
-  if (contents.querySelectorAll) {
-    var nestedList = contents.querySelectorAll('[data-fmt-unified]');
-    Array.prototype.forEach.call(nestedList, function(nested) {
-      for (var i = 0; i < nested.style.length; i++) {
-        var prop = nested.style[i];
-        /* 덮어쓰기 아닌 보존: 기존에 없으면 채움 */
-        if (!(prop in inheritedStyles)) {
-          inheritedStyles[prop] = nested.style.getPropertyValue(prop);
-        }
-      }
-      /* nested unwrap */
-      while (nested.firstChild) {
-        nested.parentNode.insertBefore(nested.firstChild, nested);
-      }
-      nested.parentNode.removeChild(nested);
-    });
   }
 
   var span = doc.createElement('span');
   span.setAttribute('data-fmt-unified', 'true');
-  /* 기존 스타일 먼저 복원 */
-  Object.keys(inheritedStyles).forEach(function(prop) {
-    span.style.setProperty(prop, inheritedStyles[prop], 'important');
-  });
-  /* 이번 호출의 속성으로 덮어쓰기 */
   span.style.setProperty(cssProp, styleValue, 'important');
   span.appendChild(contents);
 
   range.insertNode(span);
 
-  /* _savedRange만 새 span 전체로 저장 (다음 툴바 조작 대비).
-     selection은 브라우저 기본 동작에 맡김 — 사용자 시각적으로 블록 전체가 선택된 것처럼
-     보이는 혼란 방지. */
+  /* selection을 새 span으로 복원 — 사용자가 추가 스타일을 같은 영역에 적용 가능 */
   var newRange = doc.createRange();
   newRange.selectNodeContents(span);
+  selection.removeAllRanges();
+  selection.addRange(newRange);
   _savedRange = newRange.cloneRange();
 }
 
@@ -3506,30 +3472,22 @@ function cleanupFormattingInElement(el) {
     font.parentNode.removeChild(font);
   });
 
-  /* 2. nested [data-fmt-unified] 병합: 부모 span에 없는 style만 자식에서 옮기고 자식은 unwrap */
-  /* DOM 변조 중 참조 깨짐 방지 — 가장 깊은 nested부터 바깥쪽으로 정리 */
-  var nestedSelector = '[data-fmt-unified] [data-fmt-unified]';
-  var nestedList = Array.prototype.slice.call(el.querySelectorAll(nestedSelector));
-  nestedList.reverse().forEach(function(inner) {
-    /* 방어: 이전 반복에서 이미 unwrap된 요소일 수 있음 */
-    if (!inner.parentElement || !inner.parentNode) return;
-    var outer = inner.parentElement.closest('[data-fmt-unified]');
-    if (!outer) return;
-    /* 자식(inner)의 style을 부모(outer)에 반영 — 자식 스타일이 더 우선(나중에 적용된 것) */
-    for (var i = 0; i < inner.style.length; i++) {
-      var prop = inner.style[i];
-      outer.style.setProperty(prop, inner.style.getPropertyValue(prop), 'important');
-    }
-    /* inner unwrap */
-    while (inner.firstChild) {
-      inner.parentNode.insertBefore(inner.firstChild, inner);
-    }
-    inner.parentNode.removeChild(inner);
-  });
+  /* v0.33.0: nested 병합 로직 폐기 — 부분 선택 보존을 위해 nested span 그대로 유지
+   * (이전 동작은 사용자 의도와 반대로 부분을 전체로 확산) */
 
-  /* 3. 비어있는 data-fmt-unified span 제거 */
+  /* 2. 비어있는 data-fmt-unified span 제거 */
   el.querySelectorAll('[data-fmt-unified]').forEach(function(span) {
     if (!span.textContent.trim() && !span.querySelector('img')) {
+      while (span.firstChild) {
+        span.parentNode.insertBefore(span.firstChild, span);
+      }
+      span.parentNode.removeChild(span);
+    }
+  });
+
+  /* 3. 빈 style 속성 또는 style 없는 data-fmt-unified span 제거 (의미 없음) */
+  el.querySelectorAll('[data-fmt-unified]').forEach(function(span) {
+    if (!span.getAttribute('style') || !span.getAttribute('style').trim()) {
       while (span.firstChild) {
         span.parentNode.insertBefore(span.firstChild, span);
       }
@@ -5403,6 +5361,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 11:26 (v0.33.0)',
+    items: [
+      '<strong>[v0.33.0]</strong> B-1 텍스트 부분 드래그 적용 — 신 기획/개발/검수 (사용자 수차례 요청)',
+      '<strong>[v0.33.0]</strong> 진단: 기존 applyUnifiedFormatting의 case 1 shortcut(같은 span 내 선택 → 전체 style 변경) + cleanupFormattingInElement의 nested span 강제 병합 → 부분 선택이 전체로 확산된 root cause',
+      '<strong>[v0.33.0]</strong> 신 방식: 항상 새 span으로 wrap (case 1 폐기) + nested span 그대로 보존 + selection을 새 span에 복원',
+      '<strong>[v0.33.0]</strong> cleanup 단순화: nested 병합 로직 폐기, 빈 span/style 없는 span만 정리',
+      '<strong>[v0.33.0]</strong> 결과: 사용자 드래그 영역만 정확히 적용. 같은 영역에 여러 스타일 누적 (color → bold → font 순차 적용 모두 부분 보존)',
+      '<strong>[v0.33.0]</strong> CSS cascading: nested span은 동일 specificity + !important → 소스 순서로 inner가 outer 덮어씀 (의도 일치)',
+    ]
+  },
   {
     date: '2026.04.29 11:17 (v0.32.3)',
     items: [
