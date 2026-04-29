@@ -80,39 +80,39 @@
 <div class="week-card">
   <div class="week-head">
     <h2>W1 — 04월 27일 ~ 04월 30일</h2>
-    <span class="ver-tag">v0.16.0 → v0.29.2 (진행 중)</span>
+    <span class="ver-tag">v0.16.0 → v0.33.6 (진행 중)</span>
   </div>
 
   <div class="tldr">
     <div class="tldr-label">이번 주 핵심</div>
-    <div class="tldr-text">2일간 53개 버전 배포로 1차 빌더형 약 50% 진척. 4/27 W1·W3 nav + W4 채용관 Stage 1/4 / 4/28 채용관 5순위 완료 + 재설계 v0.23.0 + 7순위(서브타이틀) + UX 대대적 개선 + 박람회 개요 1차. 사용자 스펙 기반 v0.26.0 전면 재구현 (333줄 삭제). 자율 워크플로우 + 다회 핫픽스 사이클 정착.</div>
+    <div class="tldr-text">3일간 67개 버전 배포로 1차 빌더형 약 65% 진척. 4/27 W1·W3 nav + W4 채용관 Stage 1/4 / 4/28 채용관 5순위 완료 + 재설계 + UX 개선 + 박람회 1차 / 4/29 폰트 일원화 + 박람회 동적화 + B-1 신 기획(Flatten). 사용자 스펙 기반 다수 전면 재구현 (v0.26.0/v0.32.0/v0.33.3 등). 자율 워크플로우 + 다회 핫픽스 사이클 정착.</div>
   </div>
 
   <div class="kpi-row">
     <div class="kpi">
       <div class="label">배포 버전</div>
-      <div class="value">53</div>
-      <div class="sub">개 (24+29)</div>
+      <div class="value">67</div>
+      <div class="sub">개 (24+29+14)</div>
     </div>
     <div class="kpi">
       <div class="label">기능 / 핫픽스</div>
-      <div class="value">23 / 23</div>
+      <div class="value">31 / 29</div>
       <div class="sub">건</div>
     </div>
     <div class="kpi highlight">
       <div class="label">계획 대비</div>
-      <div class="value">660%</div>
-      <div class="sub">8건 → 53건</div>
+      <div class="value">837%</div>
+      <div class="sub">8건 → 67건</div>
     </div>
     <div class="kpi">
       <div class="label">1차 진척</div>
-      <div class="value">50%</div>
+      <div class="value">65%</div>
       <div class="sub">~7/8 출시</div>
     </div>
     <div class="kpi" style="background:#eff6ff;border:1px solid #2563eb;color:#1e40af;">
       <div class="label">누적 작업 시간</div>
-      <div class="value">~17.5h</div>
-      <div class="sub">4/27 9h + 4/28 8.5h</div>
+      <div class="value">~22.5h</div>
+      <div class="sub">4/27 9h + 4/28 8.5h + 4/29 5h</div>
     </div>
   </div>
 
@@ -131,15 +131,18 @@
     <div class="panel">
       <div class="panel-title">🎯 핵심 산출물</div>
       <ul>
-        <li><strong>채용관 5순위 완료</strong> + v0.23.0 재설계 (검색/게시판 탭과 별개)</li>
-        <li><strong>v0.26.0 사용자 스펙 기반 전면 재구현</strong> (sub-tab 제거, max 3개, 333줄 삭제)</li>
-        <li><strong>7순위 진입</strong>: 섹션 상단 영문 텍스트(.sec_txt.basic.top) 토글 + 글로벌 토글</li>
-        <li><strong>UX 대대적 개선</strong>: 좌측 패널 접기 + 우측 폰트 가독성 + range+number 결합 + ↺ 초기화 버튼</li>
-        <li>메인비주얼 4탭 분리 + 웹폰트 5종 + AOS 효과 16종 + 섹션 관리</li>
+        <li><strong>채용관 5순위 완료</strong> + v0.23.0 재설계 + v0.26.0 전면 재구현 (333줄 삭제)</li>
+        <li><strong>박람회 개요 동적화 v0.32.0</strong> — posters[i].infos[] (text/logos), apply_buttons[] 다중, 16개 신규 함수</li>
+        <li><strong>B-1 부분 드래그 신 기획 v0.33.0/2/3</strong> — Flatten 정규화로 nested span 0 보장 (3차 시도 끝에 정착)</li>
+        <li><strong>폰트 스타일 일원화 v0.31.0</strong> — 4단계 위계 + inline style 금지 정책</li>
+        <li>7순위 진입: 섹션 상단 영문 텍스트 토글 + 글로벌 토글</li>
+        <li>UX 대대적 개선: 좌측 패널 접기 + 우측 폰트 가독성 + range+number 결합 + ↺ 초기화</li>
+        <li>스타일 탭 6섹션 collapsible + 헤더/네비게이션 통합</li>
+        <li>자주 사용 컬러 팔레트 (텍스트/배경 최근 12개 자동 기록)</li>
+        <li>메인비주얼 4탭 분리 + 요소 추가 시 편집 손실 방지</li>
         <li>네비게이션 + 채용관 1뎁스/2뎁스 + 글로벌 링크 정책 3곳</li>
-        <li>박람회 개요 1차 (포스터 추가 버튼 숨김 + 로고 무제한 + 헤더 로고 logo1/2 분리)</li>
         <li>좌측 팔레트 → 버튼 색 디폴트 동기 (override 플래그)</li>
-        <li>CSS 백그라운드 절대경로화 (//i.incru.it) + 고급 스타일 패널 폐기</li>
+        <li>CSS 백그라운드 절대경로화 + 도메인 변경 (i.incru.it → img.incruit.com)</li>
         <li>로드맵 + 일일/주간 보고 + 자동화 정책 + 자율 워크플로우</li>
       </ul>
     </div>

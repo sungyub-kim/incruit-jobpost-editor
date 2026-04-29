@@ -75,6 +75,91 @@
 </header>
 
 <!-- ====================================================================== -->
+<!-- 2026-04-29 (수) -->
+<!-- ====================================================================== -->
+<div class="day-card">
+  <div class="day-head">
+    <h2>04월 29일 (수)</h2>
+    <span class="ver-tag">v0.31.0 → v0.33.6 (14 버전)</span>
+  </div>
+
+  <div class="tldr">
+    <div class="tldr-label">오늘 핵심</div>
+    <div class="tldr-text">
+      <strong>폰트 시스템 일원화 + 박람회 개요 동적화 + B-1 신 기획(3차 시도)</strong>.
+      좌측 스타일 탭에 "폰트 스타일 지정" (4단계 위계 + inline 금지 정책).
+      포스터 infos[] 동적 (text/logos type, 추가/제거/순서) + 신청 버튼 다중.
+      <strong>B-1: Flatten 정규화 방식</strong> 도입 — wrap 후 즉시 평탄화로 nested span 0 보장.
+      자주 사용 컬러 팔레트 + 메인비주얼 요소 추가 시 편집 손실 수정.
+      1차 빌더형 약 65% 진척.
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi feature">
+      <div class="label">신규 기능</div>
+      <div class="value">8</div>
+      <div class="sub">폰트/박람회/B-1/팔레트</div>
+    </div>
+    <div class="kpi fix">
+      <div class="label">검수 핫픽스</div>
+      <div class="value">6</div>
+      <div class="sub">v0.31.1/v0.32.3/v0.33.1~6</div>
+    </div>
+    <div class="kpi policy">
+      <div class="label">대형 리팩토링</div>
+      <div class="value">2</div>
+      <div class="sub">B-1 신기획 + 박람회 동적</div>
+    </div>
+    <div class="kpi" style="background:#eff6ff;border:1px solid #2563eb;">
+      <div class="label" style="color:#1e40af;">작업 시간</div>
+      <div class="value" style="color:#1e40af;">~5h</div>
+      <div class="sub" style="color:#3b82f6;">09:00~14:00</div>
+    </div>
+  </div>
+
+  <div class="cat-grid">
+    <div class="cat-box">
+      <div class="cat-head"><span class="cat-name">🔵 신규 기능</span><span class="cat-count">8건</span></div>
+      <ul>
+        <li>v0.31.0 폰트 스타일 일원화 — 4단계 위계 (전체/메인/서브/커스텀) + inline style 금지 정책</li>
+        <li>v0.32.0 박람회 개요 동적 infos[] (text/logos) + apply_buttons[] 다중 + 마이그레이션</li>
+        <li>v0.32.1 드래그 섹션 이동 제거 + 좌측 클릭 시 미리보기 앵커 스크롤</li>
+        <li>v0.32.2 박람회 패널 버튼 layout + 스타일 탭 6섹션 collapsible</li>
+        <li>v0.33.0 B-1 신 기획 1차 (case 1 폐기, 항상 wrap)</li>
+        <li>v0.33.1 헤더 설정 → 스타일 탭으로 이동</li>
+        <li>v0.33.3 자주 사용 컬러 팔레트 (텍스트/배경 최근 12개 자동 기록)</li>
+      </ul>
+    </div>
+    <div class="cat-box">
+      <div class="cat-head"><span class="cat-name">🟠 검수 핫픽스</span><span class="cat-count">6건</span></div>
+      <ul>
+        <li>v0.31.1 새창 미리보기에서 동적 웹폰트 적용 (builder-webfonts-css 보존)</li>
+        <li>v0.32.3 스타일 탭 collapsed 상태 복원 (DOMContentLoaded 시점)</li>
+        <li>v0.33.4 메인비주얼 요소 추가/삭제/폰트변경 시 다른 요소 편집 보존</li>
+        <li>v0.33.5 행사안내 로고 flex-wrap + .mvisual-text-1 width 제거</li>
+        <li>v0.33.6 .interview-link-view position:relative 추가</li>
+      </ul>
+    </div>
+    <div class="cat-box">
+      <div class="cat-head"><span class="cat-name">🟣 대형 리팩토링</span><span class="cat-count">2건</span></div>
+      <ul>
+        <li><strong>B-1 부분 드래그 신 기획 (3차)</strong> v0.33.0/2/3 — case 1 폐기 → 부모/자손 병합 → <strong>Flatten 정규화</strong>로 정착. 모든 텍스트 노드의 누적 스타일 계산 + 인접 동일 스타일 segment 병합 + flat 형제 span 재구성으로 nested span 0 보장. selection 텍스트 위치 자동 복원.</li>
+        <li><strong>박람회 개요 동적 필드</strong> v0.32.0 — posters[i].infos[] (text/logos type), apply_buttons[] 다중, 16개 신규 함수 (CRUD + reorder + UI), applyEventInfoToPreview 동적 DOM 재생성, migrateEventInfoPosters 자동 변환</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="next-box">
+    <div class="next-title">📌 다음 작업 (4/30 목)</div>
+    <div class="next-text">
+      <strong>🥇 검수 대기</strong>: v0.33.0~3 부분 드래그 / v0.33.3 컬러 팔레트 / v0.33.4 메인비주얼 보존 / v0.32.0 박람회 동적 / v0.31.0 폰트<br>
+      <strong>🥈 미수행</strong>: 편집모드 텍스트 수정 시 레이아웃 깨짐 (캡처 필요) / 색상 팔레트 커스텀 UI / 간이 이미지 편집 툴
+    </div>
+  </div>
+</div>
+
+<!-- ====================================================================== -->
 <!-- 2026-04-28 (화) -->
 <!-- ====================================================================== -->
 <div class="day-card">
