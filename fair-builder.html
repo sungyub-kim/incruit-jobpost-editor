@@ -233,6 +233,10 @@
     .fmt-color-wrap input[type=color] { position:absolute; opacity:0; width:100%; height:100%; cursor:pointer; inset:0; }
     .fmt-color-label { font-size:10px; font-weight:700; color:#e5e7eb; line-height:1; pointer-events:none; }
     .fmt-color-bar { width:18px; height:3px; border-radius:1px; margin-top:1px; pointer-events:none; }
+    /* v0.33.3: 자주 사용 컬러 팔레트 */
+    .fmt-recent-wrap { display: inline-flex; gap: 2px; align-items: center; margin-right: 4px; }
+    .fmt-recent-color { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #2e3a52; cursor: pointer; padding: 0; transition: transform .12s, border-color .12s; }
+    .fmt-recent-color:hover { transform: scale(1.15); border-color: #60a5fa; }
 
     /* E3: 섹션 ▲▼ 이동 버튼 (hover 시에만 표시) */
     .sec-move-btn { background: none; border: 1px solid #2e3a52; border-radius: 3px; color: #4b5563; font-size: 10px; width: 16px; height: 16px; cursor: pointer; line-height: 14px; text-align: center; padding: 0; flex-shrink: 0; }
@@ -410,7 +414,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.33.2</span>
+  <span id="ver-badge" title="배포 버전">v0.33.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -611,11 +615,15 @@
         <input id="fmt-color-text" type="color" value="#000000" onchange="restoreIframeSelection();applyUnifiedFormatting('color',this.value);document.getElementById('fmt-color-text-bar').style.background=this.value">
       </label>
       <button id="fmt-color-text-bar" class="fmt-color-bar" style="background:#000000" title="같은 색 재적용" onmousedown="saveIframeSelection();event.preventDefault()" onclick="restoreIframeSelection();applyUnifiedFormatting('color',document.getElementById('fmt-color-text').value)"></button>
+      <!-- v0.33.3: 텍스트 컬러 자주 사용 -->
+      <span id="fmt-recent-text" class="fmt-recent-wrap" title="최근 사용 텍스트 컬러"></span>
       <label class="fmt-color-wrap" title="배경 색상 (picker)" onmousedown="saveIframeSelection()">
         <span class="fmt-color-label" style="font-size:9px;">BG</span>
         <input id="fmt-color-bg" type="color" value="#ffff00" onchange="restoreIframeSelection();applyUnifiedFormatting('backgroundColor',this.value);document.getElementById('fmt-color-bg-bar').style.background=this.value">
       </label>
       <button id="fmt-color-bg-bar" class="fmt-color-bar" style="background:#ffff00" title="같은 배경색 재적용" onmousedown="saveIframeSelection();event.preventDefault()" onclick="restoreIframeSelection();applyUnifiedFormatting('backgroundColor',document.getElementById('fmt-color-bg').value)"></button>
+      <!-- v0.33.3: 배경 컬러 자주 사용 -->
+      <span id="fmt-recent-bg" class="fmt-recent-wrap" title="최근 사용 배경 컬러"></span>
       <div class="fmt-divider"></div>
       <span class="fmt-label">행간</span>
       <input id="fmt-lh" class="fmt-input-num" type="number" min="1" max="4" step="0.1" value="1.6" title="행간(line-height)"
@@ -3424,15 +3432,15 @@ function restoreIframeSelection() {
   sel.addRange(_savedRange);
 }
 
-/* v0.33.2: B-1 — Range 기반 부분 드래그 + 같은 영역 자동 병합
- * 진단 (v0.33.0 부족):
- *   - 같은 영역에 폰트→굵기→사이즈 순차 적용 시 매번 새 span 중첩
- *   - 사용자 의도: 같은 영역은 한 span으로 통합 (style만 누적)
- *   - 다른 영역(부분 선택)은 별도 span으로 분리
+/* v0.33.3: B-1 — Flatten 정규화 방식
+ * 진단 (v0.33.0/2 부족):
+ *   - 부분 선택이 다르면 nested span 어쩔 수 없이 생성됨
+ *   - 사용자 요구: 항상 flat 구조 (중첩 0)
  * 신 방식:
- *   - 새 span 생성 후 즉시 부모 검사
- *   - 부모도 [data-fmt-unified] AND textContent 일치 → 부모로 병합 (중첩 제거)
- *   - 자손(first child)도 [data-fmt-unified] AND textContent 일치 → 자손으로 병합 + unwrap */
+ *   1) Range로 wrap → 임시 nested span 가능
+ *   2) 즉시 flatten 정규화 — 모든 텍스트 노드의 누적 스타일 계산
+ *   3) 동일 스타일 인접 segment 병합 → flat 형제 span 으로 재구성
+ *   4) selection 복원 (선택 텍스트 위치로 재선택) */
 function applyUnifiedFormatting(styleProp, styleValue) {
   var doc = getPreviewDoc();
   if (!doc) return;
@@ -3440,71 +3448,184 @@ function applyUnifiedFormatting(styleProp, styleValue) {
   var selection = doc.getSelection ? doc.getSelection() : window.getSelection();
   if (!selection.rangeCount) return;
   var range = selection.getRangeAt(0);
-
   if (range.collapsed) return;
 
   var cssProp = styleProp.replace(/([A-Z])/g, '-$1').toLowerCase();
-
-  /* 0. 사전 체크: range의 commonAncestor가 [data-fmt-unified]이고 textContent === selection text
-   *    → 새 span 생성하지 않고 기존 span에 style만 추가 */
   var selText = range.toString();
-  var ancestor = range.commonAncestorContainer;
-  if (ancestor.nodeType === 3) ancestor = ancestor.parentElement;
-  var ancestorSpan = ancestor && ancestor.closest ? ancestor.closest('[data-fmt-unified]') : null;
-  if (ancestorSpan && ancestorSpan.textContent === selText) {
-    ancestorSpan.style.setProperty(cssProp, styleValue, 'important');
-    var r1 = doc.createRange();
-    r1.selectNodeContents(ancestorSpan);
-    selection.removeAllRanges();
-    selection.addRange(r1);
-    _savedRange = r1.cloneRange();
-    return;
-  }
 
-  /* 1. extractContents + 새 span wrap */
+  /* 1. extractContents + wrap (임시 nested 허용) */
   var contents;
-  try { contents = range.extractContents(); }
-  catch(e) { return; }
-
+  try { contents = range.extractContents(); } catch(e) { return; }
   var span = doc.createElement('span');
   span.setAttribute('data-fmt-unified', 'true');
   span.style.setProperty(cssProp, styleValue, 'important');
   span.appendChild(contents);
   range.insertNode(span);
 
-  /* 2. 부모 병합 — 부모가 [data-fmt-unified]이고 새 span이 부모의 유일/전체 컨텐츠 */
-  var parent = span.parentElement;
-  if (parent && parent.matches && parent.matches('[data-fmt-unified]') && parent.textContent === span.textContent) {
-    for (var i = 0; i < span.style.length; i++) {
-      var p = span.style[i];
-      parent.style.setProperty(p, span.style.getPropertyValue(p), 'important');
-    }
-    while (span.firstChild) span.parentNode.insertBefore(span.firstChild, span);
-    span.parentNode.removeChild(span);
-    span = parent;
+  /* v0.33.3: 컬러 사용 기록 */
+  if (styleProp === 'color' || styleProp === 'backgroundColor') {
+    trackUsedColor(styleProp === 'backgroundColor' ? 'bg' : 'text', styleValue);
   }
 
-  /* 3. 자손 병합 — 새 span의 단일 자식이 [data-fmt-unified]이고 textContent 동일 */
-  if (span.children.length === 1) {
-    var child = span.children[0];
-    if (child.matches && child.matches('[data-fmt-unified]') && child.textContent === span.textContent) {
-      for (var j = 0; j < child.style.length; j++) {
-        var cp = child.style[j];
-        /* 자손에 이미 있는 속성은 자손이 우선 (사용자가 명시적으로 적용한 것) — span(부모)의 해당 속성은 자손 값으로 덮어쓰기 */
-        if (!span.style.getPropertyValue(cp)) {
-          span.style.setProperty(cp, child.style.getPropertyValue(cp), 'important');
-        }
+  /* 2. 가장 가까운 contenteditable 또는 data-builder-section 찾아 flatten */
+  var editable = span.closest('[contenteditable="true"]') || span.closest('[data-builder-section]');
+  if (editable) {
+    flattenFormatting(editable);
+    /* 3. selection 복원 — 선택 텍스트 위치로 재선택 */
+    var restored = restoreSelectionByText(editable, selText);
+    if (restored) _savedRange = restored.cloneRange();
+  }
+}
+
+/* v0.33.3: flatten 정규화 — 모든 텍스트 노드의 누적 스타일 계산 + flat 재구성 */
+function flattenFormatting(rootEl) {
+  if (!rootEl) return;
+  var segments = [];
+  function walk(node, accum) {
+    if (node.nodeType === 3) {
+      if (node.textContent !== '') {
+        segments.push({ text: node.textContent, styles: Object.assign({}, accum) });
       }
-      while (child.firstChild) child.parentNode.insertBefore(child.firstChild, child);
-      child.parentNode.removeChild(child);
+      return;
     }
+    if (node.nodeType !== 1) return;
+    var tag = node.tagName;
+    if (tag === 'BR') { segments.push({ br: true }); return; }
+    var newStyles = Object.assign({}, accum);
+    /* [data-fmt-unified] span이면 style 누적 (자식이 부모 덮어씀) */
+    if (node.hasAttribute && node.hasAttribute('data-fmt-unified')) {
+      for (var i = 0; i < node.style.length; i++) {
+        var prop = node.style[i];
+        newStyles[prop] = node.style.getPropertyValue(prop);
+      }
+    }
+    /* 다른 태그(B, I, A 등)는 외부 wrapper로 보존하지 않고 자식만 walk */
+    /* 사용자가 contenteditable 내에서 만들 만한 태그: span / br 만 가정 */
+    var children = Array.prototype.slice.call(node.childNodes);
+    children.forEach(function(c) { walk(c, newStyles); });
   }
+  var topChildren = Array.prototype.slice.call(rootEl.childNodes);
+  topChildren.forEach(function(c) { walk(c, {}); });
 
-  var newRange = doc.createRange();
-  newRange.selectNodeContents(span);
-  selection.removeAllRanges();
-  selection.addRange(newRange);
-  _savedRange = newRange.cloneRange();
+  /* 인접 segment 병합 (스타일 동일) */
+  var merged = [];
+  segments.forEach(function(s) {
+    var last = merged[merged.length - 1];
+    if (s.br) { merged.push(s); return; }
+    if (last && !last.br && stylesEqual(last.styles, s.styles)) {
+      last.text += s.text;
+    } else {
+      merged.push(s);
+    }
+  });
+
+  /* HTML 재구성 */
+  var html = '';
+  merged.forEach(function(s) {
+    if (s.br) { html += '<br>'; return; }
+    var keys = Object.keys(s.styles);
+    if (keys.length === 0) {
+      html += escapeHtmlText(s.text);
+    } else {
+      var styleStr = keys.map(function(k) {
+        return k + ':' + s.styles[k] + ' !important';
+      }).join(';');
+      html += '<span data-fmt-unified="true" style="' + styleStr + '">' + escapeHtmlText(s.text) + '</span>';
+    }
+  });
+  rootEl.innerHTML = html;
+}
+
+function stylesEqual(a, b) {
+  var ka = Object.keys(a), kb = Object.keys(b);
+  if (ka.length !== kb.length) return false;
+  for (var i = 0; i < ka.length; i++) {
+    if (a[ka[i]] !== b[ka[i]]) return false;
+  }
+  return true;
+}
+function escapeHtmlText(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+/* v0.33.3: flatten 후 선택 텍스트로 selection 복원 */
+function restoreSelectionByText(rootEl, text) {
+  if (!text) return null;
+  var doc = rootEl.ownerDocument;
+  var textNodes = [];
+  function collect(n) {
+    if (n.nodeType === 3) textNodes.push(n);
+    else if (n.nodeType === 1) Array.prototype.forEach.call(n.childNodes, collect);
+  }
+  collect(rootEl);
+  var combined = '';
+  for (var i = 0; i < textNodes.length; i++) combined += textNodes[i].textContent;
+  var startPos = combined.indexOf(text);
+  if (startPos < 0) return null;
+  var endPos = startPos + text.length;
+  var pos = 0, startNode = null, startOff = 0, endNode = null, endOff = 0;
+  for (var j = 0; j < textNodes.length; j++) {
+    var len = textNodes[j].textContent.length;
+    if (!startNode && pos + len > startPos) {
+      startNode = textNodes[j];
+      startOff = startPos - pos;
+    }
+    if (!endNode && pos + len >= endPos) {
+      endNode = textNodes[j];
+      endOff = endPos - pos;
+      break;
+    }
+    pos += len;
+  }
+  if (!startNode || !endNode) return null;
+  var r = doc.createRange();
+  r.setStart(startNode, startOff);
+  r.setEnd(endNode, endOff);
+  var sel = doc.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(r);
+  return r;
+}
+
+/* v0.33.3: 자주 사용 컬러 트래킹 */
+var FAIR_USED_COLORS = [];
+var FAIR_USED_BG_COLORS = [];
+try {
+  FAIR_USED_COLORS = JSON.parse(localStorage.getItem('fair_used_colors') || '[]');
+  FAIR_USED_BG_COLORS = JSON.parse(localStorage.getItem('fair_used_bg_colors') || '[]');
+} catch(e) {}
+
+function trackUsedColor(type, hex) {
+  /* hex 정규화 (rgb → #) */
+  var normHex = toHexColor(hex);
+  if (!normHex || normHex === '#000000' && type === 'text') {
+    /* 의도적 검정은 OK, 무관한 검정은 거름 — 일단 모두 통과 */
+  }
+  var key = type === 'bg' ? 'fair_used_bg_colors' : 'fair_used_colors';
+  var arr = type === 'bg' ? FAIR_USED_BG_COLORS : FAIR_USED_COLORS;
+  var existing = arr.indexOf(normHex);
+  if (existing >= 0) arr.splice(existing, 1);
+  arr.unshift(normHex);
+  if (arr.length > 12) arr.length = 12;
+  try { localStorage.setItem(key, JSON.stringify(arr)); } catch(e) {}
+  if (type === 'bg') FAIR_USED_BG_COLORS = arr;
+  else FAIR_USED_COLORS = arr;
+  renderFmtRecentColors();
+}
+
+function renderFmtRecentColors() {
+  var textBar = document.getElementById('fmt-recent-text');
+  var bgBar = document.getElementById('fmt-recent-bg');
+  if (textBar) {
+    textBar.innerHTML = FAIR_USED_COLORS.map(function(c) {
+      return '<button class="fmt-recent-color" style="background:' + esc(c) + '" title="' + esc(c) + '" onmousedown="saveIframeSelection();event.preventDefault()" onclick="restoreIframeSelection();applyUnifiedFormatting(\'color\',\'' + esc(c) + '\')"></button>';
+    }).join('');
+  }
+  if (bgBar) {
+    bgBar.innerHTML = FAIR_USED_BG_COLORS.map(function(c) {
+      return '<button class="fmt-recent-color" style="background:' + esc(c) + '" title="' + esc(c) + '" onmousedown="saveIframeSelection();event.preventDefault()" onclick="restoreIframeSelection();applyUnifiedFormatting(\'backgroundColor\',\'' + esc(c) + '\')"></button>';
+    }).join('');
+  }
 }
 
 /* contenteditable 포맷팅 정리: <font> 태그 제거 + nested [data-fmt-unified] 병합 + 빈 span 제거 */
@@ -5409,6 +5530,19 @@ function exportZIP() {
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
   {
+    date: '2026.04.29 13:25 (v0.33.3)',
+    items: [
+      '<strong>[v0.33.3]</strong> B-1 — Flatten 정규화 방식으로 전면 재설계 + 자주 사용 컬러 팔레트',
+      '<strong>[v0.33.3]</strong> 진단 (v0.33.2 부족): 부분 선택이 다르면 nested span 생성 불가피. 사용자는 어떤 경우에도 flat 구조를 원함',
+      '<strong>[v0.33.3]</strong> 신 알고리즘: ① wrap (임시 nested 허용) → ② 즉시 flatten — 모든 텍스트 노드의 누적 스타일 계산 → ③ 인접 동일 스타일 segment 병합 → ④ flat 형제 span 으로 재구성',
+      '<strong>[v0.33.3]</strong> 결과: 어떤 적용 후에도 nested span 0개 보장. 같은 영역 = 한 span에 style 누적, 부분 영역 = 분리된 형제 span',
+      '<strong>[v0.33.3]</strong> selection 복원: flatten 후 선택 텍스트 위치로 자동 재선택 (사용자 추가 작업 가능)',
+      '<strong>[v0.33.3]</strong> 신규: flattenFormatting / restoreSelectionByText / stylesEqual / escapeHtmlText',
+      '<strong>[v0.33.3]</strong> 자주 사용 컬러 — 텍스트/배경 색상 사용 시 자동 기록 (최근 12개, localStorage). 툴바에 작은 팔레트 표시 → 클릭으로 즉시 재적용',
+      '<strong>[v0.33.3]</strong> 신규: trackUsedColor / renderFmtRecentColors / .fmt-recent-color CSS',
+    ]
+  },
+  {
     date: '2026.04.29 13:02 (v0.33.2)',
     items: [
       '<strong>[v0.33.2]</strong> 긴급 — 같은 영역에 다른 스타일 적용 시 span 무한 중첩 해결',
@@ -6524,6 +6658,7 @@ renderSectionList();
 renderColorList();
 renderFontPanel();  /* v0.31.0 */
 restoreStyleCollapse();  /* v0.32.3 — 스타일 탭 collapsed 상태 복원 */
+renderFmtRecentColors();  /* v0.33.3 — 자주 사용 컬러 팔레트 초기 렌더 */
 /* v0.28.1: 글로벌 서브타이틀 토글 체크박스 초기 상태 반영 */
 (function() {
   var chk = document.getElementById('global-subtitle-toggle');
