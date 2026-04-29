@@ -434,7 +434,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.1</span>
+  <span id="ver-badge" title="배포 버전">v0.34.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4254,6 +4254,8 @@ function buildBtnSettingsPanelHTML(idx, b) {
     '<span style="flex:1;color:#9ca3af;">인셋 쉐도우</span>' +
     '<label class="toggle"><input type="checkbox" ' + (b.shadowEnabled ? 'checked' : '') + ' onchange="updateBtnField(' + idx + ',\'shadowEnabled\',this.checked)"><span class="toggle-slider"></span></label>' +
     bspColorSwatch(idx, 'shadowColor', b.shadowColor) +
+    /* v0.34.2: 단독 swatch 위치에도 ▾ 트리거 (자주 사용 + HEX 직접 입력) */
+    ccpTriggerHTML("'" + toHexColor(b.shadowColor) + "'", "onCcpBspColorChange(" + idx + ",'shadowColor',VAL)") +
     '</div>';
   h += '<div style="display:flex;align-items:center;gap:8px;margin:6px 0;">' +
     '<span style="flex:1;color:#9ca3af;">호버 효과 <span style="font-size:10px;color:#4b5563;">PC</span></span>' +
@@ -5789,6 +5791,13 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 15:00 (v0.34.2)',
+    items: [
+      '<strong>[v0.34.2]</strong> 인셋 쉐도우 단독 swatch에도 ▾ 트리거 추가 — buildBtnStylePanel 내 인셋 쉐도우 옆 작은 swatch 옆에 popover 트리거',
+      '<strong>[v0.34.2]</strong> v0.34.0 누락 위치 보강 (단독 bspColorSwatch). 이제 모든 색상 picker UI에서 ▾ 통합 popover 사용 가능',
+    ]
+  },
   {
     date: '2026.04.29 14:50 (v0.34.1)',
     items: [
