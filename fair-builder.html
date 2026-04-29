@@ -410,7 +410,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.33.1</span>
+  <span id="ver-badge" title="배포 버전">v0.33.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3424,10 +3424,15 @@ function restoreIframeSelection() {
   sel.addRange(_savedRange);
 }
 
-/* v0.33.0: B-1 신 기획 — Range 기반 부분 드래그 적용
- * 기존 문제: case 1 shortcut + cleanup의 nested 병합 → 부분 선택이 전체로 확산
- * 신 방식: 항상 새 span으로 wrap, nested span 보존 (각각 독립적인 부분 스타일)
- * 결과: 사용자가 드래그한 영역만 정확히 적용 */
+/* v0.33.2: B-1 — Range 기반 부분 드래그 + 같은 영역 자동 병합
+ * 진단 (v0.33.0 부족):
+ *   - 같은 영역에 폰트→굵기→사이즈 순차 적용 시 매번 새 span 중첩
+ *   - 사용자 의도: 같은 영역은 한 span으로 통합 (style만 누적)
+ *   - 다른 영역(부분 선택)은 별도 span으로 분리
+ * 신 방식:
+ *   - 새 span 생성 후 즉시 부모 검사
+ *   - 부모도 [data-fmt-unified] AND textContent 일치 → 부모로 병합 (중첩 제거)
+ *   - 자손(first child)도 [data-fmt-unified] AND textContent 일치 → 자손으로 병합 + unwrap */
 function applyUnifiedFormatting(styleProp, styleValue) {
   var doc = getPreviewDoc();
   if (!doc) return;
@@ -3440,23 +3445,61 @@ function applyUnifiedFormatting(styleProp, styleValue) {
 
   var cssProp = styleProp.replace(/([A-Z])/g, '-$1').toLowerCase();
 
-  /* 항상 새 span 생성 — 부분 선택을 정확히 wrap. nested span 그대로 보존 */
-  var contents;
-  try {
-    contents = range.extractContents();
-  } catch(e) {
-    /* 추출 실패 시 fallback (드물게 cross-element 문제) */
+  /* 0. 사전 체크: range의 commonAncestor가 [data-fmt-unified]이고 textContent === selection text
+   *    → 새 span 생성하지 않고 기존 span에 style만 추가 */
+  var selText = range.toString();
+  var ancestor = range.commonAncestorContainer;
+  if (ancestor.nodeType === 3) ancestor = ancestor.parentElement;
+  var ancestorSpan = ancestor && ancestor.closest ? ancestor.closest('[data-fmt-unified]') : null;
+  if (ancestorSpan && ancestorSpan.textContent === selText) {
+    ancestorSpan.style.setProperty(cssProp, styleValue, 'important');
+    var r1 = doc.createRange();
+    r1.selectNodeContents(ancestorSpan);
+    selection.removeAllRanges();
+    selection.addRange(r1);
+    _savedRange = r1.cloneRange();
     return;
   }
+
+  /* 1. extractContents + 새 span wrap */
+  var contents;
+  try { contents = range.extractContents(); }
+  catch(e) { return; }
 
   var span = doc.createElement('span');
   span.setAttribute('data-fmt-unified', 'true');
   span.style.setProperty(cssProp, styleValue, 'important');
   span.appendChild(contents);
-
   range.insertNode(span);
 
-  /* selection을 새 span으로 복원 — 사용자가 추가 스타일을 같은 영역에 적용 가능 */
+  /* 2. 부모 병합 — 부모가 [data-fmt-unified]이고 새 span이 부모의 유일/전체 컨텐츠 */
+  var parent = span.parentElement;
+  if (parent && parent.matches && parent.matches('[data-fmt-unified]') && parent.textContent === span.textContent) {
+    for (var i = 0; i < span.style.length; i++) {
+      var p = span.style[i];
+      parent.style.setProperty(p, span.style.getPropertyValue(p), 'important');
+    }
+    while (span.firstChild) span.parentNode.insertBefore(span.firstChild, span);
+    span.parentNode.removeChild(span);
+    span = parent;
+  }
+
+  /* 3. 자손 병합 — 새 span의 단일 자식이 [data-fmt-unified]이고 textContent 동일 */
+  if (span.children.length === 1) {
+    var child = span.children[0];
+    if (child.matches && child.matches('[data-fmt-unified]') && child.textContent === span.textContent) {
+      for (var j = 0; j < child.style.length; j++) {
+        var cp = child.style[j];
+        /* 자손에 이미 있는 속성은 자손이 우선 (사용자가 명시적으로 적용한 것) — span(부모)의 해당 속성은 자손 값으로 덮어쓰기 */
+        if (!span.style.getPropertyValue(cp)) {
+          span.style.setProperty(cp, child.style.getPropertyValue(cp), 'important');
+        }
+      }
+      while (child.firstChild) child.parentNode.insertBefore(child.firstChild, child);
+      child.parentNode.removeChild(child);
+    }
+  }
+
   var newRange = doc.createRange();
   newRange.selectNodeContents(span);
   selection.removeAllRanges();
@@ -5365,6 +5408,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 13:02 (v0.33.2)',
+    items: [
+      '<strong>[v0.33.2]</strong> 긴급 — 같은 영역에 다른 스타일 적용 시 span 무한 중첩 해결',
+      '<strong>[v0.33.2]</strong> 진단 (v0.33.0 부족): 폰트→굵기→사이즈→컬러→배경 순차 적용 시 매번 새 span 생성. 사용자 의도는 같은 영역=한 span에 style 누적',
+      '<strong>[v0.33.2]</strong> 신 알고리즘 3단계: ① 사전 체크 — commonAncestor가 [data-fmt-unified]이고 텍스트 일치 → 그 span에 style 추가만 (새 span 생성 안 함) ② extractContents+wrap 후 부모 병합 ③ 단일 자손 병합',
+      '<strong>[v0.33.2]</strong> 결과: 같은 영역 폰트→굵기→사이즈 적용 → &lt;span style="font-family;font-weight;font-size"&gt; 단일 span. 부분 선택은 분리 유지',
+    ]
+  },
   {
     date: '2026.04.29 12:00 (v0.33.1)',
     items: [
