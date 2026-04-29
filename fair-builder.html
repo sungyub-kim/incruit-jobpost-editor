@@ -414,7 +414,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.33.7</span>
+  <span id="ver-badge" title="배포 버전">v0.33.8</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3181,11 +3181,7 @@ function openPreviewWindow() {
     el.removeAttribute('data-orig-href');
   });
   rootClone.querySelectorAll('[title="클릭하여 이미지 교체"],[title="클릭하여 YouTube URL 변경"]').forEach(function(el) { el.removeAttribute('title'); });
-  /* 5. iframe 인라인 display 정리 (data-builder-section의 강제 hide만) */
-  rootClone.querySelectorAll('[data-builder-section]').forEach(function(el) {
-    if (el.style.display === 'none') el.style.removeProperty('display');
-    if (el.style.backgroundColor) el.style.removeProperty('backgroundColor');
-  });
+  /* v0.33.8: 인라인 display/backgroundColor 정리 코드 제거 — 사용자가 OFF한 섹션이 새창에서 보이는 버그 + 사용자 지정 배경색 손실 버그 (사용자 의도 그대로 유지) */
   /* v0.30.4: <base href> 추가 — Blob URL 환경에서 상대 경로 (예: ui/static/css/...) 가 iframe 도메인 기준으로 해석되도록 */
   var iframeUrl = document.getElementById('preview-frame').src || window.location.href;
   var basePath = iframeUrl.substring(0, iframeUrl.lastIndexOf('/') + 1);
@@ -5562,6 +5558,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 14:00 (v0.33.8)',
+    items: [
+      '<strong>[v0.33.8]</strong> 미리보기 새창 — 사용자가 OFF한 섹션이 보이는 버그 수정',
+      '<strong>[v0.33.8]</strong> 진단: openPreviewWindow의 cleanup 블록이 [data-builder-section]의 inline display:none과 backgroundColor를 강제 제거 → 비활성 섹션이 새창에 노출 + 사용자 지정 배경색 손실',
+      '<strong>[v0.33.8]</strong> 수정: 해당 cleanup 코드 제거 — iframe DOM이 이미 사용자 의도(display:none + bg color)를 정확히 반영하므로 그대로 보존',
+    ]
+  },
   {
     date: '2026.04.29 13:55 (v0.33.7)',
     items: [
