@@ -434,7 +434,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.0</span>
+  <span id="ver-badge" title="배포 버전">v0.34.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -5789,6 +5789,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 14:50 (v0.34.1)',
+    items: [
+      '<strong>[v0.34.1]</strong> 버튼 그림자 색상 변수화 — `--s-color3-shadow` / `--s-color4-shadow` 신규 (default #D94E62 / #A612BE)',
+      '<strong>[v0.34.1]</strong> CSS — .btn-group .round-btn box-shadow 하드코딩 색상을 변수로 교체 → 메인 색상 변경 시 그림자 어울림 보장',
+      '<strong>[v0.34.1]</strong> schema FAIR_BUILDER_COLORS에 2개 추가 → 좌측 스타일 탭 컬러 picker에 자동 노출 (▾ popover 사용 가능)',
+      '<strong>[v0.34.1]</strong> 9순위 컬러 매핑 조사 결과 (project_color_mapping.md) 반영 — 향후 hover 색상도 변수화 후속 예정',
+    ]
+  },
   {
     date: '2026.04.29 14:30 (v0.34.0)',
     items: [
