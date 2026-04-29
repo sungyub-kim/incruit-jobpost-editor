@@ -414,7 +414,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.33.3</span>
+  <span id="ver-badge" title="배포 버전">v0.33.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2779,7 +2779,27 @@ function updateVisualElementSpacing(idx, prop, val) {
 
 /* Step 2: 요소 추가 */
 window.visualTextActiveIdx = 0;
+/* v0.33.4: 미리보기에서 현재 mvisual-text DOM의 innerHTML 수집 → mvisual_texts에 저장
+ * 이후 renderVisualTexts() 호출이 stale 데이터로 덮어쓰는 것을 방지 */
+function collectVisualTextsFromPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts;
+  if (!texts) return;
+  var container = doc.querySelector('.mvisual-texts-container');
+  if (!container) return;
+  texts.forEach(function(t, i) {
+    var wrap = container.querySelector('.mvisual-text-' + (i + 1));
+    if (!wrap) return;
+    var pcDiv = wrap.querySelector('.mvisual-text-pc');
+    var mDiv = wrap.querySelector('.mvisual-text-m');
+    if (pcDiv) t.pcHtml = pcDiv.innerHTML;
+    if (mDiv) t.mHtml = mDiv.innerHTML;
+  });
+}
+
 function addVisualText() {
+  collectVisualTextsFromPreview();  /* v0.33.4: 기존 요소의 편집 내용 보존 */
   var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
   if (!sectionData.section_visual) sectionData.section_visual = {};
   if (!sectionData.section_visual.mvisual_texts) sectionData.section_visual.mvisual_texts = [];
@@ -2814,6 +2834,7 @@ function removeVisualText(idx) {
     return;
   }
   if (confirm('요소 ' + (idx+1) + '을(를) 삭제하시겠습니까?')) {
+    collectVisualTextsFromPreview();  /* v0.33.4: 다른 요소의 편집 내용 보존 */
     sectionData.section_visual.mvisual_texts.splice(idx, 1);
     if (window.visualTextActiveIdx >= sectionData.section_visual.mvisual_texts.length) {
       window.visualTextActiveIdx = sectionData.section_visual.mvisual_texts.length - 1;
@@ -3039,6 +3060,7 @@ function updateVisualFontStyle(idx) {
   var fontFamily = fontSelect.value;
   var fontWeight = weightSelect.value;
 
+  collectVisualTextsFromPreview();  /* v0.33.4: 다른 요소의 편집 내용 보존 */
   var texts = sectionData.section_visual && sectionData.section_visual.mvisual_texts ? sectionData.section_visual.mvisual_texts : [];
   if (!texts[idx]) return;
 
@@ -5529,6 +5551,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 13:28 (v0.33.4)',
+    items: [
+      '<strong>[v0.33.4]</strong> 메인비주얼 — 요소 추가/삭제/폰트변경 시 다른 요소의 편집 내용(포맷팅) 초기화 버그 수정',
+      '<strong>[v0.33.4]</strong> 진단: addVisualText/removeVisualText/updateVisualFontStyle → renderVisualTexts() 가 mvisual_texts의 stale pcHtml/mHtml로 전체 재생성 → 미저장 편집 손실',
+      '<strong>[v0.33.4]</strong> 신규: collectVisualTextsFromPreview() — 미리보기의 현재 mvisual-text PC/M innerHTML 수집해 mvisual_texts에 저장. 위 3개 함수에서 render 전 호출',
+    ]
+  },
   {
     date: '2026.04.29 13:25 (v0.33.3)',
     items: [
