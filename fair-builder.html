@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.4</span>
+  <span id="ver-badge" title="배포 버전">v0.34.5</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -5843,6 +5843,12 @@ function exportZIP() {
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
   {
+    date: '2026.04.29 15:30 (v0.34.5)',
+    items: [
+      '<strong>[v0.34.5]</strong> "분석 및 초안 방향" 헤더 위치 정정 — v0.15.15 → v0.15.16 entry로 이동 (4/24 15:00 v0.15.16이 분석 단계 첫 작업)',
+    ]
+  },
+  {
     date: '2026.04.29 15:25 (v0.34.4)',
     items: [
       '<strong>[v0.34.4]</strong> 패치노트 그룹 헤더 기능 추가 — entry에 groupHeader 필드 있으면 위에 소제목 표시',
@@ -6601,6 +6607,7 @@ var PATCH_NOTES = [
   },
   {
     date: '2026.04.24 15:00 (v0.15.16)',
+    groupHeader: '분석 및 초안 방향',  /* 4/22~24 — 일일업무보고/로드맵 생성 전 */
     items: [
       '<strong>[v0.15.16]</strong> 툴바 UX 2건 해결: 같은 속성 재적용 가능 + 드래그 범위만 변경',
       '<strong>[v0.15.16]</strong> fmt-font / fmt-weight select: onchange 후 selectedIndex=0 리셋 → 같은 폰트/굵기 재선택 가능 (HTML select의 native 한계 우회)',
@@ -6611,7 +6618,6 @@ var PATCH_NOTES = [
   },
   {
     date: '2026.04.24 14:44 (v0.15.15)',
-    groupHeader: '분석 및 초안 방향',  /* 4/22~24 — 일일업무보고/로드맵 생성 전 */
     items: [
       '<strong>[v0.15.15]</strong> injectEditModeCSS에서 불필요한 CSS 규칙 제거',
       '<strong>[v0.15.15]</strong> 제거된 규칙: `[data-builder-section="section_visual"][contenteditable] { font-family:inherit!important; font-weight:normal!important; }`',
