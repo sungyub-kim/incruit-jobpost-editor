@@ -405,7 +405,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.31.1</span>
+  <span id="ver-badge" title="배포 버전">v0.32.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2208,7 +2208,18 @@ function buildSectionPanel(sectionId) {
     '</div>';
   }
   h += buildBgImagePanel(sectionId);
-  if (sectionId === 'section_event_info') h += buildPosterLayoutCtrl();
+  if (sectionId === 'section_event_info') {
+    h += buildPosterLayoutCtrl();
+    /* v0.32.0: 박람회 개요 — 동적 infos + apply_buttons 전용 패널 */
+    h += buildEventInfoCustomPanel();
+    h += buildColorPanel(sectionId);
+    h += buildSpacingPanel(sectionId);
+    h += '<div class="ep-template-group">' +
+      '<button class="ep-template-btn" onclick="saveSectionTemplate(\'' + sectionId + '\')" title="템플릿 저장">💾 템플릿 저장</button>' +
+      '<button class="ep-template-btn" onclick="applySectionTemplate(\'' + sectionId + '\')" title="템플릿 적용">📋 템플릿 적용</button>' +
+    '</div>';
+    return h;
+  }
   Object.keys(schema.fields).forEach(function(fk) {
     var field = schema.fields[fk];
     if (!map[fk]) return; // DOM_MAP에 없는 필드는 폼에서 제외
@@ -4077,6 +4088,257 @@ function renderFontPanel() {
   el.innerHTML = html;
 }
 
+/* v0.32.0: 박람회 개요 — poster-box__detail 동적 재생성 (infos[] + apply_buttons[]) */
+function applyEventInfoToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sec = doc.querySelector('[data-builder-section="section_event_info"]');
+  if (!sec) return;
+  var data = sectionData['section_event_info'] || {};
+  var posters = data.posters || [];
+  var posterEls = sec.querySelectorAll('.poster-box');
+  posters.forEach(function(p, i) {
+    var el = posterEls[i];
+    if (!el) return;
+    /* title */
+    var titleEl = el.querySelector('.poster-box__title');
+    if (titleEl && p.title !== undefined) titleEl.textContent = p.title;
+    /* poster-box__detail 재생성 (infos + apply_buttons) */
+    var detail = el.querySelector('.poster-box__detail');
+    if (!detail) return;
+    var html = '';
+    (p.infos || []).forEach(function(info) {
+      html += '<dl class="poster-box__items">' +
+        '<dt class="poster-box__items__dt">' + esc(info.label || '') + '</dt>';
+      if (info.type === 'logos') {
+        html += '<dd class="poster-box__items__dd logo--type">';
+        (info.logos || []).forEach(function(logo) {
+          if (logo && logo.src) {
+            html += '<img src="' + esc(logo.src) + '"' + (logo.alt ? ' alt="' + esc(logo.alt) + '"' : ' alt=""') + '>';
+          }
+        });
+        html += '</dd>';
+      } else {
+        html += '<dd class="poster-box__items__dd"><p class="first">' + esc(info.value || '') + '</p></dd>';
+      }
+      html += '</dl>';
+    });
+    (p.apply_buttons || []).forEach(function(btn) {
+      if (btn && (btn.label || btn.href)) {
+        var href = btn.href || '#';
+        var target = btn.target || '_blank';
+        html += '<a href="' + esc(href) + '" target="' + esc(target) + '" class="btn-biz-apply" data-orig-href="' + esc(href) + '">' + esc(btn.label || '') + '</a>';
+      }
+    });
+    detail.innerHTML = html;
+  });
+}
+
+/* v0.32.0: 박람회 개요 마이그레이션 — 레거시 fields → infos[] / apply_buttons[] */
+function migrateEventInfoPosters() {
+  var data = sectionData['section_event_info'];
+  if (!data || !data.posters) return;
+  data.posters.forEach(function(p) {
+    /* infos 마이그레이션 */
+    if (!Array.isArray(p.infos)) p.infos = [];
+    if (p.infos.length === 0) {
+      if (p.period)   p.infos.push({ label: '행사일시', type: 'text', value: p.period });
+      if (p.url)      p.infos.push({ label: 'URL',     type: 'text', value: p.url });
+      if (p.location) p.infos.push({ label: '장소',     type: 'text', value: p.location });
+      if (p.contact)  p.infos.push({ label: '문의처',   type: 'text', value: p.contact });
+      if (Array.isArray(p.logos) && p.logos.length) {
+        p.infos.push({ label: '로고', type: 'logos', logos: p.logos.slice() });
+      }
+    }
+    /* apply_buttons 마이그레이션 */
+    if (!Array.isArray(p.apply_buttons)) p.apply_buttons = [];
+    if (p.apply_buttons.length === 0 && p.apply_link) {
+      p.apply_buttons.push({
+        label: (p.type === 'online' ? '온라인' : '오프라인') + ' 박람회 참가기업 신청하기',
+        href: p.apply_link,
+        target: p.apply_target || '_blank'
+      });
+    }
+  });
+}
+
+/* v0.32.0: 박람회 개요 인포 CRUD */
+function addPosterInfo(posterIdx, type) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p) return;
+  if (!Array.isArray(p.infos)) p.infos = [];
+  if (type === 'logos') p.infos.push({ label: '로고', type: 'logos', logos: [] });
+  else p.infos.push({ label: '항목', type: 'text', value: '' });
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function removePosterInfo(posterIdx, infoIdx) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.infos) return;
+  p.infos.splice(infoIdx, 1);
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function movePosterInfo(posterIdx, infoIdx, dir) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.infos) return;
+  var newIdx = infoIdx + dir;
+  if (newIdx < 0 || newIdx >= p.infos.length) return;
+  var tmp = p.infos[infoIdx]; p.infos[infoIdx] = p.infos[newIdx]; p.infos[newIdx] = tmp;
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function updatePosterInfoField(posterIdx, infoIdx, field, val) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.infos || !p.infos[infoIdx]) return;
+  p.infos[infoIdx][field] = val;
+  applyEventInfoToPreview(); saveState();
+}
+function addPosterInfoLogo(posterIdx, infoIdx) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.infos || !p.infos[infoIdx]) return;
+  if (!Array.isArray(p.infos[infoIdx].logos)) p.infos[infoIdx].logos = [];
+  p.infos[infoIdx].logos.push({ src: '', alt: '' });
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function removePosterInfoLogo(posterIdx, infoIdx, logoIdx) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.infos || !p.infos[infoIdx] || !p.infos[infoIdx].logos) return;
+  p.infos[infoIdx].logos.splice(logoIdx, 1);
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function movePosterInfoLogo(posterIdx, infoIdx, logoIdx, dir) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.infos || !p.infos[infoIdx] || !p.infos[infoIdx].logos) return;
+  var arr = p.infos[infoIdx].logos;
+  var newIdx = logoIdx + dir;
+  if (newIdx < 0 || newIdx >= arr.length) return;
+  var tmp = arr[logoIdx]; arr[logoIdx] = arr[newIdx]; arr[newIdx] = tmp;
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function updatePosterInfoLogo(posterIdx, infoIdx, logoIdx, field, val) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.infos || !p.infos[infoIdx] || !p.infos[infoIdx].logos || !p.infos[infoIdx].logos[logoIdx]) return;
+  p.infos[infoIdx].logos[logoIdx][field] = val;
+  applyEventInfoToPreview(); saveState();
+}
+/* 신청 버튼 CRUD */
+function addPosterApplyBtn(posterIdx) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p) return;
+  if (!Array.isArray(p.apply_buttons)) p.apply_buttons = [];
+  p.apply_buttons.push({ label: '신청하기', href: '', target: '_blank' });
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function removePosterApplyBtn(posterIdx, btnIdx) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.apply_buttons) return;
+  p.apply_buttons.splice(btnIdx, 1);
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function movePosterApplyBtn(posterIdx, btnIdx, dir) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.apply_buttons) return;
+  var newIdx = btnIdx + dir;
+  if (newIdx < 0 || newIdx >= p.apply_buttons.length) return;
+  var tmp = p.apply_buttons[btnIdx]; p.apply_buttons[btnIdx] = p.apply_buttons[newIdx]; p.apply_buttons[newIdx] = tmp;
+  applyEventInfoToPreview(); refreshEventInfoPanel(); saveState();
+}
+function updatePosterApplyBtn(posterIdx, btnIdx, field, val) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p || !p.apply_buttons || !p.apply_buttons[btnIdx]) return;
+  p.apply_buttons[btnIdx][field] = val;
+  applyEventInfoToPreview(); saveState();
+}
+function refreshEventInfoPanel() {
+  if (openEditPanelId === 'section_event_info') {
+    var body = document.getElementById('edit-drawer-body');
+    if (body) body.innerHTML = buildSectionPanel('section_event_info');
+  }
+}
+
+/* v0.32.0: 박람회 개요 동적 패널 — 포스터마다 infos + apply_buttons UI */
+function buildEventInfoCustomPanel() {
+  var data = sectionData['section_event_info'] || {};
+  var posters = data.posters || [];
+  var h = '';
+  posters.forEach(function(p, pIdx) {
+    h += '<div class="ep-btn-card">';
+    h += '<div class="ep-btn-header">' + esc(p.title || ('포스터 ' + (pIdx + 1))) + '</div>';
+    h += '<div class="ep-field"><label>제목</label><input type="text" value="' + esc(p.title || '') + '" oninput="updatePosterField(' + pIdx + ',\'title\',this.value)"></div>';
+    /* infos 리스트 */
+    h += '<div class="ep-repeater-label">세부 항목 (행사일시/URL/장소/문의처/로고 등) ' +
+      '<button class="ep-add-btn" onclick="addPosterInfo(' + pIdx + ',\'text\')">+ 텍스트</button> ' +
+      '<button class="ep-add-btn" style="background:#7c3aed;" onclick="addPosterInfo(' + pIdx + ',\'logos\')">+ 로고</button>' +
+    '</div>';
+    (p.infos || []).forEach(function(info, iIdx) {
+      var isLogos = info.type === 'logos';
+      h += '<div class="ep-btn-card" style="background:' + (isLogos ? '#1f1d2e' : '#1e2433') + ';margin-top:6px;">';
+      h += '<div class="ep-btn-header" style="display:flex;align-items:center;gap:6px;">' +
+        '<span style="flex:1;font-size:11px;">' + (isLogos ? '🖼 로고' : '📝 텍스트') + ' ' + (iIdx + 1) + '</span>' +
+        ((p.infos.length > 1) ? (
+          '<button class="ep-reorder-btn" title="위로" ' + (iIdx === 0 ? 'disabled' : '') + ' onclick="movePosterInfo(' + pIdx + ',' + iIdx + ',-1)">▲</button>' +
+          '<button class="ep-reorder-btn" title="아래로" ' + (iIdx === p.infos.length - 1 ? 'disabled' : '') + ' onclick="movePosterInfo(' + pIdx + ',' + iIdx + ',1)">▼</button>' +
+          '<button class="ep-remove-btn" onclick="removePosterInfo(' + pIdx + ',' + iIdx + ')">✕</button>'
+        ) : '') +
+      '</div>';
+      h += '<div class="ep-field"><label>라벨</label><input type="text" value="' + esc(info.label || '') + '" oninput="updatePosterInfoField(' + pIdx + ',' + iIdx + ',\'label\',this.value)"></div>';
+      if (isLogos) {
+        h += '<div class="ep-repeater-label" style="font-size:10px;">로고 이미지 ' +
+          '<button class="ep-add-btn" onclick="addPosterInfoLogo(' + pIdx + ',' + iIdx + ')">+ 추가</button>' +
+        '</div>';
+        var logos = info.logos || [];
+        logos.forEach(function(logo, lIdx) {
+          h += '<div style="padding:4px;background:#0f172a;border-radius:3px;margin-bottom:4px;">' +
+            '<div style="display:flex;gap:4px;margin-bottom:2px;align-items:center;">' +
+              '<span style="flex:1;font-size:10px;color:#9ca3af;">로고 ' + (lIdx + 1) + '</span>' +
+              (logos.length > 1 ? (
+                '<button class="ep-reorder-btn" title="위로" ' + (lIdx === 0 ? 'disabled' : '') + ' onclick="movePosterInfoLogo(' + pIdx + ',' + iIdx + ',' + lIdx + ',-1)">▲</button>' +
+                '<button class="ep-reorder-btn" title="아래로" ' + (lIdx === logos.length - 1 ? 'disabled' : '') + ' onclick="movePosterInfoLogo(' + pIdx + ',' + iIdx + ',' + lIdx + ',1)">▼</button>'
+              ) : '') +
+              '<button class="ep-remove-btn" onclick="removePosterInfoLogo(' + pIdx + ',' + iIdx + ',' + lIdx + ')">✕</button>' +
+            '</div>' +
+            '<input type="text" value="' + esc(logo.src || '') + '" placeholder="이미지 URL" oninput="updatePosterInfoLogo(' + pIdx + ',' + iIdx + ',' + lIdx + ',\'src\',this.value)" style="width:100%;background:#161c2d;border:1px solid #2e3a52;border-radius:3px;color:#f1f5f9;font-size:11px;padding:3px 5px;margin-bottom:2px;">' +
+            '<input type="text" value="' + esc(logo.alt || '') + '" placeholder="alt 텍스트" oninput="updatePosterInfoLogo(' + pIdx + ',' + iIdx + ',' + lIdx + ',\'alt\',this.value)" style="width:100%;background:#161c2d;border:1px solid #2e3a52;border-radius:3px;color:#f1f5f9;font-size:11px;padding:3px 5px;">' +
+          '</div>';
+        });
+      } else {
+        h += '<div class="ep-field"><label>값</label><input type="text" value="' + esc(info.value || '') + '" oninput="updatePosterInfoField(' + pIdx + ',' + iIdx + ',\'value\',this.value)"></div>';
+      }
+      h += '</div>';
+    });
+    /* apply_buttons */
+    h += '<div class="ep-repeater-label" style="margin-top:10px;">신청 버튼 ' +
+      '<button class="ep-add-btn" onclick="addPosterApplyBtn(' + pIdx + ')">+ 추가</button>' +
+    '</div>';
+    var btns = p.apply_buttons || [];
+    btns.forEach(function(btn, bIdx) {
+      h += '<div class="ep-btn-card" style="background:#1e2433;margin-top:4px;">';
+      h += '<div class="ep-btn-header" style="display:flex;align-items:center;gap:6px;">' +
+        '<span style="flex:1;font-size:11px;">버튼 ' + (bIdx + 1) + '</span>' +
+        (btns.length > 1 ? (
+          '<button class="ep-reorder-btn" title="위로" ' + (bIdx === 0 ? 'disabled' : '') + ' onclick="movePosterApplyBtn(' + pIdx + ',' + bIdx + ',-1)">▲</button>' +
+          '<button class="ep-reorder-btn" title="아래로" ' + (bIdx === btns.length - 1 ? 'disabled' : '') + ' onclick="movePosterApplyBtn(' + pIdx + ',' + bIdx + ',1)">▼</button>'
+        ) : '') +
+        '<button class="ep-remove-btn" onclick="removePosterApplyBtn(' + pIdx + ',' + bIdx + ')">✕</button>' +
+      '</div>';
+      h += '<div class="ep-field"><label>버튼 텍스트</label><input type="text" value="' + esc(btn.label || '') + '" oninput="updatePosterApplyBtn(' + pIdx + ',' + bIdx + ',\'label\',this.value)"></div>';
+      h += '<div class="ep-field"><label>링크 URL</label><input type="text" value="' + esc(btn.href || '') + '" oninput="updatePosterApplyBtn(' + pIdx + ',' + bIdx + ',\'href\',this.value)"></div>';
+      h += '<div class="ep-field"><label>열기 방식</label><select onchange="updatePosterApplyBtn(' + pIdx + ',' + bIdx + ',\'target\',this.value)">' +
+        '<option value="_blank"' + (btn.target === '_blank' || !btn.target ? ' selected' : '') + '>새창 (_blank)</option>' +
+        '<option value="_self"' + (btn.target === '_self' ? ' selected' : '') + '>현재창 (_self)</option>' +
+      '</select></div>';
+      h += '</div>';
+    });
+    h += '</div>';
+  });
+  return h;
+}
+
+function updatePosterField(posterIdx, field, val) {
+  var p = sectionData.section_event_info && sectionData.section_event_info.posters && sectionData.section_event_info.posters[posterIdx];
+  if (!p) return;
+  p[field] = val;
+  applyEventInfoToPreview(); saveState();
+}
+
 /* ── 포스터 레이아웃 (Step G) ── */
 function applyPosterLayout(doc) {
   var styleId = 'builder-poster-layout';
@@ -4681,6 +4943,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyBgImagesToPreview();
   applyTopTextToPreview();  /* v0.27.0 */
   applyFontsToPreview();    /* v0.31.0 — 폰트 스타일 일원화 */
+  try { migrateEventInfoPosters(); applyEventInfoToPreview(); } catch(e) {}  /* v0.32.0 */
   /* v0.28.1: contenteditable로 .sec_txt.basic.top 텍스트 지우면 자동 숨김 */
   try {
     var doc = this.contentDocument;
@@ -5089,6 +5352,19 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 10:59 (v0.32.0)',
+    items: [
+      '<strong>[v0.32.0]</strong> 박람회 개요 후속 — 동적 세부 항목 + 신청 버튼 다중 (사용자 4/28 요청)',
+      '<strong>[v0.32.0]</strong> posters[i].infos:[] 신규 — 행사일시/URL/장소/문의처/로고 등 자유 추가/제거/순서 변경 + 라벨 자유 변경',
+      '<strong>[v0.32.0]</strong> info.type 2종: text(텍스트값) / logos(이미지 리스트, 갯수 무제한 + reorder)',
+      '<strong>[v0.32.0]</strong> posters[i].apply_buttons:[{label,href,target}] 신규 — 신청 버튼 다중 + 순서 변경 + 새창/현재창',
+      '<strong>[v0.32.0]</strong> applyEventInfoToPreview() — poster-box__detail 전체 재생성 (dl/dt/dd + a.btn-biz-apply)',
+      '<strong>[v0.32.0]</strong> migrateEventInfoPosters() — 레거시 period/url/location/contact/logos/apply_link → 새 구조 자동 변환',
+      '<strong>[v0.32.0]</strong> 신규 함수 16종 (CRUD + reorder + UI 빌더): addPosterInfo/removePosterInfo/movePosterInfo/updatePosterInfoField/addPosterInfoLogo/removePosterInfoLogo/movePosterInfoLogo/updatePosterInfoLogo/addPosterApplyBtn/removePosterApplyBtn/movePosterApplyBtn/updatePosterApplyBtn/refreshEventInfoPanel/buildEventInfoCustomPanel/updatePosterField/applyEventInfoToPreview',
+      '<strong>[v0.32.0]</strong> buildSectionPanel — section_event_info 분기 (custom panel + 색상/spacing/템플릿 재구성)',
+    ]
+  },
   {
     date: '2026.04.29 09:14 (v0.31.1)',
     items: [

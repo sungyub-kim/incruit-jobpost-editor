@@ -80,23 +80,31 @@ const FAIR_BUILDER_SCHEMA = {
         label: '포스터 박스',
         itemLabel: '포스터',
         maxItems: 2,
-        addable: false, /* v0.29.0: 추가 버튼 숨김 (0~2개 고정) — maxItems만 늘리면 추가 가능 */
+        addable: false, /* v0.29.0: 0~2개 고정 */
+        customPanel: 'section_event_info', /* v0.32.0: buildSectionPanel 우회, 별도 UI */
         fields: {
           type:      { type: 'text',  label: '유형 (online/offline)', default: 'online' },
-          title:     { type: 'text',  label: '제목', default: '온라인 행사안내' },
-          period:    { type: 'text',  label: '기간', default: '' },
-          url:       { type: 'link',  label: '행사 URL', default: '' },
-          location:  { type: 'text',  label: '장소', default: '' },
-          programs:  { type: 'textarea', label: '프로그램 목록 (줄바꿈 구분)', default: '' },
-          contact:   { type: 'text',  label: '문의처', default: '' },
-          apply_link:{ type: 'link',  label: '신청 버튼 링크', default: '' },
-          apply_target:{ type: 'select', label: '신청 버튼 열기 방식', default: '_blank',
-            options: [{ value: '_blank', label: '새창 (_blank)' }, { value: '_self', label: '현재창 (_self)' }] },
+          title:     { type: 'text',  label: '제목', default: '온라인 박람회' },
+          /* v0.32.0: 동적 세부 항목 — 추가/제거/순서 변경 + 라벨 자유
+           * 각 항목: { label, type:'text'|'logos', value(text), logos:[{src,alt}] } */
+          infos:     { type: 'array', label: '세부 항목', default: [] },
+          /* v0.32.0: 신청 버튼 다중 — 추가/제거 가능 */
+          apply_buttons: { type: 'array', label: '신청 버튼', default: [] },
+          /* v0.29.x 레거시 (마이그레이션 전용, drawer에 노출 안함) */
+          period:    { type: 'text',  label: '기간', default: '', legacy: true },
+          url:       { type: 'link',  label: '행사 URL', default: '', legacy: true },
+          location:  { type: 'text',  label: '장소', default: '', legacy: true },
+          programs:  { type: 'textarea', label: '프로그램', default: '', legacy: true },
+          contact:   { type: 'text',  label: '문의처', default: '', legacy: true },
+          apply_link:{ type: 'link',  label: '신청 링크', default: '', legacy: true },
+          apply_target:{ type: 'select', label: '열기 방식', default: '_blank', legacy: true,
+            options: [{ value: '_blank', label: '새창' }, { value: '_self', label: '현재창' }] },
           logos: {
             type: 'repeater',
-            label: '로고 이미지 (주최/유관기관/후원)',
+            label: '로고 이미지',
             itemLabel: '로고',
-            maxItems: 99, /* v0.29.0: 갯수 제한 사실상 해제 */
+            maxItems: 99,
+            legacy: true,
             fields: {
               src: { type: 'image', label: '이미지 경로', default: '' },
               alt: { type: 'text',  label: 'alt 텍스트',  default: '' },
