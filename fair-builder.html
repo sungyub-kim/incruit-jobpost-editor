@@ -161,6 +161,11 @@
 
     /* 패널 섹션 헤더 */
     .p-section-header { font-size: 11px; font-weight: 700; color: #4b5563; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; padding-bottom: 6px; border-bottom: 1px solid #2e3a52; }
+    /* v0.32.2: 스타일 탭 collapsible 섹션 */
+    .collapsible-header { display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; transition: color .15s; margin-top: 14px; }
+    .collapsible-header:first-child { margin-top: 0; }
+    .collapsible-header:hover { color: #94a3b8; }
+    .collapse-arrow { font-size: 10px; color: #6b7280; }
 
     /* 로고 설정 */
     .logo-input-wrap { background: #161c2d; border: 1px solid #2e3a52; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
@@ -405,7 +410,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.32.1</span>
+  <span id="ver-badge" title="배포 버전">v0.32.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -475,13 +480,7 @@
           </div>
         </div>
 
-        <!-- S2: 네비게이션 -->
-        <div class="p-section-header" style="margin-top:16px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;" onclick="toggleFixedPanel('nav-panel','nav-arrow')">
-          <span>🔗 네비게이션</span><span id="nav-arrow" style="font-size:10px;">▶</span>
-        </div>
-        <div id="nav-panel" style="display:none;margin-bottom:8px;">
-          <div id="nav-link-list" style="display:flex;flex-direction:column;gap:4px;"></div>
-        </div>
+        <!-- v0.32.2: 네비게이션 → 스타일 탭으로 이동 -->
 
         <!-- v0.21.1: S1 채용공고 탭 패널은 우측 편집 드로어로 이동 -->
 
@@ -502,25 +501,45 @@
         <div id="available-sections-pool"><!-- JS로 렌더링 --></div>
       </div>
 
-      <!-- 스타일 탭 -->
+      <!-- 스타일 탭 (v0.32.2: 모든 섹션 collapsible — 기본값 열린 상태) -->
       <div id="tab-style" class="tab-panel">
-        <div class="p-section-header">레이블</div>
-        <div id="label-toggles" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
+        <!-- 레이블 -->
+        <div class="p-section-header collapsible-header" onclick="toggleStyleSection('style-label')">
+          <span>레이블</span><span class="collapse-arrow" id="arrow-style-label">▼</span>
+        </div>
+        <div id="style-label" class="collapsible-body" style="display:flex;flex-direction:column;gap:6px;margin-bottom:14px;">
           <div style="display:flex;align-items:center;gap:10px;padding:8px 10px;background:#161c2d;border:1px solid #2e3a52;border-radius:6px;">
             <span style="flex:1;font-size:12px;color:#cbd5e1;">서브타이틀 (전체)</span>
             <label class="toggle" style="flex:0 0 auto;display:inline-block;"><input type="checkbox" id="global-subtitle-toggle" onchange="toggleAllSubTitles(this.checked)"><span class="toggle-slider"></span></label>
           </div>
         </div>
-        <!-- v0.31.0: 폰트 스타일 지정 (4단계: 전체/메인/서브/커스텀) — inline style 금지 정책 -->
-        <div class="p-section-header">폰트 스타일 지정</div>
-        <div id="font-style-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
-        <div class="p-section-header">CSS 색상 토큰</div>
-        <div id="color-list">
-          <!-- JS로 렌더링 -->
+        <!-- 네비게이션 (v0.32.2: 헤더 설정에서 이동) -->
+        <div class="p-section-header collapsible-header" onclick="toggleStyleSection('style-nav')">
+          <span>🔗 네비게이션</span><span class="collapse-arrow" id="arrow-style-nav">▼</span>
         </div>
-        <div class="p-section-header" style="margin-top:16px;">내보내기 설정</div>
-        <div id="export-settings-wrap">
-          <!-- JS로 렌더링 -->
+        <div id="style-nav" class="collapsible-body" style="margin-bottom:14px;">
+          <div id="nav-link-list" style="display:flex;flex-direction:column;gap:4px;"></div>
+        </div>
+        <!-- 폰트 스타일 -->
+        <div class="p-section-header collapsible-header" onclick="toggleStyleSection('style-fonts')">
+          <span>폰트 스타일 지정</span><span class="collapse-arrow" id="arrow-style-fonts">▼</span>
+        </div>
+        <div id="style-fonts" class="collapsible-body" style="margin-bottom:14px;">
+          <div id="font-style-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+        <!-- CSS 색상 토큰 -->
+        <div class="p-section-header collapsible-header" onclick="toggleStyleSection('style-colors')">
+          <span>CSS 색상 토큰</span><span class="collapse-arrow" id="arrow-style-colors">▼</span>
+        </div>
+        <div id="style-colors" class="collapsible-body" style="margin-bottom:14px;">
+          <div id="color-list"></div>
+        </div>
+        <!-- 내보내기 설정 -->
+        <div class="p-section-header collapsible-header" onclick="toggleStyleSection('style-export')">
+          <span>내보내기 설정</span><span class="collapse-arrow" id="arrow-style-export">▼</span>
+        </div>
+        <div id="style-export" class="collapsible-body">
+          <div id="export-settings-wrap"></div>
         </div>
       </div>
     </div>
@@ -1553,6 +1572,32 @@ function resetAll() {
 
 /* ── 탭 전환 ── */
 /* v0.28.0/v0.28.2: 좌측 패널 접기/펼치기 — main-area에 left-collapsed 클래스 토글 */
+/* v0.32.2: 스타일 탭 섹션 접기/펼치기 (기본 열림, localStorage 유지) */
+function toggleStyleSection(id) {
+  var body = document.getElementById(id);
+  var arrow = document.getElementById('arrow-' + id);
+  if (!body) return;
+  var open = body.style.display !== 'none';
+  body.style.display = open ? 'none' : '';
+  if (arrow) arrow.textContent = open ? '▶' : '▼';
+  try { localStorage.setItem('fair_style_' + id, open ? 'closed' : 'open'); } catch(e) {}
+}
+/* 페이지 로드 시 닫힘 상태 복원 */
+(function() {
+  document.addEventListener('DOMContentLoaded', function() {
+    ['style-label','style-nav','style-fonts','style-colors','style-export'].forEach(function(id) {
+      try {
+        if (localStorage.getItem('fair_style_' + id) === 'closed') {
+          var body = document.getElementById(id);
+          var arrow = document.getElementById('arrow-' + id);
+          if (body) body.style.display = 'none';
+          if (arrow) arrow.textContent = '▶';
+        }
+      } catch(e) {}
+    });
+  });
+})();
+
 function toggleLeftPanel() {
   var panel = document.getElementById('left-panel');
   var main = document.getElementById('main-area');
@@ -4267,9 +4312,14 @@ function buildEventInfoCustomPanel() {
     h += '<div class="ep-btn-header">' + esc(p.title || ('포스터 ' + (pIdx + 1))) + '</div>';
     h += '<div class="ep-field"><label>제목</label><input type="text" value="' + esc(p.title || '') + '" oninput="updatePosterField(' + pIdx + ',\'title\',this.value)"></div>';
     /* infos 리스트 */
-    h += '<div class="ep-repeater-label">세부 항목 (행사일시/URL/장소/문의처/로고 등) ' +
-      '<button class="ep-add-btn" onclick="addPosterInfo(' + pIdx + ',\'text\')">+ 텍스트</button> ' +
-      '<button class="ep-add-btn" style="background:#7c3aed;" onclick="addPosterInfo(' + pIdx + ',\'logos\')">+ 로고</button>' +
+    /* v0.32.2: 라벨 + 버튼 줄바꿈 처리 — 좁은 드로어에서 텍스트 잘림 방지 */
+    h += '<div class="ep-repeater-label" style="display:block;">' +
+      '<div>세부 항목</div>' +
+      '<div style="font-size:9px;color:#6b7280;font-weight:400;margin-top:2px;">행사일시/URL/장소/문의처/로고 등</div>' +
+      '<div style="display:flex;gap:4px;margin-top:4px;">' +
+        '<button class="ep-add-btn" style="flex:1;white-space:nowrap;" onclick="addPosterInfo(' + pIdx + ',\'text\')">+ 텍스트</button>' +
+        '<button class="ep-add-btn" style="flex:1;background:#7c3aed;white-space:nowrap;" onclick="addPosterInfo(' + pIdx + ',\'logos\')">+ 로고</button>' +
+      '</div>' +
     '</div>';
     (p.infos || []).forEach(function(info, iIdx) {
       var isLogos = info.type === 'logos';
@@ -5355,6 +5405,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 11:13 (v0.32.2)',
+    items: [
+      '<strong>[v0.32.2]</strong> 박람회 개요 우측 패널 — 텍스트/로고 버튼 잘림 수정. 라벨 단락 분리(라벨 + 부연 설명) + 버튼 가로 100% flex 분배 + white-space:nowrap',
+      '<strong>[v0.32.2]</strong> 좌측 네비게이션 패널 → 스타일 탭으로 이동 (헤더 설정에서 제거)',
+      '<strong>[v0.32.2]</strong> 스타일 탭 5개 섹션 모두 접기/펼치기 토글 — 레이블/네비게이션/폰트/색상/내보내기. 기본 열린 상태, localStorage로 닫힘 상태 유지',
+      '<strong>[v0.32.2]</strong> 신규: toggleStyleSection() + .collapsible-header CSS (▼/▶ 화살표)',
+    ]
+  },
   {
     date: '2026.04.29 11:08 (v0.32.1)',
     items: [
