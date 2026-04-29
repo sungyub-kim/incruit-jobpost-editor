@@ -410,7 +410,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.32.2</span>
+  <span id="ver-badge" title="배포 버전">v0.32.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -1582,21 +1582,19 @@ function toggleStyleSection(id) {
   if (arrow) arrow.textContent = open ? '▶' : '▼';
   try { localStorage.setItem('fair_style_' + id, open ? 'closed' : 'open'); } catch(e) {}
 }
-/* 페이지 로드 시 닫힘 상태 복원 */
-(function() {
-  document.addEventListener('DOMContentLoaded', function() {
-    ['style-label','style-nav','style-fonts','style-colors','style-export'].forEach(function(id) {
-      try {
-        if (localStorage.getItem('fair_style_' + id) === 'closed') {
-          var body = document.getElementById(id);
-          var arrow = document.getElementById('arrow-' + id);
-          if (body) body.style.display = 'none';
-          if (arrow) arrow.textContent = '▶';
-        }
-      } catch(e) {}
-    });
+/* 페이지 로드 시 닫힘 상태 복원 — 스크립트가 body 끝에 있어 즉시 실행 (DOMContentLoaded 이미 fired) */
+function restoreStyleCollapse() {
+  ['style-label','style-nav','style-fonts','style-colors','style-export'].forEach(function(id) {
+    try {
+      if (localStorage.getItem('fair_style_' + id) === 'closed') {
+        var body = document.getElementById(id);
+        var arrow = document.getElementById('arrow-' + id);
+        if (body) body.style.display = 'none';
+        if (arrow) arrow.textContent = '▶';
+      }
+    } catch(e) {}
   });
-})();
+}
 
 function toggleLeftPanel() {
   var panel = document.getElementById('left-panel');
@@ -5406,6 +5404,14 @@ function exportZIP() {
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
   {
+    date: '2026.04.29 11:17 (v0.32.3)',
+    items: [
+      '<strong>[v0.32.3]</strong> v0.32.2 검수 핫픽스 — 스타일 탭 collapsed 상태 복원 안 됨',
+      '<strong>[v0.32.3]</strong> 원인: DOMContentLoaded 리스너를 등록했지만 스크립트가 body 끝에 위치 → 이벤트 이미 fired 후라 콜백 영영 안 실행',
+      '<strong>[v0.32.3]</strong> 수정: restoreStyleCollapse() 함수로 분리 후 init 직접 호출',
+    ]
+  },
+  {
     date: '2026.04.29 11:13 (v0.32.2)',
     items: [
       '<strong>[v0.32.2]</strong> 박람회 개요 우측 패널 — 텍스트/로고 버튼 잘림 수정. 라벨 단락 분리(라벨 + 부연 설명) + 버튼 가로 100% flex 분배 + white-space:nowrap',
@@ -6484,6 +6490,7 @@ loadState();
 renderSectionList();
 renderColorList();
 renderFontPanel();  /* v0.31.0 */
+restoreStyleCollapse();  /* v0.32.3 — 스타일 탭 collapsed 상태 복원 */
 /* v0.28.1: 글로벌 서브타이틀 토글 체크박스 초기 상태 반영 */
 (function() {
   var chk = document.getElementById('global-subtitle-toggle');
