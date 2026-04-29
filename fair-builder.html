@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.6</span>
+  <span id="ver-badge" title="배포 버전">v0.34.7</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -701,6 +701,10 @@ var sectionTopTextEnabled = {};  /* v0.27.0: { sId: false } — true는 기본 (
 var videoTypes = { n1_half: true, n1_full: true, n2: true, n3: true };  /* v0.34.3: 영상 4개 타입 on/off */
 var videoTitleEnabled = true;  /* v0.34.6: .v-tit (영상 그룹 타이틀) 전역 표시 */
 var videoBarEnabled = true;    /* v0.34.6: .v-bar (영상 하단 바) 전역 표시 */
+/* v0.34.7: 영상 추가 그룹 — 기본 4개 li 외에 사용자가 자유 추가/제거.
+ * 각 그룹: { type: 'n1_half'|'n1_full'|'n2'|'n3', title: string, cells: [{ url, barText }] }
+ * cells 갯수는 type에 의해 결정 (n1_half/n1_full=1, n2=2, n3=3) — 자동 보정 */
+var videoExtraGroups = [];
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
@@ -836,6 +840,7 @@ function saveState() {
     videoTypes:           videoTypes,  /* v0.34.3 */
     videoTitleEnabled:    videoTitleEnabled,  /* v0.34.6 */
     videoBarEnabled:      videoBarEnabled,    /* v0.34.6 */
+    videoExtraGroups:     videoExtraGroups,   /* v0.34.7 */
     globalSubTitleEnabled: window.globalSubTitleEnabled !== false,
     aosEnabled:          aosEnabled,
     visualRightVisible:  visualRightVisible,
@@ -909,6 +914,7 @@ function loadState() {
     if (s.videoTypes) videoTypes = Object.assign({ n1_half: true, n1_full: true, n2: true, n3: true }, s.videoTypes);  /* v0.34.3 */
     if (s.videoTitleEnabled !== undefined) videoTitleEnabled = !!s.videoTitleEnabled;  /* v0.34.6 */
     if (s.videoBarEnabled !== undefined) videoBarEnabled = !!s.videoBarEnabled;        /* v0.34.6 */
+    if (Array.isArray(s.videoExtraGroups)) videoExtraGroups = s.videoExtraGroups;      /* v0.34.7 */
     if (s.globalSubTitleEnabled !== undefined) window.globalSubTitleEnabled = s.globalSubTitleEnabled;
     if (s.cssColors) {
       cssColors = s.cssColors;
@@ -2402,7 +2408,131 @@ function buildVideoTypesPanel() {
       '<label class="toggle"><input type="checkbox" ' + (videoBarEnabled ? 'checked' : '') + ' onchange="toggleVideoBar(this.checked)"><span class="toggle-slider"></span></label>' +
     '</div>' +
   '</div>';
+  /* v0.34.7: 영상 그룹 추가/제거 */
+  h += buildVideoExtraGroupsPanel();
   return h;
+}
+
+/* v0.34.7: 사용자가 자유롭게 추가하는 영상 그룹 패널 */
+function buildVideoExtraGroupsPanel() {
+  var typeLabels = { n1_half: '1열 작게', n1_full: '1열 크게', n2: '2열', n3: '3열' };
+  var h = '<div class="ep-spacing-group">' +
+    '<div class="ep-spacing-title">영상 그룹 추가</div>';
+  videoExtraGroups.forEach(function(g, i) {
+    h += '<div class="ep-btn-card" style="margin-bottom:8px;">' +
+      '<div class="ep-btn-header" style="display:flex;align-items:center;gap:6px;">' +
+        '<span style="flex:1;">그룹 ' + (i + 1) + '</span>' +
+        '<button class="ep-remove-btn" title="제거" onclick="removeVideoExtraGroup(' + i + ')">✕</button>' +
+      '</div>' +
+      '<div class="ep-field"><label>레이아웃 타입</label>' +
+        '<select onchange="updateVideoExtraGroup(' + i + ',\'type\',this.value)">' +
+          Object.keys(typeLabels).map(function(k) {
+            return '<option value="' + k + '" ' + (g.type === k ? 'selected' : '') + '>' + typeLabels[k] + '</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+      '<div class="ep-field"><label>그룹 타이틀 (.v-tit)</label>' +
+        '<input type="text" value="' + esc(g.title || '') + '" placeholder="예: 용산" oninput="updateVideoExtraGroup(' + i + ',\'title\',this.value)">' +
+      '</div>';
+    /* cell 리스트 (URL + barText) */
+    var cellCount = videoTypeCellCount(g.type);
+    for (var c = 0; c < cellCount; c++) {
+      var cell = (g.cells && g.cells[c]) ? g.cells[c] : { url: '', barText: '' };
+      h += '<div class="ep-field" style="border-top:1px dashed #2e3a52;padding-top:6px;margin-top:6px;">' +
+        '<label>Cell ' + (c + 1) + ' — YouTube URL</label>' +
+        '<input type="text" value="' + esc(cell.url || '') + '" placeholder="https://www.youtube.com/embed/..." oninput="updateVideoExtraCell(' + i + ',' + c + ',\'url\',this.value)">' +
+        '<label style="margin-top:4px;">하단 바 텍스트 (.v-bar)</label>' +
+        '<input type="text" value="' + esc(cell.barText || '') + '" placeholder="예: 하반기 채용 동향" oninput="updateVideoExtraCell(' + i + ',' + c + ',\'barText\',this.value)">' +
+      '</div>';
+    }
+    h += '</div>';
+  });
+  h += '<button class="ep-add-btn" onclick="addVideoExtraGroup()" style="width:100%;background:#059669;color:#fff;border:none;border-radius:4px;padding:6px;cursor:pointer;font-size:11px;font-weight:600;">+ 영상 그룹 추가</button>';
+  h += '</div>';
+  return h;
+}
+
+function videoTypeCellCount(type) {
+  if (type === 'n2') return 2;
+  if (type === 'n3') return 3;
+  return 1;  /* n1_half / n1_full */
+}
+
+function addVideoExtraGroup() {
+  videoExtraGroups.push({ type: 'n1_half', title: '용산', cells: [{ url: '', barText: '하반기 채용 동향' }] });
+  saveState();
+  applyVideoExtraGroupsToPreview();
+  /* 패널 다시 그리기 */
+  var body = document.getElementById('edit-drawer-body');
+  if (body && openEditPanelId === 'section_videos') body.innerHTML = buildSectionPanel('section_videos');
+}
+
+function removeVideoExtraGroup(i) {
+  videoExtraGroups.splice(i, 1);
+  saveState();
+  applyVideoExtraGroupsToPreview();
+  var body = document.getElementById('edit-drawer-body');
+  if (body && openEditPanelId === 'section_videos') body.innerHTML = buildSectionPanel('section_videos');
+}
+
+function updateVideoExtraGroup(i, key, val) {
+  if (!videoExtraGroups[i]) return;
+  videoExtraGroups[i][key] = val;
+  /* type 변경 시 cells 갯수 재조정 */
+  if (key === 'type') {
+    var n = videoTypeCellCount(val);
+    videoExtraGroups[i].cells = videoExtraGroups[i].cells || [];
+    while (videoExtraGroups[i].cells.length < n) videoExtraGroups[i].cells.push({ url: '', barText: '' });
+    if (videoExtraGroups[i].cells.length > n) videoExtraGroups[i].cells.length = n;
+    /* type 변경 시 패널 재구성 (cell 갯수 변경) */
+    var body = document.getElementById('edit-drawer-body');
+    if (body && openEditPanelId === 'section_videos') body.innerHTML = buildSectionPanel('section_videos');
+  }
+  saveState();
+  applyVideoExtraGroupsToPreview();
+}
+
+function updateVideoExtraCell(gIdx, cIdx, key, val) {
+  var g = videoExtraGroups[gIdx];
+  if (!g || !g.cells || !g.cells[cIdx]) return;
+  g.cells[cIdx][key] = val;
+  saveState();
+  applyVideoExtraGroupsToPreview();
+}
+
+/* v0.34.7: 사용자 추가 그룹을 ListVideoFull 안에 마크업 생성 */
+function applyVideoExtraGroupsToPreview() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var ul = doc.querySelector('[data-builder-section="section_videos"] .ListVideoFull');
+  if (!ul) return;
+  /* 기존 추가 그룹 제거 */
+  ul.querySelectorAll('li[data-builder-extra-video]').forEach(function(li) { li.remove(); });
+  /* 새로 생성 */
+  videoExtraGroups.forEach(function(g) {
+    var li = doc.createElement('li');
+    li.setAttribute('data-builder-extra-video', '');
+    var partitionClass = '';
+    if (g.type === 'n1_half') partitionClass = 'n1 w50per';
+    else if (g.type === 'n1_full') partitionClass = 'n1 w100per';
+    else if (g.type === 'n2') partitionClass = 'n2';
+    else if (g.type === 'n3') partitionClass = 'n3';
+    var cellCount = videoTypeCellCount(g.type);
+    var cellHtml = '';
+    for (var c = 0; c < cellCount; c++) {
+      var cell = (g.cells && g.cells[c]) ? g.cells[c] : { url: '', barText: '' };
+      var url = cell.url || 'https://www.youtube.com/embed/vCmn6tg2gNA?controls=0';
+      var barText = (cell.barText || '').replace(/</g, '&lt;');
+      cellHtml += '<div class="cell-partition-list">' +
+        '<div class="video"><iframe width="100%" height="100%" src="' + url.replace(/"/g, '&quot;') + '" frameborder="0" allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture" allowfullscreen=""></iframe></div>' +
+        '<div class="v-bar" style="' + (videoBarEnabled ? '' : 'display:none') + '"><span>' + barText + '</span></div>' +
+      '</div>';
+    }
+    li.innerHTML =
+      '<div class="v-tit" style="' + (videoTitleEnabled ? '' : 'display:none') + '">' + (g.title || '').replace(/</g, '&lt;') + '</div>' +
+      '<div class="cell-partition ' + partitionClass + '">' + cellHtml + '</div>';
+    ul.appendChild(li);
+  });
 }
 
 function toggleVideoType(key, on) {
@@ -5475,7 +5605,8 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyBgImagesToPreview();
   applyTopTextToPreview();  /* v0.27.0 */
   applyVideoTypesToPreview();  /* v0.34.3 — 영상 타입 on/off */
-  applyVideoTitleBarToPreview();  /* v0.34.6 — v-tit / v-bar 전역 토글 */
+  applyVideoExtraGroupsToPreview();  /* v0.34.7 — 사용자 추가 그룹 마크업 생성 */
+  applyVideoTitleBarToPreview();  /* v0.34.6 — v-tit / v-bar 전역 토글 (추가 그룹에도 적용) */
   applyFontsToPreview();    /* v0.31.0 — 폰트 스타일 일원화 */
   try { migrateEventInfoPosters(); applyEventInfoToPreview(); } catch(e) {}  /* v0.32.0 */
   /* v0.28.1: contenteditable로 .sec_txt.basic.top 텍스트 지우면 자동 숨김 */
@@ -5808,7 +5939,9 @@ function buildExportASP() {
                    'data-builder-prop','data-img-edit-bound','data-yt-edit-bound',
                    'data-edit-nav-blocked',
                    /* v0.20.2: 새로 추가된 빌더 속성 */
-                   'data-orig-href','data-text-index','data-media-text'];
+                   'data-orig-href','data-text-index','data-media-text',
+                   /* v0.34.7: 영상 추가 그룹 마커 (export 시 일반 li로 출력) */
+                   'data-builder-extra-video'];
   clone.querySelectorAll('*').forEach(function(el) {
     editAttrs.forEach(function(a) { el.removeAttribute(a); });
     /* 편집 힌트 title 제거 */
@@ -5886,6 +6019,18 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.29 16:10 (v0.34.7)',
+    items: [
+      '<strong>[v0.34.7]</strong> 영상 섹션 본격 고도화 — 사용자가 자유 추가/제거 가능한 영상 그룹 (videoExtraGroups)',
+      '<strong>[v0.34.7]</strong> 신규 패널: "영상 그룹 추가" — 타입 select (n1_half/n1_full/n2/n3) + 그룹 타이틀 + cell URL/바텍 편집',
+      '<strong>[v0.34.7]</strong> 타입 변경 시 cell 갯수 자동 보정 (n1=1, n2=2, n3=3) + 패널 재구성',
+      '<strong>[v0.34.7]</strong> applyVideoExtraGroupsToPreview: ListVideoFull에 li[data-builder-extra-video] 동적 추가/재생성',
+      '<strong>[v0.34.7]</strong> v-tit/v-bar 전역 토글(v0.34.6)이 추가 그룹의 .v-tit/.v-bar에도 자동 적용 (selector 매치)',
+      '<strong>[v0.34.7]</strong> export 시 data-builder-extra-video 속성 자동 제거 (마크업/iframe/v-bar는 보존)',
+      '<strong>[v0.34.7]</strong> 룰 갱신: .claude/rules/builder-attrs.md 에 data-builder-extra-video 추가',
+    ]
+  },
   {
     date: '2026.04.29 15:45 (v0.34.6)',
     items: [
