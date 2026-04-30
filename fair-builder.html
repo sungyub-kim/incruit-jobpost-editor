@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.2</span>
+  <span id="ver-badge" title="배포 버전">v0.35.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3650,7 +3650,13 @@ function buildAosPanelForSection(sectionId) {
       '<div style="flex:1;"><label>delay (ms)</label>' +
         '<input type="number" min="0" max="3000" step="100" value="' + (cur.delay || 0) + '" style="background:#0d1117;color:#e5e7eb;border:1px solid #2e3a52;border-radius:4px;padding:6px 8px;font-size:12px;width:100%;" oninput="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'delay\',parseInt(this.value,10)||0)">' +
       '</div>' +
-    '</div>' : '') +
+    '</div>' +
+    /* v0.35.3: once 옵션 (한 번만 재생) */
+    '<div class="ep-row" style="display:flex;align-items:center;margin:6px 0;">' +
+      '<label style="flex:1;font-size:11px;color:#9ca3af;">한 번만 재생 (once) <span style="color:#6b7280;font-size:10px;">— 스크롤 재진입 시 반복 X</span></label>' +
+      '<label class="toggle"><input type="checkbox" ' + (cur.once ? 'checked' : '') + ' onchange="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'once\',this.checked)"><span class="toggle-slider"></span></label>' +
+    '</div>'
+    : '') +
   '</div>';
 
   h += '</div>';
@@ -3720,10 +3726,14 @@ function applyAosOverridesForSection(sectionId) {
       else el.removeAttribute('data-aos-duration');
       if (v.delay) el.setAttribute('data-aos-delay', String(v.delay));
       else el.removeAttribute('data-aos-delay');
+      /* v0.35.3: once 옵션 */
+      if (v.once) el.setAttribute('data-aos-once', 'true');
+      else el.removeAttribute('data-aos-once');
     } else {
       el.removeAttribute('data-aos');
       el.removeAttribute('data-aos-duration');
       el.removeAttribute('data-aos-delay');
+      el.removeAttribute('data-aos-once');
     }
   });
 }
@@ -6335,6 +6345,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 10:25 (v0.35.3)',
+    items: [
+      '<strong>[v0.35.3]</strong> AOS once 옵션 — 한 번만 재생 (스크롤 재진입 시 반복 X)',
+      '<strong>[v0.35.3]</strong> ✨ 애니메이션 패널 모든 요소 카드에 once 토글 추가 (효과 선택 시만 노출)',
+      '<strong>[v0.35.3]</strong> apply: data-aos-once="true" 동적 부여 (off 시 제거)',
+    ]
+  },
   {
     date: '2026.04.30 10:15 (v0.35.2)',
     items: [
