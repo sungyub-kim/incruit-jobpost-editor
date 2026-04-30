@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.1</span>
+  <span id="ver-badge" title="배포 버전">v0.35.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -744,7 +744,11 @@ var AOS_ELEMENT_MAP = {
     { id: 'intro_li_3', selector: 'ul li:nth-of-type(3)[data-aos]', label: '소개기관 3', seed: { effect: 'fade-up', duration: 700, delay: 200 } },
   ],
   section_videos: [
-    { id: 'video_list_root', selector: 'ul.ListVideoFull', label: '영상 리스트 루트 (전체)', seed: { effect: 'fade-up', duration: 800, delay: 0 } },
+    { id: 'video_list_root', selector: 'ul.ListVideoFull',                                label: '영상 리스트 루트 (전체)', seed: { effect: 'fade-up', duration: 800, delay: 0 } },
+    { id: 'video_li_n1_half', selector: '.ListVideoFull > li:nth-child(1):not([data-builder-extra-video])', label: '1열 작게 (50%)',     seed: { effect: 'fade-up', duration: 800, delay: 0 } },
+    { id: 'video_li_n1_full', selector: '.ListVideoFull > li:nth-child(2):not([data-builder-extra-video])', label: '1열 크게 (100%)',    seed: { effect: 'fade-up', duration: 800, delay: 0 } },
+    { id: 'video_li_n2',      selector: '.ListVideoFull > li:nth-child(3):not([data-builder-extra-video])', label: '2열',                seed: { effect: 'fade-up', duration: 800, delay: 0 } },
+    { id: 'video_li_n3',      selector: '.ListVideoFull > li:nth-child(4):not([data-builder-extra-video])', label: '3열',                seed: { effect: 'fade-up', duration: 800, delay: 0 } },
   ],
 };
 
@@ -6331,6 +6335,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 10:15 (v0.35.2)',
+    items: [
+      '<strong>[v0.35.2]</strong> 영상 기본 4개 li 각각 AOS 개별 설정 추가 — 1열 작게 / 1열 크게 / 2열 / 3열',
+      '<strong>[v0.35.2]</strong> selector :nth-child(1~4):not([data-builder-extra-video]) — 사용자 추가 그룹과 분리',
+      '<strong>[v0.35.2]</strong> 영상 섹션 ✨ 애니메이션 탭에 5개 항목 노출 (루트 1 + li 4)',
+    ]
+  },
   {
     date: '2026.04.30 10:05 (v0.35.1)',
     items: [
