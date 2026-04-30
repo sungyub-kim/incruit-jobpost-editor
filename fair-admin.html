@@ -118,18 +118,33 @@
 </script>
 <script src="js/fair-firebase-config.js" onerror="console.info('[Admin] Firebase config 미설정')"></script>
 <script>
-/* 비밀번호 — 클라이언트 측 hash (간이 보안) */
-var ADMIN_PW_HASH = 'fair-admin-2026';  /* TODO: 실제 hash로 교체 */
+/* 비밀번호 — SHA-256 hash 비교 (클라이언트 측, 평문 노출 방지)
+ * 현재 비밀번호: incruit2026!
+ * 변경 시: printf '%s' '새비번' | shasum -a 256 → 결과를 ADMIN_PW_HASH 에 입력 */
+var ADMIN_PW_HASH = '3d2e0aa216e257d8cccf5385a4e94465c73d3c8086859beb19f3ed1f359de961';
 
-function checkPassword() {
+async function sha256(str) {
+  var buf = new TextEncoder().encode(str);
+  var hashBuf = await crypto.subtle.digest('SHA-256', buf);
+  return Array.from(new Uint8Array(hashBuf)).map(function(b) { return b.toString(16).padStart(2, '0'); }).join('');
+}
+
+async function checkPassword() {
   var pw = document.getElementById('gate-pw').value;
-  if (pw === ADMIN_PW_HASH) {
-    document.getElementById('gate').style.display = 'none';
-    document.getElementById('dashboard').style.display = 'block';
-    sessionStorage.setItem('fair_admin_auth', '1');
-    loadDashboard();
-  } else {
-    document.getElementById('gate-err').textContent = '비밀번호가 틀렸습니다.';
+  if (!pw) { document.getElementById('gate-err').textContent = '비밀번호를 입력하세요.'; return; }
+  try {
+    var hash = await sha256(pw);
+    if (hash === ADMIN_PW_HASH) {
+      document.getElementById('gate').style.display = 'none';
+      document.getElementById('dashboard').style.display = 'block';
+      sessionStorage.setItem('fair_admin_auth', '1');
+      loadDashboard();
+    } else {
+      document.getElementById('gate-err').textContent = '비밀번호가 틀렸습니다.';
+      document.getElementById('gate-pw').value = '';
+    }
+  } catch(e) {
+    document.getElementById('gate-err').textContent = 'hash 계산 실패: ' + e.message;
   }
 }
 document.getElementById('gate-pw').addEventListener('keydown', function(e) {

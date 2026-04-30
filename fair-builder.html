@@ -495,7 +495,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.3</span>
+  <span id="ver-badge" title="배포 버전">v0.36.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -7161,6 +7161,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 16:05 (v0.36.4)',
+    items: [
+      '<strong>[v0.36.4]</strong> 관리자 페이지 비밀번호 SHA-256 hash 처리 — 소스 코드 평문 노출 방지',
+      '<strong>[v0.36.4]</strong> 비밀번호 변경: "incruit2026!" (사용자 지정)',
+      '<strong>[v0.36.4]</strong> ADMIN_PW_HASH = SHA-256("incruit2026!") = 3d2e0aa2...',
+      '<strong>[v0.36.4]</strong> checkPassword: crypto.subtle.digest로 입력값 hash → 비교',
+      '<strong>[v0.36.4]</strong> 비번 변경 시: printf %s \'새비번\' | shasum -a 256 → 결과를 ADMIN_PW_HASH에 입력',
+    ]
+  },
   {
     date: '2026.04.30 15:50 (v0.36.3)',
     items: [
