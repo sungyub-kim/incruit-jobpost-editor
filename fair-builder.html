@@ -544,7 +544,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.15</span>
+  <span id="ver-badge" title="배포 버전">v0.36.16</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -552,6 +552,7 @@
   <div class="divider"></div>
   <button class="btn btn-outline" onclick="exportCSS()">CSS</button>
   <button class="btn btn-outline" onclick="exportASP()">ASP</button>
+  <button class="btn btn-outline" onclick="exportHTML()" title="ASP 헤더 없는 순수 HTML">HTML</button>
   <button class="btn btn-zip" onclick="exportZIP()">일괄 다운로드</button>
 </div>
 
@@ -1841,8 +1842,16 @@ function toggleFixedPanel(panelId, arrowId) {
 }
 
 function resetAll() {
-  if (!confirm('모든 설정을 초기화하시겠습니까?')) return;
+  if (!confirm('모든 설정을 초기화하시겠습니까?\n(빌더 상태 + 검수 핀 + 자주 사용 컬러 등 일체 삭제)')) return;
+  /* v0.36.16: 핀/사용자/자주 사용 컬러 등 부속 데이터도 함께 reset */
   localStorage.removeItem(STATE_KEY);
+  localStorage.removeItem('fair_review_pins_v1');     /* 검수 핀 */
+  localStorage.removeItem('fair_used_colors');        /* 자주 사용 텍스트 색 */
+  localStorage.removeItem('fair_used_bg_colors');     /* 자주 사용 배경 색 */
+  localStorage.removeItem('fair_used_colors_all');    /* 통합 자주 사용 (v0.34.0) */
+  localStorage.removeItem('fair_action_queue_v1');    /* 사용 통계 큐 */
+  /* fair_user_v1 / fair_admin_auth 는 사용자 식별 — 보존 */
+  /* fair_builder_projects_v1 은 멀티 프로젝트 — 보존 (다른 프로젝트 보호) */
   location.reload();
 }
 
@@ -7521,6 +7530,13 @@ function buildExportASP() {
   return aspHeader + html;
 }
 
+/* v0.36.16: 순수 HTML 빌드 (ASP 헤더 없음) */
+function buildExportHTML() {
+  var asp = buildExportASP();
+  /* ASP 헤더 제거 → 정적 HTML */
+  return asp.replace(/^<%@[^%]*%>\s*<% Response\.Charset[^%]*%>\s*/, '');
+}
+
 /* ── Step 6-B: ASP 다운로드 ── */
 function exportASP() {
   if (typeof trackAction === 'function') trackAction('export_asp', { baseName: getFileBaseName() });
@@ -7530,6 +7546,18 @@ function exportASP() {
     downloadText(baseName + '.asp', asp, 'text/html; charset=utf-8');
   } catch(e) {
     alert('ASP 내보내기 실패: ' + e.message);
+  }
+}
+
+/* v0.36.16: HTML 다운로드 — ASP 헤더 없는 순수 HTML */
+function exportHTML() {
+  if (typeof trackAction === 'function') trackAction('export_html', { baseName: getFileBaseName() });
+  try {
+    var baseName = getFileBaseName();
+    var html = buildExportHTML();
+    downloadText(baseName + '.html', html, 'text/html; charset=utf-8');
+  } catch(e) {
+    alert('HTML 내보내기 실패: ' + e.message);
   }
 }
 
@@ -7565,6 +7593,20 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 17:30 (v0.36.16)',
+    items: [
+      '<strong>[v0.36.16]</strong> S1: resetAll 초기화 시 검수 핀 등 부속 데이터 함께 reset',
+      '<strong>[v0.36.16]</strong> · 추가 제거: fair_review_pins_v1 / fair_used_colors / fair_used_bg_colors / fair_used_colors_all / fair_action_queue_v1',
+      '<strong>[v0.36.16]</strong> · 보존: fair_user_v1 (사용자 식별), fair_builder_projects_v1 (다른 프로젝트 보호)',
+      '<strong>[v0.36.16]</strong> · confirm 메시지 보강 — "빌더 상태 + 검수 핀 + 자주 사용 컬러 등 일체 삭제"',
+      '<strong>[v0.36.16]</strong> S3: HTML 다운로드 신규 — ASP 헤더 없는 순수 HTML 파일',
+      '<strong>[v0.36.16]</strong> · buildExportHTML(): buildExportASP 결과에서 ASP 헤더 제거',
+      '<strong>[v0.36.16]</strong> · exportHTML(): trackAction 통합 + downloadText',
+      '<strong>[v0.36.16]</strong> · UI: Export 영역에 [HTML] 버튼 추가 (CSS / ASP / HTML / 일괄)',
+      '<strong>[v0.36.16]</strong> 차주 W2 (5/6~5/8) 잔여 작업: S2 프로젝트 단위 / S4 통합 패키지 / 영상 Step C / Firebase 연동 / 댓글 시스템 → 메모리 등록',
+    ]
+  },
   {
     date: '2026.04.30 17:20 (v0.36.15)',
     items: [
