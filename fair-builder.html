@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.7</span>
+  <span id="ver-badge" title="배포 버전">v0.35.8</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2541,6 +2541,11 @@ function buildVideoExtraGroupsPanel() {
         '<div style="flex:1;"><label>delay (ms)</label>' +
           '<input type="number" min="0" max="3000" step="100" value="' + (g.aosDelay || 0) + '" oninput="updateVideoExtraGroup(' + i + ',\'aosDelay\',parseInt(this.value,10)||0)">' +
         '</div>' +
+      '</div>' +
+      /* v0.35.8: 영상 그룹에도 once 옵션 (다른 섹션 ✨ 패널과 일관성) */
+      '<div class="ep-row" style="display:flex;align-items:center;margin:6px 0;">' +
+        '<label style="flex:1;font-size:11px;color:#9ca3af;">한 번만 재생 (once)</label>' +
+        '<label class="toggle"><input type="checkbox" ' + (g.aosOnce ? 'checked' : '') + ' onchange="updateVideoExtraGroup(' + i + ',\'aosOnce\',this.checked)"><span class="toggle-slider"></span></label>' +
       '</div>' : '');
     /* cell 리스트 (URL + barText) */
     var cellCount = videoTypeCellCount(g.type);
@@ -2679,6 +2684,8 @@ function applyVideoExtraGroupsToPreview() {
       /* v0.34.13: duration / delay */
       if (g.aosDuration) li.setAttribute('data-aos-duration', String(g.aosDuration));
       if (g.aosDelay)    li.setAttribute('data-aos-delay',    String(g.aosDelay));
+      /* v0.35.8: once 옵션 */
+      if (g.aosOnce)     li.setAttribute('data-aos-once',     'true');
     }
     li.innerHTML =
       '<div class="v-tit" style="' + (titleShow ? '' : 'display:none') + '">' + (g.title || '').replace(/</g, '&lt;') + '</div>' +
@@ -6393,6 +6400,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 11:20 (v0.35.8)',
+    items: [
+      '<strong>[v0.35.8]</strong> 영상 그룹 카드에도 AOS once 옵션 추가 — 다른 섹션 ✨ 패널과 일관성',
+      '<strong>[v0.35.8]</strong> g.aosOnce 데이터 + apply 시 data-aos-once="true" 동적 부여',
+      '<strong>[v0.35.8]</strong> 효과(g.aos) 선택 시에만 토글 노출',
+    ]
+  },
   {
     date: '2026.04.30 11:10 (v0.35.7)',
     items: [
