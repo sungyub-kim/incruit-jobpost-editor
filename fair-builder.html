@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.6</span>
+  <span id="ver-badge" title="배포 버전">v0.35.7</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4916,17 +4916,34 @@ function updateBtnField(idx, key, val) {
 }
 
 /* ── CSS 색상 피커 렌더링 ── */
+/* v0.35.7: 컬러 변수별 적용 위치 안내 (project_color_mapping.md 자료 기반) */
+var COLOR_AFFECTED_HINTS = {
+  '--c-color':         '메인 — 채용관 / 박람회개요 신청 버튼 / 소개 / 복지 / 캠페인 / 영상 / 링크 hover (27곳)',
+  '--s-color':         '서브 — 페이징 / 합격소식 Q뱃지 / 인터뷰 번호 (4곳)',
+  '--s-color1':        '온라인 박스 뱃지',
+  '--s-color2':        '오프라인 박스 뱃지',
+  '--s-color3':        '버튼1 핑크 (라운드 버튼)',
+  '--s-color4':        '버튼2 퍼플 (라운드 버튼)',
+  '--s-color3-shadow': '버튼1 인셋 그림자',
+  '--s-color4-shadow': '버튼2 인셋 그림자',
+};
+
 function renderColorList() {
   var list = document.getElementById('color-list');
   list.innerHTML = '';
   Object.keys(FAIR_BUILDER_COLORS).forEach(function(varName) {
     var cfg = FAIR_BUILDER_COLORS[varName];
     var val = toHexColor(cssColors[varName] || cfg.default);  /* v0.28.3: hex 정규화 */
+    var hint = COLOR_AFFECTED_HINTS[varName] || '';
     var item = document.createElement('div');
     item.className = 'color-item';
     /* v0.34.0: ▾ 트리거 추가 (자주 사용 + HEX 직접 입력) */
+    /* v0.35.7: 적용 위치 안내 (variable name 옆) */
     item.innerHTML =
-      '<label>' + cfg.label + '<br><span style="color:#4b5563;font-size:10px;">' + varName + '</span></label>' +
+      '<label>' + cfg.label +
+        '<br><span style="color:#4b5563;font-size:10px;">' + varName + '</span>' +
+        (hint ? '<br><span style="color:#6b7280;font-size:10px;line-height:1.4;display:block;margin-top:2px;" title="' + esc(hint) + '">📍 ' + esc(hint) + '</span>' : '') +
+      '</label>' +
       '<div class="color-preview" style="background:' + val + ';">' +
         '<input type="color" value="' + val + '" data-var="' + varName + '" oninput="onColorChange(this)">' +
       '</div>' +
@@ -6376,6 +6393,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 11:10 (v0.35.7)',
+    items: [
+      '<strong>[v0.35.7]</strong> 9순위 시작 — 좌측 스타일 탭 컬러 변수마다 📍 적용 위치 안내 추가',
+      '<strong>[v0.35.7]</strong> 신규 상수: COLOR_AFFECTED_HINTS — 8개 변수별 적용 섹션 요약 (project_color_mapping.md 자료 기반)',
+      '<strong>[v0.35.7]</strong> 예: --c-color "메인 — 채용관 / 박람회개요 / 소개 / 복지 / 캠페인 / 영상 / 링크 hover (27곳)"',
+      '<strong>[v0.35.7]</strong> renderColorList에 hint 표시 (회색 텍스트 + 📍 아이콘 + title hover)',
+    ]
+  },
   {
     date: '2026.04.30 11:00 (v0.35.6)',
     items: [
