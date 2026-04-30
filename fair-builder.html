@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.8</span>
+  <span id="ver-badge" title="배포 버전">v0.35.9</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2527,8 +2527,9 @@ function buildVideoExtraGroupsPanel() {
       '</div>' +
       /* v0.34.12: 그룹별 AOS 효과 설정 + v0.34.13: duration / delay */
       '<div class="ep-field"><label>등장 효과 (AOS) <span class="ep-hint" style="color:#6b7280;font-size:10px;">새창 미리보기에서 확인</span></label>' +
+        /* v0.35.9: ✨ 패널과 옵션 통일 (AOS_EFFECT_OPTIONS 17종) */
         '<select onchange="updateVideoExtraGroup(' + i + ',\'aos\',this.value)">' +
-          ['', 'fade-up', 'fade-down', 'fade-left', 'fade-right', 'zoom-in', 'zoom-out', 'flip-up'].map(function(opt) {
+          AOS_EFFECT_OPTIONS.map(function(opt) {
             var label = opt === '' ? '(없음 — 정적)' : opt;
             return '<option value="' + opt + '" ' + ((g.aos || '') === opt ? 'selected' : '') + '>' + label + '</option>';
           }).join('') +
@@ -3095,8 +3096,13 @@ function buildVisualPanel() {
 
   /* === ✨ 애니메이션 탭 === */
   else if (tab === 'animation') {
+    /* v0.35.9: 두 시스템 구분 안내 */
+    h += '<div class="ep-hint" style="font-size:10px;color:#9ca3af;background:#1e293b;border-left:3px solid #3b82f6;padding:6px 10px;margin-bottom:10px;border-radius:0 4px 4px 0;">' +
+      '<strong style="color:#93c5fd;">🅐 텍스트 요소</strong> (위 요소 1/2/...) — 사용자가 추가/삭제하는 메인 텍스트<br>' +
+      '<strong style="color:#a78bfa;">🅑 추가 요소</strong> (하단 ✨ 패널) — 마크업 고정 6개 (term-online/offline + 이미지)' +
+    '</div>';
     if (activeText) {
-      h += '<div class="ep-spacing-title">애니메이션 (AOS) — 요소 ' + (activeIdx + 1) + '</div>' +
+      h += '<div class="ep-spacing-title">🅐 애니메이션 (AOS) — 요소 ' + (activeIdx + 1) + '</div>' +
         '<div class="ep-field"><label>효과</label>' +
           '<select onchange="updateVisualAos(' + activeIdx + ',\'aosEffect\',this.value)">' +
             AOS_EFFECTS.map(function(e) { return '<option value="' + e.value + '" ' + ((activeText.aosEffect || '') === e.value ? 'selected' : '') + '>' + e.label + '</option>'; }).join('') +
@@ -3735,17 +3741,20 @@ function rebuildAosPanel(sectionId) {
   else body.innerHTML = buildSectionPanel(sectionId);
 }
 
-/* v0.35.4: 섹션 전체 AOS override 초기화 */
+/* v0.35.4: 섹션 전체 AOS override 초기화
+ * v0.35.9: confirm 제거 — 가벼운 reset이라 모달 부담 X (각 카드의 ↺ 개별 복원도 confirm 없음) */
 function resetAllAosInSection(sectionId) {
   if (!sectionAosOverrides[sectionId]) return;
-  if (!confirm('섹션 [' + sectionId + ']의 모든 AOS 커스텀 설정을 기본값으로 되돌립니다. 계속할까요?')) return;
   delete sectionAosOverrides[sectionId];
   saveState();
   applyAosOverridesForSection(sectionId);
   rebuildAosPanel(sectionId);
 }
 
-/* 단일 섹션의 모든 AOS 요소에 override/seed 적용 */
+/* 단일 섹션의 모든 AOS 요소에 override 적용
+ * v0.35.9 (Critical fix): override 없으면 마크업 원본 그대로 (setAttribute 스킵)
+ *  - 이전 버그: seed로 자동 setAttribute → 마크업의 data-aos-once 등 손실 +
+ *    원래 data-aos 없던 요소(poster-box 등)에 자동 효과 부여 */
 function applyAosOverridesForSection(sectionId) {
   var map = AOS_ELEMENT_MAP[sectionId];
   if (!map) return;
@@ -3754,20 +3763,20 @@ function applyAosOverridesForSection(sectionId) {
   var sEl = doc.querySelector('[data-builder-section="' + sectionId + '"]');
   if (!sEl) return;
   map.forEach(function(meta) {
+    var override = (sectionAosOverrides[sectionId] && sectionAosOverrides[sectionId][meta.id]) || null;
+    if (!override) return;  /* 마크업 원본 보존 */
     var el = sEl.querySelector(meta.selector);
     if (!el) return;
-    var override = (sectionAosOverrides[sectionId] && sectionAosOverrides[sectionId][meta.id]) || null;
-    var v = override || meta.seed;
-    if (v.effect) {
-      el.setAttribute('data-aos', v.effect);
-      if (v.duration) el.setAttribute('data-aos-duration', String(v.duration));
+    if (override.effect) {
+      el.setAttribute('data-aos', override.effect);
+      if (override.duration) el.setAttribute('data-aos-duration', String(override.duration));
       else el.removeAttribute('data-aos-duration');
-      if (v.delay) el.setAttribute('data-aos-delay', String(v.delay));
+      if (override.delay) el.setAttribute('data-aos-delay', String(override.delay));
       else el.removeAttribute('data-aos-delay');
-      /* v0.35.3: once 옵션 */
-      if (v.once) el.setAttribute('data-aos-once', 'true');
+      if (override.once) el.setAttribute('data-aos-once', 'true');
       else el.removeAttribute('data-aos-once');
     } else {
+      /* effect 명시적 빈 문자열 = "없음" 선택 → 효과 제거 */
       el.removeAttribute('data-aos');
       el.removeAttribute('data-aos-duration');
       el.removeAttribute('data-aos-delay');
@@ -6400,6 +6409,18 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 11:50 (v0.35.9)',
+    items: [
+      '<strong>[v0.35.9]</strong> ⚠ 오전 작업(v0.35.0~8) 전수 검수 후 4건 수정 — 기획→개발→2차 검증 사이클 완료',
+      '<strong>[v0.35.9]</strong> 🔴 Critical: applyAosOverridesForSection — override 없을 때도 seed로 setAttribute 부여하던 버그 수정',
+      '<strong>[v0.35.9]</strong> · 영향: 영상 ul.ListVideoFull 마크업 data-aos-once="true" 손실 / 박람회개요·인사말·공지에 의도치 않은 효과 자동 적용',
+      '<strong>[v0.35.9]</strong> · 수정: override 없으면 setAttribute 스킵 → 마크업 원본 보존, 사용자 변경 시만 적용',
+      '<strong>[v0.35.9]</strong> 🟡 영상 그룹 AOS select 8종 → AOS_EFFECT_OPTIONS 17종 통일 (✨ 패널과 일관성)',
+      '<strong>[v0.35.9]</strong> 🟡 메인비주얼 ✨ 애니메이션 탭 안내 헤더 — 🅐 텍스트 요소(mvisual_texts) / 🅑 추가 요소(term-online 등) 구분',
+      '<strong>[v0.35.9]</strong> 🟢 resetAllAosInSection의 confirm 모달 제거 — 가벼운 reset이라 부담 X (개별 ↺ 도 confirm 없음)',
+    ]
+  },
   {
     date: '2026.04.30 11:20 (v0.35.8)',
     items: [
