@@ -267,6 +267,10 @@
     .rm-card .rm-status { display: flex; gap: 6px; margin-bottom: 10px; }
     .rm-card .rm-status button { flex: 1; padding: 5px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; border: 1px solid #4b5563; background: none; color: #9ca3af; }
     .rm-card .rm-status button.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    /* v0.36.1: 검수 모드 안내 토스트 + 상단 헬프 바 */
+    #review-tip { position: fixed; top: 70px; left: 50%; background: #7c3aed; color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; z-index: 9650; box-shadow: 0 4px 12px rgba(0,0,0,0.4); pointer-events: none; animation: review-tip-fade 4s ease forwards; }
+    @keyframes review-tip-fade { 0% { opacity: 0; transform: translate(-50%, -10px); } 10%, 80% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -10px); } }
+    body.builder-review-mode #preview-frame-wrap::before { content: '👁 검수 모드 — 미리보기 클릭하여 핀 추가 / 핀 클릭하여 편집'; position: absolute; top: 0; left: 0; right: 0; padding: 6px 12px; background: rgba(124, 58, 237, 0.9); color: #fff; font-size: 11px; font-weight: 600; text-align: center; z-index: 60; pointer-events: none; }
 
     /* v0.34.0: 커스텀 컬러 픽커 popover */
     .ccp-trigger { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #111827; border: 1px solid #374151; border-radius: 3px; color: #9ca3af; font-size: 10px; cursor: pointer; padding: 0; flex-shrink: 0; transition: color .12s, border-color .12s; }
@@ -468,7 +472,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.0</span>
+  <span id="ver-badge" title="배포 버전">v0.36.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3947,6 +3951,7 @@ function toggleReviewMode() {
     btn.textContent = '✕ 검수 종료';
     attachReviewClickListener();
     renderReviewPins();
+    showReviewTip('👁 검수 모드 — 미리보기 클릭으로 핀 추가 (' + reviewPins.length + '개 저장됨)');
   } else {
     document.body.classList.remove('builder-review-mode');
     btn.classList.remove('active');
@@ -3955,7 +3960,18 @@ function toggleReviewMode() {
   }
 }
 
-/* iframe 안 Shift+클릭 → 새 핀 추가 흐름 */
+/* v0.36.1: 토스트 안내 (4초 자동 사라짐) */
+function showReviewTip(text) {
+  var existing = document.getElementById('review-tip');
+  if (existing) existing.remove();
+  var el = document.createElement('div');
+  el.id = 'review-tip';
+  el.textContent = text;
+  document.body.appendChild(el);
+  setTimeout(function() { if (el.parentNode) el.remove(); }, 4000);
+}
+
+/* iframe 클릭 → 새 핀 추가 (v0.36.1: Shift 제거, 단순 클릭) */
 function attachReviewClickListener() {
   var doc = getPreviewDoc();
   if (!doc) return;
@@ -3963,9 +3979,10 @@ function attachReviewClickListener() {
   doc.body.dataset.reviewClickBound = '1';
   doc.body.addEventListener('click', function(e) {
     if (!reviewMode) return;
-    if (!e.shiftKey) return;
+    /* 핀 layer는 outer DOM (review-pin-layer)에 있어 iframe 클릭과 무관 */
     e.preventDefault();
     e.stopPropagation();
+    e.stopImmediatePropagation();
     handleReviewClick(e);
   }, true);
 }
@@ -6940,6 +6957,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 15:00 (v0.36.1)',
+    items: [
+      '<strong>[v0.36.1]</strong> 검수 모드 UX 보강 — 사용자가 사용법 인지 가능하도록',
+      '<strong>[v0.36.1]</strong> Shift+클릭 → 단순 클릭으로 변경 (검수 모드는 의도적 활성화이므로 충돌 위험 낮음)',
+      '<strong>[v0.36.1]</strong> 검수 모드 ON 시 미리보기 상단에 안내 바 (보라 배경, "검수 모드 — 미리보기 클릭하여 핀 추가 / 핀 클릭하여 편집")',
+      '<strong>[v0.36.1]</strong> 토글 시 토스트 (4초 자동) — "검수 모드 — 미리보기 클릭으로 핀 추가 (N개 저장됨)"',
+      '<strong>[v0.36.1]</strong> stopImmediatePropagation 추가 — 편집 모드 ON 상태에서도 검수 모드 클릭이 우선 처리',
+    ]
+  },
   {
     date: '2026.04.30 14:50 (v0.36.0)',
     items: [
