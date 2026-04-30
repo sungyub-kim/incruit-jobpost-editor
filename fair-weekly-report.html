@@ -64,6 +64,15 @@
 
   footer { text-align: center; padding: 14px; color: #9ca3af; font-size: 11px; }
 
+  /* v0.36.17: 주차 탭 */
+  .week-tabs { display: flex; gap: 6px; padding: 12px 0; overflow-x: auto; margin-top: 14px; }
+  .week-tab { background: #fff; border: 1px solid #e5e7eb; color: #4b5563; padding: 8px 16px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: all .15s; flex-shrink: 0; }
+  .week-tab:hover:not(:disabled) { background: #f3f4f6; color: #1e40af; border-color: #93c5fd; }
+  .week-tab.active { background: #1e40af; color: #fff; border-color: #1e40af; }
+  .week-tab:disabled { opacity: 0.45; cursor: not-allowed; background: #f9fafb; }
+  .week-tab .wt-meta { font-size: 10px; color: #9ca3af; margin-left: 4px; font-weight: 400; }
+  .week-tab.active .wt-meta { color: #c7d2fe; }
+
   /* 반응형 — 모바일/태블릿 */
   @media (max-width: 900px) {
     body { padding: 12px; }
@@ -96,45 +105,57 @@
   <div class="meta">담당: 김성엽 · 박람회 비주얼 빌더 · 최신 주가 상단</div>
 </header>
 
+<!-- v0.36.17: 주차 탭 (모바일 가로 스크롤) -->
+<div class="week-tabs" id="week-tabs">
+  <button class="week-tab active" data-week="W1">W1 <span class="wt-meta">4/27~30</span></button>
+  <button class="week-tab" data-week="W2" disabled>W2 <span class="wt-meta">5/6~8 예정</span></button>
+  <button class="week-tab" data-week="W3" disabled>W3 <span class="wt-meta">5/11~15</span></button>
+  <button class="week-tab" data-week="W4" disabled>W4 <span class="wt-meta">5/18~22</span></button>
+  <button class="week-tab" data-week="W5" disabled>W5 <span class="wt-meta">5/26~27</span></button>
+  <button class="week-tab" data-week="W6" disabled>W6 <span class="wt-meta">6/1~5</span></button>
+  <button class="week-tab" data-week="W7" disabled>W7 <span class="wt-meta">6/8~12</span></button>
+  <button class="week-tab" data-week="W8" disabled>W8 <span class="wt-meta">6/15~19</span></button>
+</div>
+
 <!-- ====================================================================== -->
 <!-- W1: 2026-04-27 ~ 04-30 -->
 <!-- ====================================================================== -->
-<div class="week-card">
+<div class="week-card" data-week="W1">
   <div class="week-head">
     <h2>W1 — 04월 27일 ~ 04월 30일</h2>
-    <span class="ver-tag">v0.16.0 → v0.34.13 (진행 중)</span>
+    <span class="ver-tag">v0.16.0 → v0.36.16 (진행 중)</span>
   </div>
 
   <div class="tldr">
     <div class="tldr-label">이번 주 핵심</div>
-    <div class="tldr-text">3일간 84개 버전 배포 — 4/29 오후 영상 1순위 본격 고도화 9건 + 색상 팔레트 커스텀 + AOS 통합. <strong>로드맵 기준 ~45%</strong> (영상 8순위 1+2단계 미리 당김으로 추가 진척). 완료: 메인비주얼/nav/채용관 5순위/박람회 1차+동적/폰트 일원화/B-1 Flatten/UX/<strong>색상 픽커 커스텀</strong>/<strong>영상 그룹 자유 편집 + AOS</strong>. 미진행: 영상 기본 4개 li 통합 / 다른 섹션 AOS UI / 9순위 컬러 매핑 적용 / 10순위 / 튜토리얼 / 이미지 편집 툴 / 박람회 편집모드 레이아웃 / 1차 베타. 잔여 약 5주 (~7/8).</div>
+    <div class="tldr-text">4일간 95개 버전 배포 — 4/30 AOS 전면 개편 + 검수 핀 시스템 본격 + 영상 후속. <strong>로드맵 기준 ~60%</strong> (1순위 AOS 완성 + 검수 도구 인프라). 완료: 메인비주얼/nav/채용관 5순위/박람회 1차+동적/폰트 일원화/B-1 Flatten/UX/색상 픽커/영상 그룹 + <strong>AOS 8섹션×29요소</strong>/<strong>검수 핀 + 보드 + 트래킹</strong>/Firebase stub/관리자 페이지/HTML 다운로드. 차주(W2): 프로젝트 단위 관리 / 통합 패키지 (js/images) / 영상 Step C / Firebase 연동 / 댓글 시스템.</div>
   </div>
 
   <div class="kpi-row">
     <div class="kpi">
       <div class="label">배포 버전 (절대)</div>
-      <div class="value">84</div>
-      <div class="sub">개 (24+30+30)</div>
+      <div class="value">95</div>
+      <div class="sub">개 (24+30+13+28)</div>
     </div>
     <div class="kpi">
       <div class="label">기능 (절대)</div>
-      <div class="value">45</div>
+      <div class="value">66</div>
       <div class="sub">건</div>
     </div>
     <div class="kpi">
       <div class="label">핫픽스 (절대)</div>
-      <div class="value">29</div>
+      <div class="value">32</div>
       <div class="sub">건</div>
     </div>
     <div class="kpi">
       <div class="label">1차 진척</div>
-      <div class="value">45%</div>
-      <div class="sub">잔여 ~5주</div>
+      <div class="value">60%</div>
+      <div class="sub">잔여 ~4주</div>
     </div>
     <div class="kpi" style="background:#eff6ff;border:1px solid #2563eb;color:#1e40af;">
       <div class="label">누적 작업 시간</div>
-      <div class="value">25.5h</div>
-      <div class="sub">9 + 8.5 + 8</div>
+      <div class="value">34h</div>
+      <div class="sub">9 + 8.5 + 8 + 8.5</div>
     </div>
   </div>
 
@@ -258,6 +279,23 @@
       }
     });
   }
+})();
+
+/* v0.36.17: 주차 탭 전환 (현재는 W1만 활성, W2~ 는 비활성 placeholder) */
+(function() {
+  var tabs = document.querySelectorAll('#week-tabs .week-tab');
+  var cards = document.querySelectorAll('.week-card');
+  if (!tabs.length) return;
+  tabs.forEach(function(t) {
+    t.addEventListener('click', function() {
+      if (t.disabled) return;
+      tabs.forEach(function(x) { x.classList.toggle('active', x === t); });
+      var w = t.getAttribute('data-week');
+      cards.forEach(function(c) {
+        c.style.display = c.getAttribute('data-week') === w ? '' : 'none';
+      });
+    });
+  });
 })();
 </script>
 

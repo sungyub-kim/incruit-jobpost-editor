@@ -544,7 +544,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.16</span>
+  <span id="ver-badge" title="배포 버전">v0.36.17</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -7593,6 +7593,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 17:50 (v0.36.17)',
+    items: [
+      '<strong>[v0.36.17]</strong> 보고서 UX 보강 — 사이드바 + 주차 탭',
+      '<strong>[v0.36.17]</strong> 일일 보고: 우측 floating 사이드바 (📅 날짜별 배포) + 앵커 이동 + IntersectionObserver active 토글 + 4/30 카드 신규',
+      '<strong>[v0.36.17]</strong> 일일 보고 모바일: ≤1100px 가로 스크롤 carousel 형태로 자동 전환',
+      '<strong>[v0.36.17]</strong> 주간 보고: W1~W8 탭 (현재 W1 활성, W2~ 비활성 placeholder) + 클릭 시 카드 전환 + 모바일 가로 스크롤',
+      '<strong>[v0.36.17]</strong> 일일/주간/로드맵 4/30 데이터 갱신: 95버전 / 기능 66 / 핫픽스 32 / 진척 60% / 누적 34h',
+    ]
+  },
   {
     date: '2026.04.30 17:30 (v0.36.16)',
     items: [

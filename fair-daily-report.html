@@ -64,7 +64,30 @@
 
   footer { text-align: center; padding: 14px; color: #9ca3af; font-size: 11px; }
 
+  /* v0.36.17: 날짜별 배포 사이드바 (앵커 이동) */
+  .day-nav { position: fixed; top: 80px; right: 24px; width: 200px; background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 14px 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.06); z-index: 50; }
+  .day-nav .dn-title { font-size: 12px; font-weight: 700; color: #1f2937; margin-bottom: 10px; }
+  .day-nav .dn-list { list-style: none; padding: 0; }
+  .day-nav .dn-list li { margin-bottom: 4px; }
+  .day-nav .dn-list a { display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-radius: 6px; color: #4b5563; text-decoration: none; font-size: 12px; transition: all .15s; }
+  .day-nav .dn-list a:hover { background: #f3f4f6; color: #1e40af; }
+  .day-nav .dn-list a.active { background: #1e40af; color: #fff; font-weight: 700; }
+  .day-nav .dn-list a .dn-cnt { background: #f3f4f6; color: #6b7280; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .day-nav .dn-list a.active .dn-cnt { background: rgba(255,255,255,0.3); color: #fff; }
+
   /* 반응형 — 모바일/태블릿 */
+  @media (max-width: 1340px) {
+    /* 사이드바가 컨테이너와 겹치는 영역 — 사이드바 폭 좁힘 */
+    .day-nav { width: 170px; padding: 12px; }
+    .day-nav .dn-list a { padding: 6px 8px; font-size: 11px; }
+  }
+  @media (max-width: 1100px) {
+    /* 사이드바를 컨테이너 상단으로 이동 (가로 carousel) */
+    .day-nav { position: static; width: auto; max-width: 1100px; margin: 16px auto 0; }
+    .day-nav .dn-list { display: flex; gap: 6px; overflow-x: auto; }
+    .day-nav .dn-list li { margin: 0; flex: 0 0 auto; }
+    .day-nav .dn-list a { padding: 6px 12px; white-space: nowrap; }
+  }
   @media (max-width: 900px) {
     body { padding: 12px; }
     header { padding: 20px 24px; display: flex; flex-direction: column; }
@@ -96,10 +119,114 @@
   <div class="meta">담당: 김성엽 · 박람회 비주얼 빌더 · 최신 일자가 상단</div>
 </header>
 
+<!-- v0.36.17: 날짜별 배포 사이드바 (앵커 이동) -->
+<nav class="day-nav" id="day-nav">
+  <div class="dn-title">📅 날짜별 배포</div>
+  <ul class="dn-list" id="day-nav-list">
+    <li><a href="#day-2026-04-30" class="active"><span>2026-04-30</span><span class="dn-cnt">28</span></a></li>
+    <li><a href="#day-2026-04-29"><span>2026-04-29</span><span class="dn-cnt">14</span></a></li>
+    <li><a href="#day-2026-04-28"><span>2026-04-28</span><span class="dn-cnt">29</span></a></li>
+    <li><a href="#day-2026-04-27"><span>2026-04-27</span><span class="dn-cnt">24</span></a></li>
+  </ul>
+</nav>
+
+<!-- ====================================================================== -->
+<!-- 2026-04-30 (목) -->
+<!-- ====================================================================== -->
+<div class="day-card" id="day-2026-04-30">
+  <div class="day-head">
+    <h2>04월 30일 (목)</h2>
+    <span class="ver-tag">v0.35.0 → v0.36.16 (28 버전)</span>
+  </div>
+
+  <div class="tldr">
+    <div class="tldr-label">오늘 핵심</div>
+    <div class="tldr-text">
+      <strong>AOS 전면 개편 (사용자 1순위) + 검수 핀 시스템 본격 구축 + 영상 후속 + 마감 보강</strong>.
+      <strong>AOS</strong>: 8섹션 × 29 요소 개별 설정 + 탭/highlight UX + 박람회·인사말·공지·영상 li 추가.
+      <strong>핀 시스템</strong>: 검수 모드 + 핀 작성/저장 + 사이드바 + hover preview + Alt+드래그 영역 캡처 + 우선순위 + 보드 페이지(칸반) + CSV/JSON export.
+      <strong>인프라</strong>: Firebase 트래킹 stub + 관리자 페이지 (비번 보호) + 컬러 변수 highlight + 우측 드로어 input focus highlight.
+      <strong>마감</strong>: 초기화 시 핀 reset + HTML 다운로드 추가.
+      <strong>1차 빌더형 진척 ~60%</strong> (영상 본격 + 검수 도구 + 사용 통계 인프라).
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi feature"><div class="label">신규 기능 (절대)</div><div class="value">21</div><div class="sub">건</div></div>
+    <div class="kpi fix"><div class="label">검수 핫픽스 (절대)</div><div class="value">3</div><div class="sub">건</div></div>
+    <div class="kpi policy"><div class="label">대형 리팩토링 (절대)</div><div class="value">4</div><div class="sub">AOS / 검수핀 / 보드 / 트래킹</div></div>
+    <div class="kpi" style="background:#eff6ff;border:1px solid #2563eb;"><div class="label" style="color:#1e40af;">작업 시간</div><div class="value" style="color:#1e40af;">~8.5h</div><div class="sub" style="color:#3b82f6;">09:00~17:30</div></div>
+  </div>
+
+  <div style="background:#fef3c7;border:1px solid #f59e0b;border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:#78350f;">
+    <strong>📦 패킷 제한 시간 (토큰 리셋)</strong>: 14:00 / 19:00 (5h 단위) — 8.5h 사용
+  </div>
+
+  <div class="cat-grid">
+    <div class="cat-box">
+      <div class="cat-head"><span class="cat-name">🔵 AOS 전면 개편 (1순위)</span><span class="cat-count">11건</span></div>
+      <ul>
+        <li>v0.35.0 ⭐ AOS 전면 개편 — 5섹션 × 24요소 개별 설정</li>
+        <li>v0.35.1 탭 전환 UX + input 가시성</li>
+        <li>v0.35.2 영상 기본 4 li 개별 AOS</li>
+        <li>v0.35.3 once 옵션</li>
+        <li>v0.35.4 섹션 전체 초기화 버튼</li>
+        <li>v0.35.5 박람회 개요 poster-box 2개</li>
+        <li>v0.35.6 인사말 + 공지 (8섹션 × 29요소)</li>
+        <li>v0.35.9 검수 사이클 — Critical apply 버그 수정</li>
+        <li>v0.35.10 ⭐ 패널 라벨 + 미리보기 highlight (펄스)</li>
+      </ul>
+    </div>
+    <div class="cat-box">
+      <div class="cat-head"><span class="cat-name">🟣 검수 핀 시스템 ⭐</span><span class="cat-count">11건</span></div>
+      <ul>
+        <li>v0.36.0 검수 모드 + 핀 작성/저장 + 모달 + html2canvas</li>
+        <li>v0.36.1 안내 + Shift 제거 + UX 보강</li>
+        <li>v0.36.2 클릭 element 자동 캡처</li>
+        <li>v0.36.3 ⭐ Firebase 트래킹 인프라 + fair-admin.html</li>
+        <li>v0.36.4 비밀번호 SHA-256 hash (incruit2026!)</li>
+        <li>v0.36.7 ⭐ 사이드바 + hover preview + Alt+드래그 영역 캡처</li>
+        <li>v0.36.8 ⭐ fair-feedback-board.html 칸반 보드</li>
+        <li>v0.36.9 trackAction 핵심 함수 통합</li>
+        <li>v0.36.10 사이드바/tooltip 썸네일</li>
+        <li>v0.36.11 우선순위 4단계 (긴급/높음/보통/낮음)</li>
+        <li>v0.36.12~13 검색 매칭 강조 + KPI + CSV/JSON export</li>
+      </ul>
+    </div>
+    <div class="cat-box">
+      <div class="cat-head"><span class="cat-name">🟢 UX 보강</span><span class="cat-count">5건</span></div>
+      <ul>
+        <li>v0.35.11 컬러 변수 클릭 시 적용 위치 highlight (청록)</li>
+        <li>v0.35.12 메인비주얼 텍스트 요소 highlight 일관성</li>
+        <li>v0.35.13 우측 드로어 input focus highlight (주황)</li>
+        <li>v0.35.14 소개기관/영상/공지 상단 영문 텍스트 추가</li>
+        <li>v0.35.15 합격소식 sec_txt 오타 수정</li>
+      </ul>
+    </div>
+    <div class="cat-box">
+      <div class="cat-head"><span class="cat-name">🟠 영상 후속 + 마감</span><span class="cat-count">3건</span></div>
+      <ul>
+        <li>v0.36.14 YouTube URL blur 자동 embed 변환</li>
+        <li>v0.36.15 cell 옆 YouTube 썸네일 자동 표시</li>
+        <li>v0.36.16 S1+S3: 초기화 핀 reset + HTML 다운로드</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="next-box">
+    <div class="next-title">📌 다음 작업 (차주 W2 5/6~5/8)</div>
+    <div class="next-text">
+      <strong>5/6</strong>: S2 프로젝트 단위 관리 + S4 통합 패키지 시작 (ASP/HTML 선택, js/images)<br>
+      <strong>5/7</strong>: S4 마무리 + 영상 Step C (기본 4 li 마이그레이션)<br>
+      <strong>5/8</strong>: Firebase 연동 (Phase 1B) + 댓글 시스템 (Phase 2) + 1차 통합 검수 + 배포
+    </div>
+  </div>
+</div>
+
 <!-- ====================================================================== -->
 <!-- 2026-04-29 (수) -->
 <!-- ====================================================================== -->
-<div class="day-card">
+<div class="day-card" id="day-2026-04-29">
   <div class="day-head">
     <h2>04월 29일 (수)</h2>
     <span class="ver-tag">v0.31.0 → v0.34.13 (30 버전)</span>
@@ -209,7 +336,7 @@
 <!-- ====================================================================== -->
 <!-- 2026-04-28 (화) -->
 <!-- ====================================================================== -->
-<div class="day-card">
+<div class="day-card" id="day-2026-04-28">
   <div class="day-head">
     <h2>04월 28일 (화)</h2>
     <span class="ver-tag">v0.21.0 → v0.29.2 (29개 버전)</span>
@@ -307,7 +434,7 @@
 <!-- ====================================================================== -->
 <!-- 2026-04-27 (월) -->
 <!-- ====================================================================== -->
-<div class="day-card">
+<div class="day-card" id="day-2026-04-27">
   <div class="day-head">
     <h2>04월 27일 (월)</h2>
     <span class="ver-tag">v0.16.0 → v0.22.7 (4/28 진행 중)</span>
@@ -428,6 +555,38 @@
         }
       }
     });
+  }
+})();
+
+/* v0.36.17: 사이드바 active 토글 + 부드러운 스크롤 */
+(function() {
+  var navLinks = document.querySelectorAll('#day-nav-list a');
+  if (!navLinks.length) return;
+  /* 부드러운 스크롤 (offset top 80) */
+  navLinks.forEach(function(a) {
+    a.addEventListener('click', function(e) {
+      var href = a.getAttribute('href');
+      if (!href || !href.startsWith('#')) return;
+      e.preventDefault();
+      var el = document.getElementById(href.slice(1));
+      if (!el) return;
+      var top = el.getBoundingClientRect().top + window.pageYOffset - 70;
+      window.scrollTo({ top: top, behavior: 'smooth' });
+    });
+  });
+  /* IntersectionObserver — 현재 보이는 day-card에 active 클래스 */
+  var dayCards = document.querySelectorAll('.day-card[id]');
+  if ('IntersectionObserver' in window && dayCards.length) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          navLinks.forEach(function(a) {
+            a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
+          });
+        }
+      });
+    }, { threshold: 0.3, rootMargin: '-100px 0px -50% 0px' });
+    dayCards.forEach(function(c) { observer.observe(c); });
   }
 })();
 </script>
