@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.11</span>
+  <span id="ver-badge" title="배포 버전">v0.35.12</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3026,6 +3026,9 @@ function buildVisualPanel() {
   var activeIdx = window.visualTextActiveIdx !== undefined ? window.visualTextActiveIdx : 0;
   var activeText = texts[activeIdx];
 
+  /* v0.35.12: 활성 텍스트 요소 자동 highlight (메인비주얼 진입 시) */
+  if (texts.length) setTimeout(function() { highlightVisualTextElement(activeIdx); }, 0);
+
   h += '<div class="ep-spacing-title">텍스트 요소 (' + texts.length + ')</div>';
   h += '<div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap;">';
   texts.forEach(function(t, i) {
@@ -3301,6 +3304,25 @@ function removeVisualText(idx) {
 function switchVisualTextTab(idx) {
   window.visualTextActiveIdx = idx;
   openEditDrawer('section_visual');
+  /* v0.35.12: 활성 텍스트 요소 미리보기 highlight (AOS UX 일관성) */
+  setTimeout(function() { highlightVisualTextElement(idx); }, 0);
+}
+
+/* v0.35.12: 메인비주얼 텍스트 요소 highlight (AOS와 같은 outline 재사용) */
+function highlightVisualTextElement(idx) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  injectAosHighlightCSS(doc);
+  clearAosHighlight();
+  var sEl = doc.querySelector('[data-builder-section="section_visual"]');
+  if (!sEl) return;
+  var n = idx + 1;
+  var pc = sEl.querySelector('[data-builder-field="mvisual_text_' + n + '_pc"]');
+  var m  = sEl.querySelector('[data-builder-field="mvisual_text_' + n + '_m"]');
+  var first = null;
+  if (pc) { pc.classList.add('builder-aos-target'); first = first || pc; }
+  if (m)  { m.classList.add('builder-aos-target'); first = first || m; }
+  if (first) try { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
 }
 
 function updateVisualImage(gIdx, iIdx, url) {
@@ -6525,6 +6547,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 13:40 (v0.35.12)',
+    items: [
+      '<strong>[v0.35.12]</strong> 메인비주얼 텍스트 요소 (mvisual_texts) 도 highlight 일관 적용 — AOS UX 통일',
+      '<strong>[v0.35.12]</strong> 텍스트 요소 1/2/.. 버튼 클릭 시 미리보기에서 PC + M 둘 다 outline + 자동 스크롤',
+      '<strong>[v0.35.12]</strong> 메인비주얼 패널 진입 시에도 활성 텍스트 자동 highlight',
+    ]
+  },
   {
     date: '2026.04.30 13:25 (v0.35.11)',
     items: [
