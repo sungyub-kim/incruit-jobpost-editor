@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.0</span>
+  <span id="ver-badge" title="배포 버전">v0.35.1</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3590,41 +3590,77 @@ function sectionHasAos(sectionId) {
   return Array.isArray(AOS_ELEMENT_MAP[sectionId]) && AOS_ELEMENT_MAP[sectionId].length > 0;
 }
 
-/* ✨ 애니메이션 패널 HTML 생성 — 모든 섹션 공용 */
+/* ✨ 애니메이션 패널 HTML 생성 — 모든 섹션 공용 (탭 패턴 v0.35.1) */
 function buildAosPanelForSection(sectionId) {
   if (!sectionHasAos(sectionId)) return '';
   var items = collectAosElementsInSection(sectionId);
+  if (!items.length) return '';
+
+  /* 활성 인덱스 (섹션별 보존) */
+  if (!window.aosActiveIdx) window.aosActiveIdx = {};
+  if (window.aosActiveIdx[sectionId] === undefined || window.aosActiveIdx[sectionId] >= items.length) {
+    window.aosActiveIdx[sectionId] = 0;
+  }
+  var activeIdx = window.aosActiveIdx[sectionId];
+  var item = items[activeIdx];
+
   var h = '<div class="ep-spacing-group">' +
     '<div class="ep-spacing-title">✨ 애니메이션 (요소별 개별 설정)</div>' +
     '<div class="ep-hint" style="font-size:10px;color:#6b7280;margin-bottom:8px;">새창 미리보기에서 효과 확인 가능</div>';
-  items.forEach(function(item) {
-    var cur = item.current;
-    var hasOverride = !!item.override;
-    h += '<div class="ep-btn-card" style="margin-bottom:8px;' + (hasOverride ? 'border-color:#7c3aed;' : '') + '">' +
-      '<div class="ep-btn-header" style="display:flex;align-items:center;gap:6px;">' +
-        '<span style="flex:1;font-size:11px;">' + esc(item.label) + (hasOverride ? ' <span style="color:#a855f7;font-size:9px;">●커스텀</span>' : '') + '</span>' +
-        (hasOverride ? '<button class="ep-remove-btn" title="기본값 복원" onclick="resetAosOverride(\'' + sectionId + '\',\'' + item.id + '\')">↺</button>' : '') +
-      '</div>' +
-      '<div class="ep-field"><label>등장 효과</label>' +
-        '<select onchange="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'effect\',this.value)">' +
-          AOS_EFFECT_OPTIONS.map(function(opt) {
-            var lbl = opt === '' ? '(없음 — 정적)' : opt;
-            return '<option value="' + opt + '" ' + (cur.effect === opt ? 'selected' : '') + '>' + lbl + '</option>';
-          }).join('') +
-        '</select>' +
-      '</div>' +
-      (cur.effect ? '<div class="ep-field" style="display:flex;gap:8px;">' +
-        '<div style="flex:1;"><label>duration (ms)</label>' +
-          '<input type="number" min="0" max="3000" step="100" value="' + (cur.duration || 800) + '" oninput="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'duration\',parseInt(this.value,10)||0)">' +
-        '</div>' +
-        '<div style="flex:1;"><label>delay (ms)</label>' +
-          '<input type="number" min="0" max="3000" step="100" value="' + (cur.delay || 0) + '" oninput="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'delay\',parseInt(this.value,10)||0)">' +
-        '</div>' +
-      '</div>' : '') +
-    '</div>';
+
+  /* 요소 탭 버튼들 (가로 wrap) */
+  h += '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">';
+  items.forEach(function(it, i) {
+    var on = i === activeIdx;
+    var has = !!it.override;
+    h += '<button onclick="switchAosTab(\'' + sectionId + '\',' + i + ')" style="' +
+      'flex:0 0 auto;padding:5px 10px;font-size:11px;border-radius:4px;cursor:pointer;' +
+      'border:1px solid ' + (on ? '#3b82f6' : (has ? '#7c3aed' : '#2e3a52')) + ';' +
+      'background:' + (on ? '#1e3a8a' : 'transparent') + ';' +
+      'color:' + (on ? '#93c5fd' : (has ? '#a855f7' : '#cbd5e1')) + ';' +
+      'font-weight:' + (on ? '700' : '400') + ';' +
+      '">' + (i + 1) + (has ? ' ●' : '') + '</button>';
   });
   h += '</div>';
+
+  /* 활성 요소 카드 1개만 표시 */
+  var cur = item.current;
+  var hasOverride = !!item.override;
+  h += '<div class="ep-btn-card" style="margin-bottom:0;' + (hasOverride ? 'border-color:#7c3aed;' : '') + '">' +
+    '<div class="ep-btn-header" style="display:flex;align-items:center;gap:6px;">' +
+      '<span style="flex:1;font-size:11px;">' + esc(item.label) + (hasOverride ? ' <span style="color:#a855f7;font-size:9px;">●커스텀</span>' : '') + '</span>' +
+      (hasOverride ? '<button class="ep-remove-btn" title="기본값 복원" onclick="resetAosOverride(\'' + sectionId + '\',\'' + item.id + '\')">↺</button>' : '') +
+    '</div>' +
+    '<div class="ep-field"><label>등장 효과</label>' +
+      '<select onchange="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'effect\',this.value)" style="background:#0d1117;color:#e5e7eb;border:1px solid #2e3a52;border-radius:4px;padding:6px 8px;font-size:12px;width:100%;">' +
+        AOS_EFFECT_OPTIONS.map(function(opt) {
+          var lbl = opt === '' ? '(없음 — 정적)' : opt;
+          return '<option value="' + opt + '" ' + (cur.effect === opt ? 'selected' : '') + '>' + lbl + '</option>';
+        }).join('') +
+      '</select>' +
+    '</div>' +
+    (cur.effect ? '<div class="ep-field" style="display:flex;gap:8px;">' +
+      '<div style="flex:1;"><label>duration (ms)</label>' +
+        '<input type="number" min="0" max="3000" step="100" value="' + (cur.duration || 800) + '" style="background:#0d1117;color:#e5e7eb;border:1px solid #2e3a52;border-radius:4px;padding:6px 8px;font-size:12px;width:100%;" oninput="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'duration\',parseInt(this.value,10)||0)">' +
+      '</div>' +
+      '<div style="flex:1;"><label>delay (ms)</label>' +
+        '<input type="number" min="0" max="3000" step="100" value="' + (cur.delay || 0) + '" style="background:#0d1117;color:#e5e7eb;border:1px solid #2e3a52;border-radius:4px;padding:6px 8px;font-size:12px;width:100%;" oninput="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'delay\',parseInt(this.value,10)||0)">' +
+      '</div>' +
+    '</div>' : '') +
+  '</div>';
+
+  h += '</div>';
   return h;
+}
+
+/* 탭 전환 — 활성 인덱스 변경 + 패널 재구성 (메인비주얼은 buildVisualPanel 분기) */
+function switchAosTab(sectionId, idx) {
+  if (!window.aosActiveIdx) window.aosActiveIdx = {};
+  window.aosActiveIdx[sectionId] = idx;
+  var body = document.getElementById('edit-drawer-body');
+  if (!body || openEditPanelId !== sectionId) return;
+  if (sectionId === 'section_visual') body.innerHTML = buildVisualPanel();
+  else body.innerHTML = buildSectionPanel(sectionId);
 }
 
 /* override 갱신 — 사용자가 값 변경 시 호출 */
@@ -3639,10 +3675,7 @@ function updateAosOverride(sectionId, elementId, key, val) {
   saveState();
   applyAosOverridesForSection(sectionId);
   /* effect 변경 시 패널 재구성 (duration/delay UI 표시/숨김) */
-  if (key === 'effect') {
-    var body = document.getElementById('edit-drawer-body');
-    if (body && openEditPanelId === sectionId) body.innerHTML = buildSectionPanel(sectionId);
-  }
+  if (key === 'effect') rebuildAosPanel(sectionId);
 }
 
 /* 기본값 복원 — override 제거 */
@@ -3653,8 +3686,15 @@ function resetAosOverride(sectionId, elementId) {
   }
   saveState();
   applyAosOverridesForSection(sectionId);
+  rebuildAosPanel(sectionId);
+}
+
+/* 패널 재구성 헬퍼 — 메인비주얼은 buildVisualPanel, 그 외는 buildSectionPanel */
+function rebuildAosPanel(sectionId) {
   var body = document.getElementById('edit-drawer-body');
-  if (body && openEditPanelId === sectionId) body.innerHTML = buildSectionPanel(sectionId);
+  if (!body || openEditPanelId !== sectionId) return;
+  if (sectionId === 'section_visual') body.innerHTML = buildVisualPanel();
+  else body.innerHTML = buildSectionPanel(sectionId);
 }
 
 /* 단일 섹션의 모든 AOS 요소에 override/seed 적용 */
@@ -6291,6 +6331,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 10:05 (v0.35.1)',
+    items: [
+      '<strong>[v0.35.1]</strong> ✨ 애니메이션 패널 UX 개선 — 요소 카드 모두 펼침 → <strong>탭 전환</strong> 방식 (활성 1개만 표시)',
+      '<strong>[v0.35.1]</strong> 패널 상단에 요소 번호 탭 버튼 (1/2/3...) — 클릭 시 해당 요소 카드만 노출, 커스텀 적용 요소는 ●/보라 테두리',
+      '<strong>[v0.35.1]</strong> input/select 색상 명시 (배경 #0d1117, 글자 #e5e7eb) — 흰 배경에 흰 글씨로 안 보이던 가시성 버그 수정',
+      '<strong>[v0.35.1]</strong> 활성 인덱스 섹션별 보존 (window.aosActiveIdx[sectionId])',
+      '<strong>[v0.35.1]</strong> rebuildAosPanel 헬퍼 — 메인비주얼은 buildVisualPanel / 그 외는 buildSectionPanel 분기',
+    ]
+  },
   {
     date: '2026.04.30 09:50 (v0.35.0)',
     items: [
