@@ -544,7 +544,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.12</span>
+  <span id="ver-badge" title="배포 버전">v0.36.13</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -7528,6 +7528,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 17:00 (v0.36.13)',
+    items: [
+      '<strong>[v0.36.13]</strong> 보드 페이지 핀 export — CSV / JSON 다운로드',
+      '<strong>[v0.36.13]</strong> CSV: 번호 / 섹션 / 상태 / 우선순위 / 제목 / 내용 / 작성일 / 수정일 / 핀ID (UTF-8 BOM 포함, Excel 한글 정상)',
+      '<strong>[v0.36.13]</strong> JSON: 원본 데이터 전체 (capture base64 포함)',
+      '<strong>[v0.36.13]</strong> 파일명: fair-pins-YYYY-MM-DD.csv/json (자동)',
+    ]
+  },
   {
     date: '2026.04.30 16:50 (v0.36.12)',
     items: [

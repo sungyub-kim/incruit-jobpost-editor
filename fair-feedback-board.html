@@ -32,6 +32,8 @@
   .controls input { flex: 1; min-width: 200px; background: #1f2937; border: 1px solid #2e3a52; border-radius: 6px; padding: 8px 12px; color: #e5e7eb; font-size: 13px; }
   .controls .refresh-btn { background: #1f2937; border: 1px solid #4b5563; color: #9ca3af; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
   .controls .refresh-btn:hover { color: #93c5fd; border-color: #3b82f6; }
+  .controls .export-btn { background: #1f2937; border: 1px solid #7c3aed; color: #c4b5fd; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .controls .export-btn:hover { background: #7c3aed; color: #fff; }
 
   /* 보드 */
   .board { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
@@ -118,6 +120,8 @@
 <div class="controls">
   <input id="search" type="text" placeholder="🔍 제목/내용 검색..." oninput="renderBoard()">
   <button class="refresh-btn" onclick="loadPins()">🔄 새로고침</button>
+  <button class="export-btn" onclick="exportPinsCSV()" title="현재 핀 데이터를 CSV 파일로 다운로드">📥 CSV</button>
+  <button class="export-btn" onclick="exportPinsJSON()" title="현재 핀 데이터를 JSON 파일로 다운로드">📥 JSON</button>
 </div>
 
 <div class="board" id="board">
@@ -281,6 +285,54 @@ document.addEventListener('keydown', function(e) {
 function esc(s) {
   if (s == null) return '';
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+/* v0.36.13: CSV / JSON export */
+function downloadFile(filename, content, mimeType) {
+  var blob = new Blob([content], { type: mimeType });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 100);
+}
+
+function exportPinsJSON() {
+  if (!pins.length) { alert('내보낼 핀이 없습니다.'); return; }
+  var data = JSON.stringify(pins, null, 2);
+  var fname = 'fair-pins-' + new Date().toISOString().slice(0,10) + '.json';
+  downloadFile(fname, data, 'application/json');
+}
+
+function exportPinsCSV() {
+  if (!pins.length) { alert('내보낼 핀이 없습니다.'); return; }
+  var headers = ['번호', '섹션', '상태', '우선순위', '제목', '내용', '작성일', '수정일', '핀ID'];
+  var rows = pins.map(function(p, i) {
+    return [
+      (i + 1),
+      p.sectionId || '',
+      p.status || 'open',
+      p.priority || 'normal',
+      p.title || '',
+      (p.body || '').replace(/\n/g, ' '),
+      p.createdAt ? new Date(p.createdAt).toLocaleString('ko-KR') : '',
+      p.updatedAt ? new Date(p.updatedAt).toLocaleString('ko-KR') : '',
+      p.id || '',
+    ];
+  });
+  var csv = [headers].concat(rows).map(function(row) {
+    return row.map(function(cell) {
+      var s = String(cell);
+      if (s.indexOf(',') !== -1 || s.indexOf('"') !== -1 || s.indexOf('\n') !== -1) {
+        return '"' + s.replace(/"/g, '""') + '"';
+      }
+      return s;
+    }).join(',');
+  }).join('\n');
+  /* UTF-8 BOM for Excel 한글 */
+  var fname = 'fair-pins-' + new Date().toISOString().slice(0,10) + '.csv';
+  downloadFile(fname, '﻿' + csv, 'text/csv; charset=utf-8');
 }
 
 loadPins();
