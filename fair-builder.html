@@ -247,6 +247,12 @@
     .review-pin:hover { transform: translate(-50%, -50%) scale(1.15); }
     .review-pin.status-done { background: #10b981; }
     .review-pin.status-progress { background: #f59e0b; }
+    /* v0.36.6: 핀 hover preview tooltip */
+    #review-pin-tooltip { position: fixed; background: #111827; border: 1px solid #7c3aed; border-radius: 6px; padding: 8px 12px; max-width: 260px; z-index: 9600; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); opacity: 0; transition: opacity .15s; }
+    #review-pin-tooltip.show { opacity: 1; }
+    #review-pin-tooltip .rpt-title { font-size: 12px; font-weight: 700; color: #a78bfa; margin-bottom: 4px; line-height: 1.3; }
+    #review-pin-tooltip .rpt-body { font-size: 11px; color: #d1d5db; line-height: 1.5; max-height: 80px; overflow: hidden; }
+    #review-pin-tooltip .rpt-meta { font-size: 10px; color: #6b7280; margin-top: 4px; padding-top: 4px; border-top: 1px solid #2e3a52; }
     /* 검수 모달 */
     #review-modal { display: none; position: fixed; inset: 0; z-index: 9700; background: rgba(0,0,0,.55); align-items: center; justify-content: center; }
     #review-modal.open { display: flex; }
@@ -270,7 +276,30 @@
     /* v0.36.1: 검수 모드 안내 토스트 + 상단 헬프 바 */
     #review-tip { position: fixed; top: 70px; left: 50%; background: #7c3aed; color: #fff; padding: 8px 16px; border-radius: 6px; font-size: 12px; font-weight: 600; z-index: 9650; box-shadow: 0 4px 12px rgba(0,0,0,0.4); pointer-events: none; animation: review-tip-fade 4s ease forwards; }
     @keyframes review-tip-fade { 0% { opacity: 0; transform: translate(-50%, -10px); } 10%, 80% { opacity: 1; transform: translate(-50%, 0); } 100% { opacity: 0; transform: translate(-50%, -10px); } }
-    body.builder-review-mode #preview-frame-wrap::before { content: '👁 검수 모드 — 미리보기 클릭하여 핀 추가 / 핀 클릭하여 편집'; position: absolute; top: 0; left: 0; right: 0; padding: 6px 12px; background: rgba(124, 58, 237, 0.9); color: #fff; font-size: 11px; font-weight: 600; text-align: center; z-index: 60; pointer-events: none; }
+    body.builder-review-mode #preview-frame-wrap::before { content: '👁 검수 모드 — 클릭=요소 자동 캡처 / Alt+드래그=영역 선택 캡처 / 핀 클릭=편집'; position: absolute; top: 0; left: 0; right: 0; padding: 6px 12px; background: rgba(124, 58, 237, 0.9); color: #fff; font-size: 11px; font-weight: 600; text-align: center; z-index: 60; pointer-events: none; }
+    /* v0.36.5: 핀 목록 사이드바 — 검수 모드 ON 시 우측 상단 floating */
+    #review-list-panel { position: fixed; top: 110px; right: 16px; width: 280px; max-height: calc(100vh - 130px); background: #1f2937; border: 1px solid #2e3a52; border-radius: 8px; box-shadow: 0 6px 20px rgba(0,0,0,0.5); z-index: 9550; display: none; flex-direction: column; color: #e5e7eb; font-size: 12px; }
+    body.builder-review-mode #review-list-panel { display: flex; }
+    #review-list-panel.collapsed { width: 44px; }
+    #review-list-panel.collapsed .rlp-body, #review-list-panel.collapsed .rlp-search-wrap, #review-list-panel.collapsed .rlp-filter { display: none; }
+    .rlp-head { display: flex; align-items: center; gap: 6px; padding: 10px 12px; border-bottom: 1px solid #2e3a52; background: #1f2937; border-radius: 8px 8px 0 0; }
+    .rlp-head .rlp-title { flex: 1; font-size: 13px; font-weight: 700; color: #a78bfa; }
+    .rlp-head .rlp-toggle { background: none; border: 1px solid #4b5563; color: #9ca3af; padding: 3px 8px; border-radius: 3px; font-size: 10px; cursor: pointer; }
+    .rlp-search-wrap { padding: 8px 12px; border-bottom: 1px solid #2e3a52; }
+    .rlp-search-wrap input { width: 100%; background: #111827; border: 1px solid #2e3a52; border-radius: 4px; padding: 6px 8px; color: #e5e7eb; font-size: 11px; }
+    .rlp-filter { display: flex; gap: 4px; padding: 6px 12px; border-bottom: 1px solid #2e3a52; }
+    .rlp-filter button { flex: 1; background: none; border: 1px solid #4b5563; color: #9ca3af; padding: 4px 6px; border-radius: 3px; font-size: 10px; cursor: pointer; }
+    .rlp-filter button.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    .rlp-body { flex: 1; overflow-y: auto; padding: 4px; }
+    .rlp-empty { padding: 20px 12px; text-align: center; color: #6b7280; font-size: 11px; }
+    .rlp-item { padding: 8px 10px; border-radius: 4px; cursor: pointer; margin: 2px 0; transition: background .12s; }
+    .rlp-item:hover { background: #232f45; }
+    .rlp-item .rlp-num { display: inline-block; width: 20px; height: 20px; line-height: 18px; text-align: center; background: #7c3aed; color: #fff; border-radius: 50%; font-size: 10px; font-weight: 700; margin-right: 6px; vertical-align: middle; }
+    .rlp-item.status-progress .rlp-num { background: #f59e0b; }
+    .rlp-item.status-done .rlp-num { background: #10b981; }
+    .rlp-item-title { font-size: 12px; color: #e5e7eb; font-weight: 600; margin-top: 4px; line-height: 1.3; }
+    .rlp-item-meta { font-size: 10px; color: #6b7280; margin-top: 2px; }
+    .rlp-count { font-size: 10px; color: #9ca3af; padding: 4px 12px; border-bottom: 1px solid #2e3a52; }
 
     /* v0.34.0: 커스텀 컬러 픽커 popover */
     .ccp-trigger { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #111827; border: 1px solid #374151; border-radius: 3px; color: #9ca3af; font-size: 10px; cursor: pointer; padding: 0; flex-shrink: 0; transition: color .12s, border-color .12s; }
@@ -495,7 +524,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.4</span>
+  <span id="ver-badge" title="배포 버전">v0.36.7</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -735,6 +764,22 @@
       <iframe id="preview-frame" src="temp.html"></iframe>
       <!-- v0.36.0: 검수 모드 핀 레이어 -->
       <div id="review-pin-layer"></div>
+    </div>
+    <!-- v0.36.5: 핀 목록 사이드바 (검수 모드 ON 시 우측 상단 floating) -->
+    <div id="review-list-panel">
+      <div class="rlp-head">
+        <span class="rlp-title">📋 핀 목록</span>
+        <button class="rlp-toggle" onclick="toggleReviewListPanel()" title="접기/펼치기">─</button>
+      </div>
+      <div class="rlp-search-wrap"><input id="rlp-search" type="text" placeholder="제목/내용 검색..." oninput="renderReviewList()"></div>
+      <div class="rlp-filter">
+        <button class="active" data-status="all" onclick="setReviewListFilter('all')">전체</button>
+        <button data-status="open" onclick="setReviewListFilter('open')">🔴 열림</button>
+        <button data-status="progress" onclick="setReviewListFilter('progress')">🟡 진행</button>
+        <button data-status="done" onclick="setReviewListFilter('done')">🟢 완료</button>
+      </div>
+      <div class="rlp-count" id="rlp-count">0개</div>
+      <div class="rlp-body" id="rlp-body"></div>
     </div>
     <!-- v0.36.0: 검수 핀 추가/편집 모달 -->
     <div id="review-modal">
@@ -4132,12 +4177,13 @@ function toggleReviewMode() {
     btn.textContent = '✕ 검수 종료';
     attachReviewClickListener();
     renderReviewPins();
+    renderReviewList();  /* v0.36.5: 사이드바 갱신 */
     showReviewTip('👁 검수 모드 — 미리보기 클릭으로 핀 추가 (' + reviewPins.length + '개 저장됨)');
   } else {
     document.body.classList.remove('builder-review-mode');
     btn.classList.remove('active');
     btn.textContent = '👁 검수 모드';
-    /* 핀 layer는 CSS로 숨김 (display:none) */
+    /* 핀 layer + 사이드바 CSS로 자동 숨김 */
   }
 }
 
@@ -4152,20 +4198,98 @@ function showReviewTip(text) {
   setTimeout(function() { if (el.parentNode) el.remove(); }, 4000);
 }
 
-/* iframe 클릭 → 새 핀 추가 (v0.36.1: Shift 제거, 단순 클릭) */
+/* iframe 클릭 → 새 핀 추가 + v0.36.7: Alt+드래그 영역 선택 캡처 */
+var _dragActive = false;
 function attachReviewClickListener() {
   var doc = getPreviewDoc();
   if (!doc) return;
   if (doc.body.dataset.reviewClickBound) return;
   doc.body.dataset.reviewClickBound = '1';
+
+  /* 일반 클릭 — element 자동 캡처 */
   doc.body.addEventListener('click', function(e) {
     if (!reviewMode) return;
-    /* 핀 layer는 outer DOM (review-pin-layer)에 있어 iframe 클릭과 무관 */
+    if (_dragActive) return;  /* drag 종료 직후 무시 */
     e.preventDefault();
     e.stopPropagation();
     e.stopImmediatePropagation();
     handleReviewClick(e);
   }, true);
+
+  /* v0.36.7: Alt+드래그 영역 선택 */
+  var dragStart = null;
+  var dragBox = null;
+  doc.body.addEventListener('mousedown', function(e) {
+    if (!reviewMode) return;
+    if (!e.altKey) return;
+    e.preventDefault();
+    dragStart = { x: e.pageX, y: e.pageY };
+    if (!dragBox) {
+      dragBox = doc.createElement('div');
+      dragBox.id = 'review-drag-box';
+      dragBox.setAttribute('data-builder-ui', '');
+      dragBox.style.cssText = 'position:absolute;border:2px dashed #7c3aed;background:rgba(124,58,237,0.15);pointer-events:none;z-index:99999;';
+      doc.body.appendChild(dragBox);
+    }
+    dragBox.style.left = dragStart.x + 'px';
+    dragBox.style.top = dragStart.y + 'px';
+    dragBox.style.width = '0';
+    dragBox.style.height = '0';
+    dragBox.style.display = 'block';
+    _dragActive = true;
+  }, true);
+
+  doc.body.addEventListener('mousemove', function(e) {
+    if (!_dragActive || !dragStart || !dragBox) return;
+    var x = Math.min(dragStart.x, e.pageX);
+    var y = Math.min(dragStart.y, e.pageY);
+    var w = Math.abs(e.pageX - dragStart.x);
+    var h = Math.abs(e.pageY - dragStart.y);
+    dragBox.style.left = x + 'px';
+    dragBox.style.top = y + 'px';
+    dragBox.style.width = w + 'px';
+    dragBox.style.height = h + 'px';
+  }, true);
+
+  doc.body.addEventListener('mouseup', function(e) {
+    if (!_dragActive || !dragStart || !dragBox) return;
+    var x = Math.min(dragStart.x, e.pageX);
+    var y = Math.min(dragStart.y, e.pageY);
+    var w = Math.abs(e.pageX - dragStart.x);
+    var h = Math.abs(e.pageY - dragStart.y);
+    if (dragBox) dragBox.style.display = 'none';
+    dragStart = null;
+    if (w > 30 && h > 30) {
+      handleReviewBoxCapture(x, y, w, h);
+    }
+    /* 클릭 이벤트와 충돌 방지 */
+    setTimeout(function() { _dragActive = false; }, 50);
+  }, true);
+}
+
+function handleReviewBoxCapture(x, y, w, h) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  /* 박스 중심점에서 가장 가까운 섹션 찾기 */
+  var winScrollX = doc.defaultView.scrollX || 0;
+  var winScrollY = doc.defaultView.scrollY || 0;
+  var centerEl = null;
+  try { centerEl = doc.elementFromPoint(x + w/2 - winScrollX, y + h/2 - winScrollY); } catch(e) {}
+  var sectionEl = centerEl && centerEl.closest ? centerEl.closest('[data-builder-section]') : null;
+  var sectionId = sectionEl ? sectionEl.getAttribute('data-builder-section') : '';
+  var bodyW = doc.body.scrollWidth || 1;
+  var bodyH = doc.body.scrollHeight || 1;
+  _newPinDraft = {
+    sectionId: sectionId,
+    selector: '',
+    offsetX: (x + w/2) / bodyW,
+    offsetY: (y + h/2) / bodyH,
+    pageX: x + w/2,
+    pageY: y + h/2,
+    _captureBox: { x: x, y: y, w: w, h: h },
+  };
+  _editingPinId = null;
+  openReviewModal('new');
 }
 
 function handleReviewClick(e) {
@@ -4267,7 +4391,35 @@ function captureReviewPreview(capWrap) {
   }
   var doc = getPreviewDoc();
   if (!doc) { capWrap.innerHTML = '<div class="rm-loading">⚠ 미리보기 미로드</div>'; return; }
-  /* v0.36.2: 캡처 대상 — _newPinDraft._captureEl 우선 (클릭한 element), 없으면 body 전체 */
+
+  /* v0.36.7: 캡처 모드 분기
+   * 1. _captureBox 있음 = Alt+드래그 영역 선택 → body 캡처 + crop
+   * 2. _captureEl 있음 = 일반 클릭 element 자동 캡처 (v0.36.2)
+   * 3. fallback = body 전체 */
+  if (_newPinDraft && _newPinDraft._captureBox) {
+    var box = _newPinDraft._captureBox;
+    try {
+      html2canvas(doc.body, {
+        scale: 1,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#fff',
+        x: box.x, y: box.y, width: box.w, height: box.h,
+        windowWidth: doc.documentElement.scrollWidth,
+        windowHeight: doc.documentElement.scrollHeight
+      }).then(function(canvas) {
+        var dataURL = canvas.toDataURL('image/jpeg', 0.85);
+        capWrap.innerHTML = '<img src="' + dataURL + '">';
+        if (_newPinDraft) _newPinDraft._capture = dataURL;
+      }).catch(function(err) {
+        capWrap.innerHTML = '<div class="rm-loading">⚠ 영역 캡처 실패: ' + (err.message || 'unknown') + '</div>';
+      });
+    } catch(e) {
+      capWrap.innerHTML = '<div class="rm-loading">⚠ 영역 캡처 오류</div>';
+    }
+    return;
+  }
+
   var targetEl = (_newPinDraft && _newPinDraft._captureEl) || doc.body;
   try {
     html2canvas(targetEl, {
@@ -4333,6 +4485,7 @@ function saveReviewPin() {
   saveReviewPins();
   closeReviewModal();
   renderReviewPins();
+  renderReviewList();  /* v0.36.5: 사이드바 동기 */
 }
 
 function deleteReviewPin() {
@@ -4342,6 +4495,7 @@ function deleteReviewPin() {
   saveReviewPins();
   closeReviewModal();
   renderReviewPins();
+  renderReviewList();  /* v0.36.5: 사이드바 동기 */
 }
 
 function renderReviewPins() {
@@ -4361,7 +4515,6 @@ function renderReviewPins() {
     var dot = document.createElement('div');
     dot.className = 'review-pin status-' + (pin.status || 'open');
     dot.textContent = (i + 1);
-    dot.title = pin.title || '';
     /* iframe rect 기준 위치 */
     var px = (iframeRect.left - wrapRect.left) + (pin.offsetX * bodyW * (iframeRect.width / bodyW));
     var py = (iframeRect.top - wrapRect.top) + (pin.offsetY * bodyH * (iframeRect.height / bodyH)) - scrollY * (iframeRect.height / bodyH);
@@ -4372,8 +4525,49 @@ function renderReviewPins() {
       _newPinDraft = null;
       openReviewModal('edit');
     };
+    /* v0.36.6: hover preview tooltip */
+    dot.onmouseenter = function(e) { showReviewPinTooltip(pin, e.clientX, e.clientY); };
+    dot.onmousemove = function(e) { positionReviewPinTooltip(e.clientX, e.clientY); };
+    dot.onmouseleave = function() { hideReviewPinTooltip(); };
     layer.appendChild(dot);
   });
+}
+
+/* v0.36.6: 핀 hover tooltip */
+function showReviewPinTooltip(pin, x, y) {
+  var tip = document.getElementById('review-pin-tooltip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.id = 'review-pin-tooltip';
+    document.body.appendChild(tip);
+  }
+  var statusLabel = pin.status === 'done' ? '🟢 완료' : (pin.status === 'progress' ? '🟡 진행중' : '🔴 열림');
+  var date = pin.createdAt ? new Date(pin.createdAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  tip.innerHTML =
+    '<div class="rpt-title">' + esc(pin.title || '(제목 없음)') + '</div>' +
+    (pin.body ? '<div class="rpt-body">' + esc(pin.body).replace(/\n/g, '<br>') + '</div>' : '') +
+    '<div class="rpt-meta">' + statusLabel + ' · ' + esc(pin.sectionId || '') + ' · ' + date + '</div>';
+  positionReviewPinTooltip(x, y);
+  tip.classList.add('show');
+}
+
+function positionReviewPinTooltip(x, y) {
+  var tip = document.getElementById('review-pin-tooltip');
+  if (!tip) return;
+  var px = x + 14;
+  var py = y + 14;
+  /* 화면 우측/하단 넘침 보정 */
+  var w = tip.offsetWidth || 260;
+  var h = tip.offsetHeight || 80;
+  if (px + w > window.innerWidth - 8) px = x - w - 14;
+  if (py + h > window.innerHeight - 8) py = y - h - 14;
+  tip.style.left = px + 'px';
+  tip.style.top = py + 'px';
+}
+
+function hideReviewPinTooltip() {
+  var tip = document.getElementById('review-pin-tooltip');
+  if (tip) tip.classList.remove('show');
 }
 
 /* iframe 스크롤 시 핀 위치 갱신 */
@@ -4381,6 +4575,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   if (reviewMode) {
     attachReviewClickListener();
     renderReviewPins();
+    renderReviewList();
     var doc = getPreviewDoc();
     if (doc) {
       doc.addEventListener('scroll', function() { renderReviewPins(); }, { passive: true });
@@ -4388,6 +4583,85 @@ document.getElementById('preview-frame').addEventListener('load', function() {
     }
   }
 });
+
+/* v0.36.5: 핀 목록 사이드바 — 필터/검색/클릭 이동 */
+var _reviewListFilter = 'all';
+
+function toggleReviewListPanel() {
+  var panel = document.getElementById('review-list-panel');
+  if (!panel) return;
+  panel.classList.toggle('collapsed');
+  var btn = panel.querySelector('.rlp-toggle');
+  if (btn) btn.textContent = panel.classList.contains('collapsed') ? '▸' : '─';
+}
+
+function setReviewListFilter(status) {
+  _reviewListFilter = status;
+  document.querySelectorAll('#review-list-panel .rlp-filter button').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.status === status);
+  });
+  renderReviewList();
+}
+
+function renderReviewList() {
+  var body = document.getElementById('rlp-body');
+  var count = document.getElementById('rlp-count');
+  if (!body || !count) return;
+  var search = (document.getElementById('rlp-search') || {}).value || '';
+  search = search.trim().toLowerCase();
+  var filtered = reviewPins.filter(function(p) {
+    if (_reviewListFilter !== 'all' && (p.status || 'open') !== _reviewListFilter) return false;
+    if (search) {
+      var t = ((p.title || '') + ' ' + (p.body || '')).toLowerCase();
+      if (t.indexOf(search) === -1) return false;
+    }
+    return true;
+  });
+  /* 최근 작성 순 */
+  filtered.sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+  count.textContent = filtered.length + '개 (전체 ' + reviewPins.length + ')';
+  if (!filtered.length) {
+    body.innerHTML = '<div class="rlp-empty">' + (reviewPins.length === 0 ? '아직 핀이 없습니다.<br>미리보기 클릭으로 추가' : '검색/필터 결과 없음') + '</div>';
+    return;
+  }
+  body.innerHTML = filtered.map(function(p) {
+    var idx = reviewPins.indexOf(p) + 1;  /* 원본 배열 인덱스 (핀 번호 일관성) */
+    var date = p.createdAt ? new Date(p.createdAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    var statusEmoji = p.status === 'done' ? '🟢' : (p.status === 'progress' ? '🟡' : '🔴');
+    return '<div class="rlp-item status-' + (p.status || 'open') + '" onclick="focusReviewPin(\'' + p.id + '\')">' +
+      '<span class="rlp-num">' + idx + '</span>' +
+      '<span style="font-size:11px;color:#9ca3af;">' + statusEmoji + ' ' + esc(p.sectionId || '?') + '</span>' +
+      '<div class="rlp-item-title">' + esc(p.title || '(제목 없음)') + '</div>' +
+      '<div class="rlp-item-meta">' + date + (p.body ? ' · ' + esc(p.body.slice(0, 40)) + (p.body.length > 40 ? '…' : '') : '') + '</div>' +
+    '</div>';
+  }).join('');
+}
+
+/* 핀 클릭 → 미리보기에서 해당 위치로 스크롤 + 모달 열기 */
+function focusReviewPin(pinId) {
+  var pin = reviewPins.find(function(p) { return p.id === pinId; });
+  if (!pin) return;
+  /* 미리보기 스크롤 — selector 매칭 시도, 실패 시 좌표 비율 사용 */
+  var doc = getPreviewDoc();
+  if (doc) {
+    var sEl = doc.querySelector('[data-builder-section="' + pin.sectionId + '"]');
+    var target = null;
+    if (sEl && pin.selector) {
+      try { target = sEl.querySelector(pin.selector); } catch(e) {}
+    }
+    if (target) {
+      try { target.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+    } else if (pin.offsetY) {
+      var bodyH = doc.body.scrollHeight || doc.body.clientHeight || 1;
+      var win = doc.defaultView;
+      if (win) win.scrollTo({ top: pin.offsetY * bodyH - 200, behavior: 'smooth' });
+    }
+  }
+  /* 모달 열기 */
+  _editingPinId = pinId;
+  _newPinDraft = null;
+  openReviewModal('edit');
+}
 
 /* ESC 키로 모달 닫기 */
 document.addEventListener('keydown', function(e) {
@@ -7161,6 +7435,18 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 16:30 (v0.36.7)',
+    items: [
+      '<strong>[v0.36.7]</strong> 검수 핀 시스템 3종 보강 — A. 핀 목록 사이드바 / C. hover preview / B. Alt+드래그 영역 선택 캡처',
+      '<strong>[v0.36.7]</strong> A) #review-list-panel — 검수 모드 ON 시 우측 상단 floating 패널 (검색 + 상태 필터 + 핀 클릭 시 미리보기 자동 스크롤 + 모달 열기)',
+      '<strong>[v0.36.7]</strong> A) 접기/펼치기 토글 (collapsed) + 상태별 색상 (열림/진행/완료) + 핀 번호 일관 표시',
+      '<strong>[v0.36.7]</strong> C) 핀 dot hover 시 #review-pin-tooltip 팝업 — 제목/내용/상태/날짜 미리보기 (260px max-width, 화면 넘침 자동 보정)',
+      '<strong>[v0.36.7]</strong> B) Alt+드래그로 영역 선택 캡처 — 일반 클릭은 element 자동, Alt+드래그는 정밀 영역 박스',
+      '<strong>[v0.36.7]</strong> B) iframe 내 #review-drag-box 동적 표시 (보라 dashed) + html2canvas x/y/width/height 옵션으로 영역 정밀 캡처',
+      '<strong>[v0.36.7]</strong> 안내 바 갱신: "클릭=요소 자동 캡처 / Alt+드래그=영역 선택 캡처 / 핀 클릭=편집"',
+    ]
+  },
   {
     date: '2026.04.30 16:05 (v0.36.4)',
     items: [
