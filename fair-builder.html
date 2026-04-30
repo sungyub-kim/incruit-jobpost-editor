@@ -472,7 +472,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.1</span>
+  <span id="ver-badge" title="배포 버전">v0.36.2</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3997,11 +3997,24 @@ function handleReviewClick(e) {
   /* selector 추출 — id > tag.class chain */
   var selector = buildSelectorPath(target, sectionEl);
   /* iframe 좌표 비율 */
-  var rect = doc.body.getBoundingClientRect();
   var bodyW = doc.body.scrollWidth || doc.body.clientWidth || 1;
   var bodyH = doc.body.scrollHeight || doc.body.clientHeight || 1;
   var offsetX = (e.pageX) / bodyW;
   var offsetY = (e.pageY) / bodyH;
+
+  /* v0.36.2: 캡처 대상 element 자동 결정 — 클릭한 element. 너무 작으면 부모 확장
+   *   - 너무 작음 = width<150 또는 height<60 (작은 텍스트, span 등)
+   *   - 부모 확장 시 sectionEl까지만 (그 이상은 fallback) */
+  var captureTarget = target;
+  var rect = captureTarget.getBoundingClientRect ? captureTarget.getBoundingClientRect() : { width: 0, height: 0 };
+  var safety = 0;
+  while (captureTarget && captureTarget !== sectionEl && captureTarget !== doc.body && (rect.width < 150 || rect.height < 60) && safety < 5) {
+    captureTarget = captureTarget.parentElement;
+    if (captureTarget && captureTarget.getBoundingClientRect) rect = captureTarget.getBoundingClientRect();
+    safety++;
+  }
+  if (!captureTarget || captureTarget === doc.body) captureTarget = target;
+
   _newPinDraft = {
     sectionId: sectionId,
     selector: selector,
@@ -4009,6 +4022,7 @@ function handleReviewClick(e) {
     offsetY: offsetY,
     pageX: e.pageX,
     pageY: e.pageY,
+    _captureEl: captureTarget,  /* v0.36.2: 캡처 대상 (element 참조, 모달 열릴 때 사용) */
   };
   _editingPinId = null;
   openReviewModal('new');
@@ -4072,9 +4086,18 @@ function captureReviewPreview(capWrap) {
   }
   var doc = getPreviewDoc();
   if (!doc) { capWrap.innerHTML = '<div class="rm-loading">⚠ 미리보기 미로드</div>'; return; }
+  /* v0.36.2: 캡처 대상 — _newPinDraft._captureEl 우선 (클릭한 element), 없으면 body 전체 */
+  var targetEl = (_newPinDraft && _newPinDraft._captureEl) || doc.body;
   try {
-    html2canvas(doc.body, { scale: 0.5, useCORS: true, logging: false, backgroundColor: '#fff' }).then(function(canvas) {
-      var dataURL = canvas.toDataURL('image/jpeg', 0.7);
+    html2canvas(targetEl, {
+      scale: 1,
+      useCORS: true,
+      logging: false,
+      backgroundColor: '#fff',
+      windowWidth: doc.documentElement.scrollWidth,
+      windowHeight: doc.documentElement.scrollHeight
+    }).then(function(canvas) {
+      var dataURL = canvas.toDataURL('image/jpeg', 0.8);
       capWrap.innerHTML = '<img src="' + dataURL + '">';
       if (_newPinDraft) _newPinDraft._capture = dataURL;
     }).catch(function(err) {
@@ -6957,6 +6980,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 15:15 (v0.36.2)',
+    items: [
+      '<strong>[v0.36.2]</strong> 검수 핀 캡처 영역 개선 — 전체 화면 → 클릭한 element 자동 캡처',
+      '<strong>[v0.36.2]</strong> handleReviewClick: e.target을 캡처 대상으로. 너무 작으면(width<150 또는 height<60) 부모 5단계까지 확장',
+      '<strong>[v0.36.2]</strong> captureReviewPreview: targetEl 인자 활용, scale 1 (이전 0.5 → 선명도 ↑)',
+      '<strong>[v0.36.2]</strong> JPEG 품질 0.7 → 0.8 (선명도 보강)',
+      '<strong>[v0.36.2]</strong> 후속 (Phase 1B): 사용자 영역 선택 (drag box) 옵션 — 더 정밀한 캡처 필요 시',
+    ]
+  },
   {
     date: '2026.04.30 15:00 (v0.36.1)',
     items: [
