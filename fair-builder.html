@@ -544,7 +544,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.13</span>
+  <span id="ver-badge" title="배포 버전">v0.36.14</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2713,9 +2713,10 @@ function buildVideoExtraGroupsPanel() {
     var cellCount = videoTypeCellCount(g.type);
     for (var c = 0; c < cellCount; c++) {
       var cell = (g.cells && g.cells[c]) ? g.cells[c] : { url: '', barText: '' };
+      /* v0.36.14: YouTube URL 자동 embed 변환 (blur 시) — watch?v=, youtu.be/ → embed/ */
       h += '<div class="ep-field" style="border-top:1px dashed #2e3a52;padding-top:6px;margin-top:6px;">' +
-        '<label>Cell ' + (c + 1) + ' — YouTube URL</label>' +
-        '<input type="text" value="' + esc(cell.url || '') + '" placeholder="https://www.youtube.com/embed/..." oninput="updateVideoExtraCell(' + i + ',' + c + ',\'url\',this.value)">' +
+        '<label>Cell ' + (c + 1) + ' — YouTube URL <span class="ep-hint" style="color:#6b7280;font-size:10px;">(watch?v= 또는 youtu.be 입력 시 자동 변환)</span></label>' +
+        '<input type="text" value="' + esc(cell.url || '') + '" placeholder="https://www.youtube.com/watch?v=..." oninput="updateVideoExtraCell(' + i + ',' + c + ',\'url\',this.value)" onblur="autoConvertYtCell(this,' + i + ',' + c + ')">' +
         '<label style="margin-top:4px;">하단 바 텍스트 (.v-bar)</label>' +
         '<input type="text" value="' + esc(cell.barText || '') + '" placeholder="예: 하반기 채용 동향" oninput="updateVideoExtraCell(' + i + ',' + c + ',\'barText\',this.value)">' +
       '</div>';
@@ -2804,6 +2805,18 @@ function updateVideoExtraCell(gIdx, cIdx, key, val) {
   g.cells[cIdx][key] = val;
   saveState();
   applyVideoExtraGroupsToPreview();
+}
+
+/* v0.36.14: YouTube URL → embed 자동 변환 (blur 시) */
+function autoConvertYtCell(input, gIdx, cIdx) {
+  var v = (input.value || '').trim();
+  if (!v) return;
+  if (typeof ytToEmbed !== 'function') return;
+  var converted = ytToEmbed(v);
+  if (converted !== v) {
+    input.value = converted;
+    updateVideoExtraCell(gIdx, cIdx, 'url', converted);
+  }
 }
 
 /* v0.34.7: 사용자 추가 그룹을 ListVideoFull 안에 마크업 생성 */
@@ -7528,6 +7541,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 17:10 (v0.36.14)',
+    items: [
+      '<strong>[v0.36.14]</strong> 영상 후속 Step A — YouTube URL 자동 embed 변환',
+      '<strong>[v0.36.14]</strong> 영상 그룹 cell URL input blur 시 자동 변환 (watch?v=... / youtu.be/... → embed/...)',
+      '<strong>[v0.36.14]</strong> 사용자가 어떤 형식 URL을 붙여넣어도 미리보기에 정상 임베드 + 안내 hint 표시',
+      '<strong>[v0.36.14]</strong> 후속 단계 (Step B): cell 옆 YouTube 썸네일 자동 표시 / Step C: 기본 4 li 그룹 통합 (마이그레이션)',
+    ]
+  },
   {
     date: '2026.04.30 17:00 (v0.36.13)',
     items: [
