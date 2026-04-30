@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>박람회 빌더 ─ 피드백 보드</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', -apple-system, sans-serif; background: #0d1117; color: #e5e7eb; padding: 18px; line-height: 1.55; min-height: 100vh; }
+  .container { max-width: 1400px; margin: 0 auto; }
+
+  /* Header */
+  header { background: linear-gradient(135deg, #4c1d95 0%, #5b21b6 100%); padding: 20px 28px; border-radius: 10px; margin-bottom: 16px; position: relative; }
+  header h1 { font-size: 19px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  header .meta { font-size: 12px; color: #ddd6fe; }
+  header .nav-link { position: absolute; top: 18px; right: 22px; background: #fff; color: #6d28d9; padding: 7px 14px; border-radius: 5px; font-size: 12px; font-weight: 600; text-decoration: none; }
+
+  /* KPI */
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+  .kpi { background: #1f2937; border: 1px solid #2e3a52; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .kpi .label { font-size: 11px; color: #9ca3af; }
+  .kpi .value { font-size: 24px; font-weight: 800; margin-top: 4px; }
+  .kpi.open .value { color: #f87171; }
+  .kpi.progress .value { color: #fbbf24; }
+  .kpi.done .value { color: #34d399; }
+  .kpi.total .value { color: #93c5fd; }
+
+  /* 검색/필터 */
+  .controls { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+  .controls input { flex: 1; min-width: 200px; background: #1f2937; border: 1px solid #2e3a52; border-radius: 6px; padding: 8px 12px; color: #e5e7eb; font-size: 13px; }
+  .controls .refresh-btn { background: #1f2937; border: 1px solid #4b5563; color: #9ca3af; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 12px; font-weight: 600; }
+  .controls .refresh-btn:hover { color: #93c5fd; border-color: #3b82f6; }
+
+  /* 보드 */
+  .board { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; }
+  .column { background: #1f2937; border: 1px solid #2e3a52; border-radius: 10px; padding: 12px; min-height: 60vh; }
+  .column.drag-over { background: #2e3a52; border-color: #7c3aed; }
+  .column-head { display: flex; align-items: center; gap: 8px; padding: 4px 4px 12px; border-bottom: 1px solid #2e3a52; margin-bottom: 10px; }
+  .column-head .icon { font-size: 16px; }
+  .column-head .name { flex: 1; font-size: 13px; font-weight: 700; }
+  .column-head .count { font-size: 11px; color: #9ca3af; background: #111827; padding: 2px 8px; border-radius: 10px; }
+  .column[data-status="open"] .column-head { color: #f87171; }
+  .column[data-status="progress"] .column-head { color: #fbbf24; }
+  .column[data-status="done"] .column-head { color: #34d399; }
+
+  /* 카드 */
+  .pin-card { background: #111827; border: 1px solid #2e3a52; border-radius: 8px; padding: 12px; margin-bottom: 8px; cursor: grab; transition: transform .15s, box-shadow .15s; }
+  .pin-card:hover { transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.3); border-color: #7c3aed; }
+  .pin-card.dragging { opacity: 0.5; cursor: grabbing; }
+  .pin-card .pc-num { display: inline-block; width: 22px; height: 22px; line-height: 20px; text-align: center; background: #7c3aed; color: #fff; border-radius: 50%; font-size: 11px; font-weight: 700; margin-right: 6px; vertical-align: middle; }
+  .pin-card.status-progress .pc-num { background: #f59e0b; }
+  .pin-card.status-done .pc-num { background: #10b981; }
+  .pin-card .pc-section { font-size: 10px; color: #9ca3af; vertical-align: middle; }
+  .pin-card .pc-thumb { width: 100%; max-height: 100px; object-fit: cover; border-radius: 4px; margin: 8px 0; background: #0d1117; display: block; }
+  .pin-card .pc-title { font-size: 13px; font-weight: 600; color: #e5e7eb; margin-bottom: 4px; line-height: 1.3; }
+  .pin-card .pc-body { font-size: 11px; color: #9ca3af; line-height: 1.5; max-height: 50px; overflow: hidden; }
+  .pin-card .pc-meta { font-size: 10px; color: #6b7280; margin-top: 8px; padding-top: 6px; border-top: 1px solid #2e3a52; display: flex; justify-content: space-between; }
+  .pin-card .pc-actions { font-size: 10px; }
+  .pin-card .pc-actions a { color: #93c5fd; text-decoration: none; }
+  .pin-card .pc-actions a:hover { text-decoration: underline; }
+
+  .empty { padding: 30px 12px; text-align: center; color: #6b7280; font-size: 11px; }
+
+  .info-bar { background: #422006; border: 1px solid #92400e; color: #fcd34d; padding: 10px 14px; border-radius: 6px; font-size: 11px; margin-bottom: 14px; line-height: 1.6; }
+
+  /* 카드 상세 모달 */
+  #pin-detail-modal { display: none; position: fixed; inset: 0; z-index: 9700; background: rgba(0,0,0,.6); align-items: center; justify-content: center; }
+  #pin-detail-modal.open { display: flex; }
+  #pin-detail-modal .pdm-card { background: #1f2937; border: 1px solid #2e3a52; border-radius: 10px; width: 540px; max-width: 92vw; max-height: 88vh; overflow-y: auto; padding: 22px 24px; color: #e5e7eb; }
+  #pin-detail-modal .pdm-title { font-size: 15px; font-weight: 700; color: #a78bfa; margin-bottom: 12px; }
+  #pin-detail-modal img { width: 100%; max-height: 280px; object-fit: contain; border-radius: 4px; margin-bottom: 12px; background: #0d1117; }
+  #pin-detail-modal .pdm-meta { font-size: 11px; color: #9ca3af; margin-bottom: 10px; }
+  #pin-detail-modal .pdm-body { font-size: 13px; color: #d1d5db; line-height: 1.7; white-space: pre-wrap; padding: 10px 0; border-top: 1px solid #2e3a52; }
+  #pin-detail-modal .pdm-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 14px; }
+  #pin-detail-modal .pdm-actions button, #pin-detail-modal .pdm-actions a { padding: 7px 16px; font-size: 12px; border-radius: 4px; cursor: pointer; border: 1px solid #4b5563; background: none; color: #9ca3af; text-decoration: none; }
+  #pin-detail-modal .pdm-actions a.primary { background: #7c3aed; border-color: #7c3aed; color: #fff; font-weight: 600; }
+
+  /* 반응형 */
+  @media (max-width: 900px) {
+    body { padding: 12px; }
+    header { padding: 18px 22px; }
+    header h1 { font-size: 16px; padding-right: 100px; }
+    .board { grid-template-columns: 1fr; }
+    .controls input { width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <a href="fair-builder.html" class="nav-link">← 빌더</a>
+  <h1>📋 피드백 보드</h1>
+  <div class="meta">검수자/사용자/개발자 양방향 소통 — 핀 칸반</div>
+</header>
+
+<div class="info-bar" id="firebase-warn">
+  ⚠ <strong>현재 단일 사용자 PoC 모드</strong> (localStorage). 다중 사용자 동기는 Firebase 연동 후 활성화.<br>
+  카드 드래그&드롭으로 상태 변경 / 카드 클릭 → 상세 / 빌더 보기 → 해당 핀으로 이동.
+</div>
+
+<div class="kpi-row">
+  <div class="kpi total"><div class="label">전체</div><div class="value" id="kpi-total">0</div></div>
+  <div class="kpi open"><div class="label">🔴 열림</div><div class="value" id="kpi-open">0</div></div>
+  <div class="kpi progress"><div class="label">🟡 진행중</div><div class="value" id="kpi-progress">0</div></div>
+  <div class="kpi done"><div class="label">🟢 완료</div><div class="value" id="kpi-done">0</div></div>
+</div>
+
+<div class="controls">
+  <input id="search" type="text" placeholder="🔍 제목/내용 검색..." oninput="renderBoard()">
+  <button class="refresh-btn" onclick="loadPins()">🔄 새로고침</button>
+</div>
+
+<div class="board" id="board">
+  <div class="column" data-status="open" ondragover="onColDragOver(event,this)" ondragleave="onColDragLeave(this)" ondrop="onColDrop(event,this)">
+    <div class="column-head"><span class="icon">🔴</span><span class="name">열림</span><span class="count" id="cnt-open">0</span></div>
+    <div class="column-body" id="col-open"></div>
+  </div>
+  <div class="column" data-status="progress" ondragover="onColDragOver(event,this)" ondragleave="onColDragLeave(this)" ondrop="onColDrop(event,this)">
+    <div class="column-head"><span class="icon">🟡</span><span class="name">진행중</span><span class="count" id="cnt-progress">0</span></div>
+    <div class="column-body" id="col-progress"></div>
+  </div>
+  <div class="column" data-status="done" ondragover="onColDragOver(event,this)" ondragleave="onColDragLeave(this)" ondrop="onColDrop(event,this)">
+    <div class="column-head"><span class="icon">🟢</span><span class="name">완료</span><span class="count" id="cnt-done">0</span></div>
+    <div class="column-body" id="col-done"></div>
+  </div>
+</div>
+
+<!-- 카드 상세 모달 -->
+<div id="pin-detail-modal" onclick="if(event.target.id==='pin-detail-modal') closeDetail()">
+  <div class="pdm-card">
+    <div class="pdm-title" id="pdm-title">상세</div>
+    <img id="pdm-img" style="display:none;">
+    <div class="pdm-meta" id="pdm-meta"></div>
+    <div class="pdm-body" id="pdm-body"></div>
+    <div class="pdm-actions">
+      <button onclick="closeDetail()">닫기</button>
+      <a id="pdm-builder-link" class="primary">빌더에서 보기 →</a>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+/* localStorage 핀 로드 (단일 사용자 PoC). Firebase 연동 시 Firestore로 교체 */
+var pins = [];
+function loadPins() {
+  try { pins = JSON.parse(localStorage.getItem('fair_review_pins_v1') || '[]'); }
+  catch(e) { pins = []; }
+  renderBoard();
+}
+
+function renderBoard() {
+  var search = (document.getElementById('search').value || '').trim().toLowerCase();
+  var filtered = pins.filter(function(p) {
+    if (!search) return true;
+    var t = ((p.title || '') + ' ' + (p.body || '') + ' ' + (p.sectionId || '')).toLowerCase();
+    return t.indexOf(search) !== -1;
+  });
+
+  var groups = { open: [], progress: [], done: [] };
+  filtered.forEach(function(p) {
+    var s = p.status || 'open';
+    (groups[s] || groups.open).push(p);
+  });
+
+  /* 시간 역순 */
+  Object.keys(groups).forEach(function(s) {
+    groups[s].sort(function(a, b) { return (b.createdAt || 0) - (a.createdAt || 0); });
+  });
+
+  /* KPI */
+  document.getElementById('kpi-total').textContent = pins.length;
+  document.getElementById('kpi-open').textContent = pins.filter(function(p) { return (p.status || 'open') === 'open'; }).length;
+  document.getElementById('kpi-progress').textContent = pins.filter(function(p) { return p.status === 'progress'; }).length;
+  document.getElementById('kpi-done').textContent = pins.filter(function(p) { return p.status === 'done'; }).length;
+
+  /* 컬럼 채우기 */
+  ['open', 'progress', 'done'].forEach(function(s) {
+    var col = document.getElementById('col-' + s);
+    var cnt = document.getElementById('cnt-' + s);
+    var arr = groups[s];
+    cnt.textContent = arr.length;
+    if (!arr.length) {
+      col.innerHTML = '<div class="empty">' + (search ? '검색 결과 없음' : (s === 'open' ? '열린 핀 없음' : (s === 'progress' ? '진행 중 없음' : '완료 핀 없음'))) + '</div>';
+      return;
+    }
+    col.innerHTML = arr.map(function(p) {
+      var idx = pins.indexOf(p) + 1;
+      var date = p.createdAt ? new Date(p.createdAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+      var thumb = p.capture ? '<img class="pc-thumb" src="' + p.capture + '" alt="">' : '';
+      var bodyTxt = p.body ? esc(p.body.slice(0, 100)) + (p.body.length > 100 ? '…' : '') : '';
+      return '<div class="pin-card status-' + (p.status || 'open') + '" draggable="true" data-pin-id="' + esc(p.id) + '" ' +
+        'ondragstart="onCardDragStart(event,this)" ondragend="onCardDragEnd(this)" onclick="openDetail(\'' + esc(p.id) + '\')">' +
+        '<span class="pc-num">' + idx + '</span>' +
+        '<span class="pc-section">' + esc(p.sectionId || '') + '</span>' +
+        thumb +
+        '<div class="pc-title">' + esc(p.title || '(제목 없음)') + '</div>' +
+        (bodyTxt ? '<div class="pc-body">' + bodyTxt + '</div>' : '') +
+        '<div class="pc-meta"><span>' + date + '</span><span class="pc-actions"><a href="fair-builder.html?pin=' + esc(p.id) + '" onclick="event.stopPropagation()">빌더 →</a></span></div>' +
+      '</div>';
+    }).join('');
+  });
+}
+
+/* 드래그 */
+var _dragPinId = null;
+function onCardDragStart(e, el) {
+  _dragPinId = el.dataset.pinId;
+  el.classList.add('dragging');
+  try { e.dataTransfer.effectAllowed = 'move'; e.dataTransfer.setData('text/plain', _dragPinId); } catch(err) {}
+}
+function onCardDragEnd(el) {
+  el.classList.remove('dragging');
+  _dragPinId = null;
+  document.querySelectorAll('.column').forEach(function(c) { c.classList.remove('drag-over'); });
+}
+function onColDragOver(e, col) {
+  e.preventDefault();
+  col.classList.add('drag-over');
+  try { e.dataTransfer.dropEffect = 'move'; } catch(err) {}
+}
+function onColDragLeave(col) {
+  col.classList.remove('drag-over');
+}
+function onColDrop(e, col) {
+  e.preventDefault();
+  col.classList.remove('drag-over');
+  var pinId = _dragPinId || (e.dataTransfer && e.dataTransfer.getData('text/plain'));
+  if (!pinId) return;
+  var newStatus = col.dataset.status;
+  var pin = pins.find(function(p) { return p.id === pinId; });
+  if (!pin || pin.status === newStatus) return;
+  pin.status = newStatus;
+  pin.updatedAt = Date.now();
+  try { localStorage.setItem('fair_review_pins_v1', JSON.stringify(pins)); } catch(err) {}
+  renderBoard();
+}
+
+/* 카드 상세 모달 */
+function openDetail(pinId) {
+  var pin = pins.find(function(p) { return p.id === pinId; });
+  if (!pin) return;
+  document.getElementById('pdm-title').textContent = pin.title || '(제목 없음)';
+  var img = document.getElementById('pdm-img');
+  if (pin.capture) { img.src = pin.capture; img.style.display = 'block'; }
+  else img.style.display = 'none';
+  var statusEmoji = pin.status === 'done' ? '🟢 완료' : (pin.status === 'progress' ? '🟡 진행중' : '🔴 열림');
+  var date = pin.createdAt ? new Date(pin.createdAt).toLocaleString() : '';
+  document.getElementById('pdm-meta').textContent = statusEmoji + ' · ' + (pin.sectionId || '?') + ' · ' + date;
+  document.getElementById('pdm-body').textContent = pin.body || '(내용 없음)';
+  document.getElementById('pdm-builder-link').href = 'fair-builder.html?pin=' + encodeURIComponent(pin.id);
+  document.getElementById('pin-detail-modal').classList.add('open');
+}
+function closeDetail() { document.getElementById('pin-detail-modal').classList.remove('open'); }
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeDetail();
+});
+
+function esc(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
+loadPins();
+</script>
+</body>
+</html>

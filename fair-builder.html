@@ -524,7 +524,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.7</span>
+  <span id="ver-badge" title="배포 버전">v0.36.8</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -769,6 +769,7 @@
     <div id="review-list-panel">
       <div class="rlp-head">
         <span class="rlp-title">📋 핀 목록</span>
+        <a href="fair-feedback-board.html" target="_blank" rel="noopener" title="피드백 보드 열기" style="background:#7c3aed;color:#fff;padding:4px 10px;border-radius:3px;font-size:10px;font-weight:600;text-decoration:none;">📋 보드</a>
         <button class="rlp-toggle" onclick="toggleReviewListPanel()" title="접기/펼치기">─</button>
       </div>
       <div class="rlp-search-wrap"><input id="rlp-search" type="text" placeholder="제목/내용 검색..." oninput="renderReviewList()"></div>
@@ -4149,6 +4150,8 @@ window.addEventListener('DOMContentLoaded', function() {
   if (window.__fairBuilderFirebase && window.__fairBuilderFirebase.ready) {
     startFairTracking();
   }
+  /* v0.36.8: ?pin=ID 딥링크 처리 (iframe load 후) */
+  setTimeout(tryDeepLinkPin, 1500);
 });
 
 /* ============================================================================
@@ -4568,6 +4571,17 @@ function positionReviewPinTooltip(x, y) {
 function hideReviewPinTooltip() {
   var tip = document.getElementById('review-pin-tooltip');
   if (tip) tip.classList.remove('show');
+}
+
+/* v0.36.8: ?pin=ID 파라미터 처리 — 보드 페이지에서 deep link 진입 시 자동 검수 모드 + 핀 포커스 */
+function tryDeepLinkPin() {
+  try {
+    var params = new URLSearchParams(location.search);
+    var pinId = params.get('pin');
+    if (!pinId) return;
+    if (!reviewMode) toggleReviewMode();
+    setTimeout(function() { focusReviewPin(pinId); }, 800);
+  } catch(e) {}
 }
 
 /* iframe 스크롤 시 핀 위치 갱신 */
@@ -7435,6 +7449,19 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 16:50 (v0.36.8)',
+    items: [
+      '<strong>[v0.36.8]</strong> 검수 핀 시스템 Phase 3 — 신규 페이지 fair-feedback-board.html (칸반 보드)',
+      '<strong>[v0.36.8]</strong> 3 컬럼: 🔴열림 / 🟡진행중 / 🟢완료 (드래그&드롭으로 상태 변경 → localStorage 저장)',
+      '<strong>[v0.36.8]</strong> 카드: 캡처 썸네일 + 제목 + 내용 미리보기 + 메타 + 빌더 deep link',
+      '<strong>[v0.36.8]</strong> KPI 4종 (전체/열림/진행/완료) + 검색 + 새로고침',
+      '<strong>[v0.36.8]</strong> 카드 클릭 → 상세 모달 (캡처 큰 이미지 + 전체 내용)',
+      '<strong>[v0.36.8]</strong> 빌더 측: 사이드바에 📋 보드 링크 (새 창 열기) + URL ?pin=ID 딥링크 자동 처리 (검수 모드 ON + 핀 포커스)',
+      '<strong>[v0.36.8]</strong> 단일 사용자 PoC (localStorage). Firebase 연동 시 Firestore 자동 동기',
+      '<strong>[v0.36.8]</strong> 반응형 (≤900px 1컬럼) + 다크 테마',
+    ]
+  },
   {
     date: '2026.04.30 16:30 (v0.36.7)',
     items: [
