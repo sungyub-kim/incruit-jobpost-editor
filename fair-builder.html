@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.13</span>
+  <span id="ver-badge" title="배포 버전">v0.35.14</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -6629,6 +6629,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 14:15 (v0.35.14)',
+    items: [
+      '<strong>[v0.35.14]</strong> 소개기관 / 영상 / 공지사항 섹션에 상단 영문 텍스트 (.sec_txt.basic.top) 추가',
+      '<strong>[v0.35.14]</strong> temp.html 마크업 3곳 추가: "Affiliated Agencies" / "Video Gallery" / "Notice"',
+      '<strong>[v0.35.14]</strong> sectionHasTopText 함수 자동 작동 → 편집 드로어에 ✅ "상단 영문 텍스트 표시" 토글 자동 노출',
+      '<strong>[v0.35.14]</strong> 빈 텍스트 시 자동 숨김 처리 기존 로직 그대로 적용 (applyTopTextToPreview)',
+    ]
+  },
   {
     date: '2026.04.30 14:00 (v0.35.13)',
     items: [
