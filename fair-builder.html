@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.34.13</span>
+  <span id="ver-badge" title="배포 버전">v0.35.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -706,6 +706,56 @@ var videoBarEnabled = true;    /* v0.34.6: .v-bar (영상 하단 바) 전역 표
  * cells 갯수는 type에 의해 결정 (n1_half/n1_full=1, n2=2, n3=3) — 자동 보정 */
 var videoExtraGroups = [];
 var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
+
+/* ============================================================================
+ * v0.35.0: AOS 전면 개편 — 모든 [data-aos] 요소 개별 설정
+ *  - AOS_ELEMENT_MAP: 섹션별 요소 식별자 + selector + 라벨 + 마크업 기본값
+ *  - sectionAosOverrides[sectionId][elementId] = { effect, duration, delay }
+ *  - 기본값: fade-up / 800 / 0 (마크업 기본값을 1차 시드로 사용)
+ *  - 사용자 변경 시만 override 저장
+ * ============================================================================ */
+var AOS_ELEMENT_MAP = {
+  /* section_visual의 메인 텍스트(mvisual_texts)는 별도 시스템(buildVisualPanel ✨ 애니메이션 탭)으로 이미 관리.
+   * 여기는 term-online/offline 영역 + 이미지 4개만 추가 관리 (총 6개). */
+  section_visual: [
+    { id: 'mvisual_term_online',   selector: '.mvisual-term-online',                     label: '온라인 일정 (영역)',       seed: { effect: 'fade-left',  duration: 1500, delay: 700 } },
+    { id: 'mvisual_term_online_pc',selector: '.mvisual-term-online img.d-lg-block',      label: '온라인 일정 이미지 (PC)',  seed: { effect: 'fade-left',  duration: 800,  delay: 0 } },
+    { id: 'mvisual_term_online_m', selector: '.mvisual-term-online img.d-lg-none',       label: '온라인 일정 이미지 (모바일)', seed: { effect: 'fade-left', duration: 800, delay: 0 } },
+    { id: 'mvisual_term_offline',  selector: '.mvisual-term-offline',                    label: '오프라인 일정 (영역)',     seed: { effect: 'fade-right', duration: 1500, delay: 500 } },
+    { id: 'mvisual_term_offline_pc',selector:'.mvisual-term-offline img.d-lg-block',     label: '오프라인 일정 이미지 (PC)',seed: { effect: 'fade-left',  duration: 800,  delay: 0 } },
+    { id: 'mvisual_term_offline_m',selector: '.mvisual-term-offline img.d-lg-none',      label: '오프라인 일정 이미지 (모바일)', seed: { effect: 'fade-left', duration: 800, delay: 0 } },
+  ],
+  section_intro_links: [
+    { id: 'interview_link_1', selector: '.interview-link-view:nth-of-type(1)', label: '인터뷰 링크 1', seed: { effect: 'fade-up', duration: 600,  delay: 0 } },
+    { id: 'interview_link_2', selector: '.interview-link-view:nth-of-type(2)', label: '인터뷰 링크 2', seed: { effect: 'fade-up', duration: 800,  delay: 0 } },
+    { id: 'interview_link_3', selector: '.interview-link-view:nth-of-type(3)', label: '인터뷰 링크 3', seed: { effect: 'fade-up', duration: 1000, delay: 0 } },
+    { id: 'interview_link_4', selector: '.interview-link-view:nth-of-type(4)', label: '인터뷰 링크 4', seed: { effect: 'fade-up', duration: 1200, delay: 0 } },
+    { id: 'interview_link_5', selector: '.interview-link-view:nth-of-type(5)', label: '인터뷰 링크 5', seed: { effect: 'fade-up', duration: 1400, delay: 0 } },
+  ],
+  section_success: [
+    { id: 'success_link_1', selector: 'a.success-link-view:nth-of-type(1)', label: '합격소식 링크 1', seed: { effect: 'fade-up', duration: 800,  delay: 0 } },
+    { id: 'success_link_2', selector: 'a.success-link-view:nth-of-type(2)', label: '합격소식 링크 2', seed: { effect: 'fade-up', duration: 1000, delay: 0 } },
+    { id: 'success_link_3', selector: 'a.success-link-view:nth-of-type(3)', label: '합격소식 링크 3', seed: { effect: 'fade-up', duration: 1200, delay: 0 } },
+    { id: 'success_link_4', selector: 'a.success-link-view:nth-of-type(4)', label: '합격소식 링크 4', seed: { effect: 'fade-up', duration: 1400, delay: 0 } },
+  ],
+  section_organizations: [
+    { id: 'intro_li_1', selector: 'ul li:nth-of-type(1)[data-aos]', label: '소개기관 1', seed: { effect: 'fade-up', duration: 700, delay: 0 } },
+    { id: 'intro_li_2', selector: 'ul li:nth-of-type(2)[data-aos]', label: '소개기관 2', seed: { effect: 'fade-up', duration: 700, delay: 100 } },
+    { id: 'intro_li_3', selector: 'ul li:nth-of-type(3)[data-aos]', label: '소개기관 3', seed: { effect: 'fade-up', duration: 700, delay: 200 } },
+  ],
+  section_videos: [
+    { id: 'video_list_root', selector: 'ul.ListVideoFull', label: '영상 리스트 루트 (전체)', seed: { effect: 'fade-up', duration: 800, delay: 0 } },
+  ],
+};
+
+var AOS_EFFECT_OPTIONS = [
+  '', 'fade-up', 'fade-down', 'fade-left', 'fade-right',
+  'fade-up-right', 'fade-up-left', 'fade-down-right', 'fade-down-left',
+  'zoom-in', 'zoom-out', 'zoom-in-up', 'zoom-in-down',
+  'flip-up', 'flip-down', 'flip-left', 'flip-right',
+];
+
+var sectionAosOverrides = {};  /* { sectionId: { elementId: { effect, duration, delay } } } */
 var visualRightVisible = true;  /* V2: 비주얼 우측 패널 표시 */
 var logoImages = { logo1: '', logo2: '' };  /* X2: 헤더 로고 이미지 */
 var logoLinks  = { logo1: { href: '', target: '_blank' }, logo2: { href: '', target: '_blank' } };  /* v0.29.1: 헤더 로고 링크 */
@@ -841,6 +891,7 @@ function saveState() {
     videoTitleEnabled:    videoTitleEnabled,  /* v0.34.6 */
     videoBarEnabled:      videoBarEnabled,    /* v0.34.6 */
     videoExtraGroups:     videoExtraGroups,   /* v0.34.7 */
+    sectionAosOverrides:  sectionAosOverrides,/* v0.35.0 */
     globalSubTitleEnabled: window.globalSubTitleEnabled !== false,
     aosEnabled:          aosEnabled,
     visualRightVisible:  visualRightVisible,
@@ -915,6 +966,7 @@ function loadState() {
     if (s.videoTitleEnabled !== undefined) videoTitleEnabled = !!s.videoTitleEnabled;  /* v0.34.6 */
     if (s.videoBarEnabled !== undefined) videoBarEnabled = !!s.videoBarEnabled;        /* v0.34.6 */
     if (Array.isArray(s.videoExtraGroups)) videoExtraGroups = s.videoExtraGroups;      /* v0.34.7 */
+    if (s.sectionAosOverrides && typeof s.sectionAosOverrides === 'object') sectionAosOverrides = s.sectionAosOverrides;  /* v0.35.0 */
     if (s.globalSubTitleEnabled !== undefined) window.globalSubTitleEnabled = s.globalSubTitleEnabled;
     if (s.cssColors) {
       cssColors = s.cssColors;
@@ -2367,6 +2419,10 @@ function buildSectionPanel(sectionId) {
   if (sectionId === 'section_videos') {
     h += buildVideoTypesPanel();
   }
+  /* v0.35.0: ✨ 애니메이션 패널 (AOS_ELEMENT_MAP 정의된 섹션만) */
+  if (sectionHasAos(sectionId)) {
+    h += buildAosPanelForSection(sectionId);
+  }
   h += buildColorPanel(sectionId);
   h += buildSpacingPanel(sectionId);
   /* Adv: 템플릿 저장/적용 버튼 */
@@ -3035,6 +3091,8 @@ function buildVisualPanel() {
     } else {
       h += '<div style="color:#6b7280;font-size:12px;padding:20px;text-align:center;">텍스트 요소가 없어 AOS를 설정할 수 없습니다.</div>';
     }
+    /* v0.35.0: 메인비주얼 추가 요소 (term-online/offline + 이미지) AOS 개별 설정 */
+    h += buildAosPanelForSection('section_visual');
   }
 
   /* === 🖼 이미지 탭 === */
@@ -3500,6 +3558,138 @@ function applyAosToPreview() {
   if (chk) { chk.checked = false; chk.disabled = true; }
 }
 function toggleAos(val) { /* no-op */ }
+
+/* ============================================================================
+ * v0.35.0: AOS 개별 설정 공용 함수
+ * ============================================================================ */
+
+/* 섹션의 모든 AOS 요소 메타 + 현재 적용 값 반환 */
+function collectAosElementsInSection(sectionId) {
+  var map = AOS_ELEMENT_MAP[sectionId];
+  if (!map) return [];
+  var doc = getPreviewDoc();
+  var sEl = doc ? doc.querySelector('[data-builder-section="' + sectionId + '"]') : null;
+  return map.map(function(meta) {
+    var override = (sectionAosOverrides[sectionId] && sectionAosOverrides[sectionId][meta.id]) || null;
+    var el = sEl ? sEl.querySelector(meta.selector) : null;
+    var current = override || meta.seed;
+    return {
+      id: meta.id,
+      label: meta.label,
+      selector: meta.selector,
+      seed: meta.seed,
+      override: override,
+      current: current,
+      exists: !!el
+    };
+  });
+}
+
+/* 섹션이 AOS 설정 가능한지 (AOS_ELEMENT_MAP에 정의됐는지) */
+function sectionHasAos(sectionId) {
+  return Array.isArray(AOS_ELEMENT_MAP[sectionId]) && AOS_ELEMENT_MAP[sectionId].length > 0;
+}
+
+/* ✨ 애니메이션 패널 HTML 생성 — 모든 섹션 공용 */
+function buildAosPanelForSection(sectionId) {
+  if (!sectionHasAos(sectionId)) return '';
+  var items = collectAosElementsInSection(sectionId);
+  var h = '<div class="ep-spacing-group">' +
+    '<div class="ep-spacing-title">✨ 애니메이션 (요소별 개별 설정)</div>' +
+    '<div class="ep-hint" style="font-size:10px;color:#6b7280;margin-bottom:8px;">새창 미리보기에서 효과 확인 가능</div>';
+  items.forEach(function(item) {
+    var cur = item.current;
+    var hasOverride = !!item.override;
+    h += '<div class="ep-btn-card" style="margin-bottom:8px;' + (hasOverride ? 'border-color:#7c3aed;' : '') + '">' +
+      '<div class="ep-btn-header" style="display:flex;align-items:center;gap:6px;">' +
+        '<span style="flex:1;font-size:11px;">' + esc(item.label) + (hasOverride ? ' <span style="color:#a855f7;font-size:9px;">●커스텀</span>' : '') + '</span>' +
+        (hasOverride ? '<button class="ep-remove-btn" title="기본값 복원" onclick="resetAosOverride(\'' + sectionId + '\',\'' + item.id + '\')">↺</button>' : '') +
+      '</div>' +
+      '<div class="ep-field"><label>등장 효과</label>' +
+        '<select onchange="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'effect\',this.value)">' +
+          AOS_EFFECT_OPTIONS.map(function(opt) {
+            var lbl = opt === '' ? '(없음 — 정적)' : opt;
+            return '<option value="' + opt + '" ' + (cur.effect === opt ? 'selected' : '') + '>' + lbl + '</option>';
+          }).join('') +
+        '</select>' +
+      '</div>' +
+      (cur.effect ? '<div class="ep-field" style="display:flex;gap:8px;">' +
+        '<div style="flex:1;"><label>duration (ms)</label>' +
+          '<input type="number" min="0" max="3000" step="100" value="' + (cur.duration || 800) + '" oninput="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'duration\',parseInt(this.value,10)||0)">' +
+        '</div>' +
+        '<div style="flex:1;"><label>delay (ms)</label>' +
+          '<input type="number" min="0" max="3000" step="100" value="' + (cur.delay || 0) + '" oninput="updateAosOverride(\'' + sectionId + '\',\'' + item.id + '\',\'delay\',parseInt(this.value,10)||0)">' +
+        '</div>' +
+      '</div>' : '') +
+    '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+/* override 갱신 — 사용자가 값 변경 시 호출 */
+function updateAosOverride(sectionId, elementId, key, val) {
+  if (!sectionAosOverrides[sectionId]) sectionAosOverrides[sectionId] = {};
+  /* 처음 변경 시 seed로 초기화하여 effect만 변경해도 duration/delay 보존 */
+  if (!sectionAosOverrides[sectionId][elementId]) {
+    var seed = (AOS_ELEMENT_MAP[sectionId] || []).find(function(m) { return m.id === elementId; });
+    sectionAosOverrides[sectionId][elementId] = seed ? Object.assign({}, seed.seed) : { effect: 'fade-up', duration: 800, delay: 0 };
+  }
+  sectionAosOverrides[sectionId][elementId][key] = val;
+  saveState();
+  applyAosOverridesForSection(sectionId);
+  /* effect 변경 시 패널 재구성 (duration/delay UI 표시/숨김) */
+  if (key === 'effect') {
+    var body = document.getElementById('edit-drawer-body');
+    if (body && openEditPanelId === sectionId) body.innerHTML = buildSectionPanel(sectionId);
+  }
+}
+
+/* 기본값 복원 — override 제거 */
+function resetAosOverride(sectionId, elementId) {
+  if (sectionAosOverrides[sectionId]) {
+    delete sectionAosOverrides[sectionId][elementId];
+    if (Object.keys(sectionAosOverrides[sectionId]).length === 0) delete sectionAosOverrides[sectionId];
+  }
+  saveState();
+  applyAosOverridesForSection(sectionId);
+  var body = document.getElementById('edit-drawer-body');
+  if (body && openEditPanelId === sectionId) body.innerHTML = buildSectionPanel(sectionId);
+}
+
+/* 단일 섹션의 모든 AOS 요소에 override/seed 적용 */
+function applyAosOverridesForSection(sectionId) {
+  var map = AOS_ELEMENT_MAP[sectionId];
+  if (!map) return;
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  var sEl = doc.querySelector('[data-builder-section="' + sectionId + '"]');
+  if (!sEl) return;
+  map.forEach(function(meta) {
+    var el = sEl.querySelector(meta.selector);
+    if (!el) return;
+    var override = (sectionAosOverrides[sectionId] && sectionAosOverrides[sectionId][meta.id]) || null;
+    var v = override || meta.seed;
+    if (v.effect) {
+      el.setAttribute('data-aos', v.effect);
+      if (v.duration) el.setAttribute('data-aos-duration', String(v.duration));
+      else el.removeAttribute('data-aos-duration');
+      if (v.delay) el.setAttribute('data-aos-delay', String(v.delay));
+      else el.removeAttribute('data-aos-delay');
+    } else {
+      el.removeAttribute('data-aos');
+      el.removeAttribute('data-aos-duration');
+      el.removeAttribute('data-aos-delay');
+    }
+  });
+}
+
+/* 모든 섹션에 적용 — iframe load 시 호출 */
+function applyAllAosOverrides() {
+  Object.keys(AOS_ELEMENT_MAP).forEach(function(sId) {
+    applyAosOverridesForSection(sId);
+  });
+}
 
 /* v0.30.2: 미리보기 새창 — 빌더 흔적 제거 + AOS 활성 상태로 출력 */
 function openPreviewWindow() {
@@ -5688,6 +5878,7 @@ document.getElementById('preview-frame').addEventListener('load', function() {
   applyVideoTypesToPreview();  /* v0.34.3 — 영상 타입 on/off */
   applyVideoExtraGroupsToPreview();  /* v0.34.7 — 사용자 추가 그룹 마크업 생성 */
   applyVideoTitleBarToPreview();  /* v0.34.6 — v-tit / v-bar 전역 토글 (추가 그룹에도 적용) */
+  applyAllAosOverrides();  /* v0.35.0 — 모든 섹션 [data-aos] 개별 override 적용 */
   applyFontsToPreview();    /* v0.31.0 — 폰트 스타일 일원화 */
   try { migrateEventInfoPosters(); applyEventInfoToPreview(); } catch(e) {}  /* v0.32.0 */
   /* v0.28.1: contenteditable로 .sec_txt.basic.top 텍스트 지우면 자동 숨김 */
@@ -6100,6 +6291,21 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 09:50 (v0.35.0)',
+    items: [
+      '<strong>[v0.35.0]</strong> ⭐ AOS 전면 개편 — 모든 [data-aos] 요소 개별 설정 (메인비주얼 외 4섹션 18개 + 메인비주얼 6개 추가)',
+      '<strong>[v0.35.0]</strong> 신규 상수: AOS_ELEMENT_MAP (5개 섹션 × 요소 메타: id/selector/label/seed) + AOS_EFFECT_OPTIONS (17종)',
+      '<strong>[v0.35.0]</strong> 신규 전역: sectionAosOverrides[sectionId][elementId] = { effect, duration, delay }',
+      '<strong>[v0.35.0]</strong> 공용 함수: collectAosElementsInSection / buildAosPanelForSection / updateAosOverride / resetAosOverride / applyAosOverridesForSection / applyAllAosOverrides',
+      '<strong>[v0.35.0]</strong> UI: 각 섹션 편집 드로어에 ✨ 애니메이션 패널 자동 노출 (요소별 카드 — 효과 select + duration/delay + ↺ 기본값 복원)',
+      '<strong>[v0.35.0]</strong> 메인비주얼 ✨ 애니메이션 탭 보강: mvisual_texts (기존) + term-online/offline 6개 추가',
+      '<strong>[v0.35.0]</strong> 적용 섹션: 메인비주얼 / 인터뷰 링크 / 합격소식 / 소개기관 / 영상 (총 5섹션 × 24개 요소)',
+      '<strong>[v0.35.0]</strong> 기본값: 마크업 기본값을 1차 시드로 보존 (사용자 변경 시만 override 저장 → 카드에 ●커스텀 표시)',
+      '<strong>[v0.35.0]</strong> save/load state + iframe load 핸들러 등록 (applyAllAosOverrides)',
+      '<strong>[v0.35.0]</strong> 새창 미리보기 / export ASP에서 변경된 AOS 효과 정상 동작 (data-aos 속성 builder-attrs 보존)',
+    ]
+  },
   {
     date: '2026.04.29 17:15 (v0.34.13)',
     items: [
