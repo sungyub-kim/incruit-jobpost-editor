@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.4</span>
+  <span id="ver-badge" title="배포 버전">v0.35.5</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -715,6 +715,10 @@ var aosEnabled = true;          /* ST3: AOS 애니메이션 전역 토글 */
  *  - 사용자 변경 시만 override 저장
  * ============================================================================ */
 var AOS_ELEMENT_MAP = {
+  section_event_info: [
+    { id: 'poster_online',  selector: '.poster-box.type--online',  label: '온라인 박람회 박스',   seed: { effect: 'fade-up', duration: 800, delay: 0 } },
+    { id: 'poster_offline', selector: '.poster-box.type--offline', label: '오프라인 박람회 박스', seed: { effect: 'fade-up', duration: 800, delay: 100 } },
+  ],
   /* section_visual의 메인 텍스트(mvisual_texts)는 별도 시스템(buildVisualPanel ✨ 애니메이션 탭)으로 이미 관리.
    * 여기는 term-online/offline 영역 + 이미지 4개만 추가 관리 (총 6개). */
   section_visual: [
@@ -2379,6 +2383,8 @@ function buildSectionPanel(sectionId) {
     h += buildPosterLayoutCtrl();
     /* v0.32.0: 박람회 개요 — 동적 infos + apply_buttons 전용 패널 */
     h += buildEventInfoCustomPanel();
+    /* v0.35.5: 박람회 개요 ✨ 애니메이션 (poster-box 2개) */
+    if (sectionHasAos(sectionId)) h += buildAosPanelForSection(sectionId);
     h += buildColorPanel(sectionId);
     h += buildSpacingPanel(sectionId);
     h += '<div class="ep-template-group">' +
@@ -6363,6 +6369,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 10:50 (v0.35.5)',
+    items: [
+      '<strong>[v0.35.5]</strong> 박람회 개요 (section_event_info) ✨ 애니메이션 추가 — poster-box 2개 (온라인/오프라인) 개별 설정',
+      '<strong>[v0.35.5]</strong> 박람회 개요는 customPanel을 사용하므로 buildSectionPanel 분기 안에 buildAosPanelForSection 별도 호출',
+      '<strong>[v0.35.5]</strong> 마크업에 data-aos 없음 → 빌더에서 동적 부여 (사용자가 효과 선택 시 적용)',
+      '<strong>[v0.35.5]</strong> AOS 적용 섹션 6개로 확장 (메인비주얼 / 박람회개요 / 인터뷰 / 합격소식 / 소개기관 / 영상)',
+    ]
+  },
   {
     date: '2026.04.30 10:35 (v0.35.4)',
     items: [
