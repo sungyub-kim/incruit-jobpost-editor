@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.10</span>
+  <span id="ver-badge" title="배포 버전">v0.35.11</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3748,6 +3748,45 @@ function clearAosHighlight() {
   });
 }
 
+/* v0.35.11: 컬러 변수 적용 위치 미리보기 highlight (청록색 outline, AOS 파랑과 구분) */
+function injectColorHighlightCSS(doc) {
+  if (doc.getElementById('builder-color-highlight-css')) return;
+  var s = doc.createElement('style');
+  s.id = 'builder-color-highlight-css';
+  s.textContent =
+    '.builder-color-target { outline: 2px dashed #14b8a6 !important; outline-offset: 2px !important; ' +
+    'box-shadow: 0 0 0 4px rgba(20,184,166,0.18) !important; transition: outline .15s; position: relative; z-index: 100; }';
+  doc.head.appendChild(s);
+}
+
+function highlightColorVar(varName) {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  injectColorHighlightCSS(doc);
+  clearColorHighlight();
+  var selectors = COLOR_AFFECTED_SELECTORS[varName];
+  if (!selectors || !selectors.length) return;
+  var first = null;
+  selectors.forEach(function(sel) {
+    try {
+      doc.querySelectorAll(sel).forEach(function(el) {
+        el.classList.add('builder-color-target');
+        if (!first) first = el;
+      });
+    } catch(e) {}
+  });
+  /* 첫 요소로 스크롤 */
+  if (first) try { first.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+}
+
+function clearColorHighlight() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  doc.querySelectorAll('.builder-color-target').forEach(function(el) {
+    el.classList.remove('builder-color-target');
+  });
+}
+
 /* override 갱신 — 사용자가 값 변경 시 호출 */
 function updateAosOverride(sectionId, elementId, key, val) {
   if (!sectionAosOverrides[sectionId]) sectionAosOverrides[sectionId] = {};
@@ -4990,6 +5029,35 @@ var COLOR_AFFECTED_HINTS = {
   '--s-color4-shadow': '버튼2 인셋 그림자',
 };
 
+/* v0.35.11: 컬러 변수별 적용 selector — 미리보기 highlight 용 */
+var COLOR_AFFECTED_SELECTORS = {
+  '--c-color': [
+    '.poster-box__detail .btn-biz-apply',
+    '.fair-introduce ul li a .items__title',
+    '.fair-introduce ul li a .fake_btn',
+    '.sub-tab .sub-tab__link',
+    '.tabList',
+    '.benefit-introduce .bf_box .items__title.gr',
+    '.section-campaign-form .sec6_campaign_tp',
+    '.section-campaign-form .campaign-formBtn',
+    '#main .v-tit',
+    '#main .v-bar',
+    '.award-company-view .button-box .button',
+  ],
+  '--s-color': [
+    '.poster-box__items__dd p .subtitle',
+    '.sqr_paging strong',
+    '.success-link-wrap .success-link-view .link-view-q',
+    '.interview-link-wrap .interview-link-view .link-view-num',
+  ],
+  '--s-color1':        ['.type--online .poster-box__items__dt'],
+  '--s-color2':        ['.type--offline .poster-box__items__dt'],
+  '--s-color3':        ['.btn-group .round-btn:not(.btn--puple)'],
+  '--s-color4':        ['.btn-group .round-btn.btn--puple'],
+  '--s-color3-shadow': ['.btn-group .round-btn:not(.btn--puple)'],
+  '--s-color4-shadow': ['.btn-group .round-btn.btn--puple'],
+};
+
 function renderColorList() {
   var list = document.getElementById('color-list');
   list.innerHTML = '';
@@ -5004,7 +5072,9 @@ function renderColorList() {
     item.innerHTML =
       '<label>' + cfg.label +
         '<br><span style="color:#4b5563;font-size:10px;">' + varName + '</span>' +
-        (hint ? '<br><span style="color:#6b7280;font-size:10px;line-height:1.4;display:block;margin-top:2px;" title="' + esc(hint) + '">📍 ' + esc(hint) + '</span>' : '') +
+        (hint ? '<br><button type="button" style="background:none;border:none;padding:0;margin-top:2px;color:#14b8a6;font-size:10px;line-height:1.4;text-align:left;cursor:pointer;text-decoration:underline;" ' +
+          'onclick="highlightColorVar(\'' + varName + '\')" ' +
+          'title="클릭 시 미리보기에서 적용 위치 강조">📍 ' + esc(hint) + '</button>' : '') +
       '</label>' +
       '<div class="color-preview" style="background:' + val + ';">' +
         '<input type="color" value="' + val + '" data-var="' + varName + '" oninput="onColorChange(this)">' +
@@ -6455,6 +6525,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 13:25 (v0.35.11)',
+    items: [
+      '<strong>[v0.35.11]</strong> 9순위 강화 — 컬러 변수 클릭 시 미리보기에서 적용 위치 자동 highlight',
+      '<strong>[v0.35.11]</strong> 신규: COLOR_AFFECTED_SELECTORS (8개 변수별 selector 배열) + injectColorHighlightCSS / highlightColorVar / clearColorHighlight',
+      '<strong>[v0.35.11]</strong> outline 청록색 (#14b8a6 dashed) — AOS 파랑(#3b82f6 solid)과 시각 구분',
+      '<strong>[v0.35.11]</strong> 좌측 스타일 탭 컬러 변수 hint(📍)를 클릭 가능 버튼으로 변경 — 클릭 시 적용 요소 outline + 첫 요소로 스크롤',
+      '<strong>[v0.35.11]</strong> 효과: --c-color (27곳), --s-color (4곳) 같은 변수 변경 전에 영향 범위 시각 확인 가능',
+    ]
+  },
   {
     date: '2026.04.30 13:10 (v0.35.10)',
     items: [
