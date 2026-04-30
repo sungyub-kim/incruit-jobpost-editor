@@ -544,7 +544,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.18</span>
+  <span id="ver-badge" title="배포 버전">v0.36.19</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -7636,6 +7636,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 18:25 (v0.36.19)',
+    items: [
+      '<strong>[v0.36.19]</strong> 일일 보고 사이드바 active 인식 정확도 수정 (사용자 보고: 4/30→4/29 스크롤 시 활성 그대로, 4/28 도달 시 비로소 갱신)',
+      '<strong>[v0.36.19]</strong> 진단: IntersectionObserver는 카드 크기에 따라 정확도 편차 — 4/30 카드가 매우 커서(28건) 4/29 영역에서도 30% 보임 → 활성 유지',
+      '<strong>[v0.36.19]</strong> 수정: scroll position 기반으로 교체 — window.pageYOffset + 120 < day-card.offsetTop 인 가장 마지막 카드 active',
+      '<strong>[v0.36.19]</strong> resize/scroll 양쪽 listener 등록 + 초기 1회 호출',
+    ]
+  },
   {
     date: '2026.04.30 18:10 (v0.36.18)',
     items: [

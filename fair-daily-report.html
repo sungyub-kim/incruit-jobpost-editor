@@ -558,11 +558,14 @@
   }
 })();
 
-/* v0.36.17: 사이드바 active 토글 + 부드러운 스크롤 */
+/* v0.36.19: 사이드바 active 토글 + 부드러운 스크롤 (scroll position 기반 — 큰 카드도 정확 인식) */
 (function() {
   var navLinks = document.querySelectorAll('#day-nav-list a');
   if (!navLinks.length) return;
-  /* 부드러운 스크롤 (offset top 80) */
+  var dayCards = Array.prototype.slice.call(document.querySelectorAll('.day-card[id]'));
+  if (!dayCards.length) return;
+
+  /* 부드러운 스크롤 (offset top 70) */
   navLinks.forEach(function(a) {
     a.addEventListener('click', function(e) {
       var href = a.getAttribute('href');
@@ -574,20 +577,22 @@
       window.scrollTo({ top: top, behavior: 'smooth' });
     });
   });
-  /* IntersectionObserver — 현재 보이는 day-card에 active 클래스 */
-  var dayCards = document.querySelectorAll('.day-card[id]');
-  if ('IntersectionObserver' in window && dayCards.length) {
-    var observer = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          navLinks.forEach(function(a) {
-            a.classList.toggle('active', a.getAttribute('href') === '#' + entry.target.id);
-          });
-        }
-      });
-    }, { threshold: 0.3, rootMargin: '-100px 0px -50% 0px' });
-    dayCards.forEach(function(c) { observer.observe(c); });
+
+  /* scroll position 기반 active 갱신 — 현재 스크롤보다 위에 있는 가장 마지막 day-card */
+  function updateActive() {
+    var scrollPos = window.pageYOffset + 120;  /* 헤더 영역 offset (사이드바와 비슷한 위치 기준) */
+    var current = dayCards[0];  /* 기본: 첫 번째 (4/30) */
+    for (var i = 0; i < dayCards.length; i++) {
+      if (dayCards[i].offsetTop <= scrollPos) current = dayCards[i];
+    }
+    var activeId = '#' + current.id;
+    navLinks.forEach(function(a) {
+      a.classList.toggle('active', a.getAttribute('href') === activeId);
+    });
   }
+  window.addEventListener('scroll', updateActive, { passive: true });
+  window.addEventListener('resize', updateActive, { passive: true });
+  updateActive();  /* 초기 1회 */
 })();
 </script>
 
