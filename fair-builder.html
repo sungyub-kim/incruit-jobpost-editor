@@ -544,7 +544,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.17</span>
+  <span id="ver-badge" title="배포 버전">v0.36.18</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4284,6 +4284,13 @@ function attachReviewClickListener() {
   if (doc.body.dataset.reviewClickBound) return;
   doc.body.dataset.reviewClickBound = '1';
 
+  /* v0.36.18: scroll/resize 시 핀 위치 갱신 (이전: iframe load 시점에만 등록 → 검수 모드 늦게 켤 시 미적용) */
+  var rerender = function() { renderReviewPins(); };
+  doc.addEventListener('scroll', rerender, { passive: true });
+  if (doc.defaultView) doc.defaultView.addEventListener('scroll', rerender, { passive: true });
+  window.addEventListener('scroll', rerender, { passive: true });
+  window.addEventListener('resize', rerender, { passive: true });
+
   /* 일반 클릭 — element 자동 캡처 */
   doc.body.addEventListener('click', function(e) {
     if (!reviewMode) return;
@@ -4590,41 +4597,77 @@ function deleteReviewPin() {
   renderReviewList();  /* v0.36.5: 사이드바 동기 */
 }
 
+/* v0.36.18: 핀 layer 위치를 iframe과 정확히 매칭 — preview-frame-wrap이 가운데 정렬이라 좌표 분리 필수 */
+function syncPinLayerToIframe() {
+  var iframe = document.getElementById('preview-frame');
+  var layer = document.getElementById('review-pin-layer');
+  if (!iframe || !layer) return null;
+  var iframeRect = iframe.getBoundingClientRect();
+  var wrapRect = iframe.parentElement.getBoundingClientRect();
+  layer.style.left = (iframeRect.left - wrapRect.left) + 'px';
+  layer.style.top = (iframeRect.top - wrapRect.top) + 'px';
+  layer.style.width = iframeRect.width + 'px';
+  layer.style.height = iframeRect.height + 'px';
+  layer.style.right = 'auto';
+  layer.style.bottom = 'auto';
+  return iframeRect;
+}
+
 function renderReviewPins() {
   var layer = document.getElementById('review-pin-layer');
   if (!layer) return;
   layer.innerHTML = '';
   if (!reviewMode) return;
-  var iframe = document.getElementById('preview-frame');
-  if (!iframe) return;
-  var iframeRect = iframe.getBoundingClientRect();
-  var wrapRect = iframe.parentElement.getBoundingClientRect();
+  var iframeRect = syncPinLayerToIframe();
+  if (!iframeRect) return;
   var doc = getPreviewDoc();
-  var bodyW = doc ? (doc.body.scrollWidth || doc.body.clientWidth) : iframeRect.width;
-  var bodyH = doc ? (doc.body.scrollHeight || doc.body.clientHeight) : iframeRect.height;
-  var scrollY = doc ? (doc.documentElement.scrollTop || doc.body.scrollTop || 0) : 0;
+  if (!doc) return;
+  var bodyW = doc.body.scrollWidth || doc.body.clientWidth || iframeRect.width;
+  var bodyH = doc.body.scrollHeight || doc.body.clientHeight || iframeRect.height;
+  var scrollX = doc.documentElement.scrollLeft || doc.body.scrollLeft || 0;
+  var scrollY = doc.documentElement.scrollTop  || doc.body.scrollTop  || 0;
+  /* iframe 화면 너비 / body 전체 너비 = 표시 스케일 */
+  var scale = iframeRect.width / bodyW;
+
   reviewPins.forEach(function(pin, i) {
     var dot = document.createElement('div');
     var classes = ['review-pin', 'status-' + (pin.status || 'open')];
-    /* v0.36.12: 검색 매칭 강조 / 비매칭 흐림 */
     if (_reviewMatchedIds) {
       classes.push(_reviewMatchedIds.has(pin.id) ? 'search-matched' : 'search-dimmed');
     }
     dot.className = classes.join(' ');
     dot.textContent = (i + 1);
-    /* iframe rect 기준 위치 */
-    var px = (iframeRect.left - wrapRect.left) + (pin.offsetX * bodyW * (iframeRect.width / bodyW));
-    var py = (iframeRect.top - wrapRect.top) + (pin.offsetY * bodyH * (iframeRect.height / bodyH)) - scrollY * (iframeRect.height / bodyH);
+
+    /* v0.36.18: selector 우선 매칭 → 정확한 위치, 실패 시 비율 fallback */
+    var pageX = null, pageY = null;
+    if (pin.selector && pin.sectionId) {
+      try {
+        var sEl = doc.querySelector('[data-builder-section="' + pin.sectionId + '"]');
+        var foundEl = sEl ? sEl.querySelector(pin.selector) : null;
+        if (foundEl) {
+          var er = foundEl.getBoundingClientRect();
+          pageX = er.left + scrollX + er.width / 2;
+          pageY = er.top  + scrollY + er.height / 2;
+        }
+      } catch(e) {}
+    }
+    if (pageX == null) {
+      pageX = pin.offsetX * bodyW;
+      pageY = pin.offsetY * bodyH;
+    }
+    /* iframe 화면 기준 (scroll 빼고 scale 곱) — layer가 iframe과 같은 영역이므로 layer 내부 좌표 */
+    var px = (pageX - scrollX) * scale;
+    var py = (pageY - scrollY) * scale;
     dot.style.left = px + 'px';
     dot.style.top = py + 'px';
+
     dot.onclick = function() {
       _editingPinId = pin.id;
       _newPinDraft = null;
       openReviewModal('edit');
     };
-    /* v0.36.6: hover preview tooltip */
     dot.onmouseenter = function(e) { showReviewPinTooltip(pin, e.clientX, e.clientY); };
-    dot.onmousemove = function(e) { positionReviewPinTooltip(e.clientX, e.clientY); };
+    dot.onmousemove  = function(e) { positionReviewPinTooltip(e.clientX, e.clientY); };
     dot.onmouseleave = function() { hideReviewPinTooltip(); };
     layer.appendChild(dot);
   });
@@ -7593,6 +7636,17 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 18:10 (v0.36.18)',
+    items: [
+      '<strong>[v0.36.18]</strong> 🔴 핀 위치 오류 수정 (사용자 보고: Alt+드래그/클릭 위치와 핀 dot 위치 불일치, fixed처럼 안 움직임)',
+      '<strong>[v0.36.18]</strong> 진단: ① 핀 layer가 preview-frame-wrap(가운데 정렬)과 iframe 영역 차이 미반영 ② iframe scroll listener가 iframe load 시점에만 등록 — 검수 모드를 나중에 켜면 listener 없음',
+      '<strong>[v0.36.18]</strong> 수정: syncPinLayerToIframe — iframe getBoundingClientRect로 layer 위치/크기 동기 (left/top/width/height 직접 설정)',
+      '<strong>[v0.36.18]</strong> 수정: renderReviewPins — selector 우선 매칭(getBoundingClientRect) → 정확한 위치, 실패 시 비율 fallback',
+      '<strong>[v0.36.18]</strong> 수정: attachReviewClickListener에서 scroll/resize listener 등록 (toggleReviewMode 시 자동 동작) — iframe 안 스크롤 시 핀 즉시 갱신',
+      '<strong>[v0.36.18]</strong> 로드맵 날짜 오류 정정: "2026-04-29 기준" → "2026-04-30 기준"',
+    ]
+  },
   {
     date: '2026.04.30 17:50 (v0.36.17)',
     items: [
