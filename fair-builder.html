@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.12</span>
+  <span id="ver-badge" title="배포 버전">v0.35.13</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2076,6 +2076,8 @@ function closeEditDrawer() {
   });
   /* v0.35.10: AOS highlight 제거 */
   if (typeof clearAosHighlight === 'function') clearAosHighlight();
+  /* v0.35.13: field highlight 제거 */
+  if (typeof clearFieldHighlight === 'function') clearFieldHighlight();
 }
 
 /* ESC 키로 드로어 닫기 */
@@ -2749,14 +2751,25 @@ function buildFieldInput(sectionId, path, field, val) {
   var label = '<label>' + field.label + '</label>';
   var inputId = 'field-' + sectionId + '-' + path.replace(/\./g, '-');
 
+  /* v0.35.13: 단순 schema 필드 미리보기 highlight 매핑 (안전 1차 — 단일 path만)
+   *  - SECTION_DOM_MAP[sectionId][path]에 sel 있을 때만 부여
+   *  - repeater (path에 '.' 포함) 는 1차 제외 → 추후 단계 */
+  var dataAttr = '';
+  try {
+    if (path.indexOf('.') === -1) {
+      var m = SECTION_DOM_MAP[sectionId] && SECTION_DOM_MAP[sectionId][path];
+      if (m && m.sel) dataAttr = ' data-preview-section="' + sectionId + '" data-preview-selector="' + esc(m.sel) + '"';
+    }
+  } catch(e) {}
+
   if (field.type === 'textarea') {
-    return '<div class="ep-field">' + label + '<textarea class="ep-textarea" oninput="' + cb + '">' + esc(val) + '</textarea></div>';
+    return '<div class="ep-field">' + label + '<textarea class="ep-textarea"' + dataAttr + ' oninput="' + cb + '">' + esc(val) + '</textarea></div>';
   } else if (field.type === 'image') {
     var thumbId = 'thumb-' + inputId;
     return '<div class="ep-field">' + label +
       '<span class="ep-hint" style="display:block;margin-bottom:4px;">(이미지 경로 또는 파일 업로드)</span>' +
       '<div class="ep-bgimg-row">' +
-        '<input type="text" class="ep-bgimg-input" id="' + inputId + '" value="' + esc(val) + '" placeholder="URL" oninput="' + cb + '">' +
+        '<input type="text" class="ep-bgimg-input" id="' + inputId + '"' + dataAttr + ' value="' + esc(val) + '" placeholder="URL" oninput="' + cb + '">' +
         '<label class="ep-bgimg-upload" title="파일 업로드">📁' +
           '<input type="file" accept="image/*" style="display:none" onchange="onFieldImgFile(this,\'' + sectionId + '\',\'' + path + '\')">' +
         '</label>' +
@@ -2766,15 +2779,15 @@ function buildFieldInput(sectionId, path, field, val) {
     '</div>';
   } else if (field.type === 'link') {
     return '<div class="ep-field">' + label + '<span class="ep-hint" style="display:block;margin-bottom:4px;">(URL)</span>' +
-      '<input type="text" value="' + esc(val) + '" placeholder="https://..." oninput="' + cb + '"></div>';
+      '<input type="text"' + dataAttr + ' value="' + esc(val) + '" placeholder="https://..." oninput="' + cb + '"></div>';
   } else if (field.type === 'select') {
     /* v0.21.5: select 필드 타입 (예: target 옵션) */
     var opts = (field.options || []).map(function(o) {
       return '<option value="' + esc(o.value) + '" ' + (val === o.value ? 'selected' : '') + '>' + esc(o.label) + '</option>';
     }).join('');
-    return '<div class="ep-field">' + label + '<select onchange="' + cb + '">' + opts + '</select></div>';
+    return '<div class="ep-field">' + label + '<select' + dataAttr + ' onchange="' + cb + '">' + opts + '</select></div>';
   }
-  return '<div class="ep-field">' + label + '<input type="text" value="' + esc(val) + '" oninput="' + cb + '"></div>';
+  return '<div class="ep-field">' + label + '<input type="text"' + dataAttr + ' value="' + esc(val) + '" oninput="' + cb + '"></div>';
 }
 
 function updateBtn(i, key, val) {
@@ -3808,6 +3821,75 @@ function clearColorHighlight() {
     el.classList.remove('builder-color-target');
   });
 }
+
+/* v0.35.13: 우측 드로어 입력 focus 시 미리보기 요소 highlight (주황 outline)
+ *  - 안전 1차: data-preview-selector 부여된 단순 schema 필드만 작동
+ *  - 같은 selector 재진입 시 highlight 유지 (스크롤 멀미 방지)
+ *  - 모든 처리 try/catch — selector 매칭 실패해도 silent fail */
+function injectFieldHighlightCSS(doc) {
+  if (doc.getElementById('builder-field-highlight-css')) return;
+  var s = doc.createElement('style');
+  s.id = 'builder-field-highlight-css';
+  s.textContent =
+    '.builder-field-target { outline: 2px solid #f59e0b !important; outline-offset: 2px !important; ' +
+    'box-shadow: 0 0 0 4px rgba(245,158,11,0.18) !important; transition: outline .15s; position: relative; z-index: 100; }';
+  doc.head.appendChild(s);
+}
+
+var _lastFieldSelector = null;
+function highlightFieldElement(sectionId, selector) {
+  try {
+    var doc = getPreviewDoc();
+    if (!doc) return;
+    if (selector === _lastFieldSelector) return;  /* 재진입 시 스크롤/highlight 갱신 X */
+    injectFieldHighlightCSS(doc);
+    clearFieldHighlight();
+    var sEl = doc.querySelector('[data-builder-section="' + sectionId + '"]');
+    if (!sEl) return;
+    var el = sEl.querySelector(selector);
+    if (!el) return;
+    el.classList.add('builder-field-target');
+    _lastFieldSelector = selector;
+    try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) {}
+  } catch(e) {}
+}
+
+function clearFieldHighlight() {
+  try {
+    var doc = getPreviewDoc();
+    if (!doc) return;
+    doc.querySelectorAll('.builder-field-target').forEach(function(el) {
+      el.classList.remove('builder-field-target');
+    });
+    _lastFieldSelector = null;
+  } catch(e) {}
+}
+
+/* delegated focusin — 우측 드로어 안 모든 매핑 input 자동 처리 */
+document.addEventListener('focusin', function(e) {
+  try {
+    var t = e.target;
+    if (!t || !t.closest) return;
+    /* edit-drawer 안에서만 작동 (다른 영역 input 무시) */
+    if (!t.closest('#edit-drawer')) return;
+    var sec = t.getAttribute('data-preview-section');
+    var sel = t.getAttribute('data-preview-selector');
+    if (sec && sel) highlightFieldElement(sec, sel);
+  } catch(e) {}
+});
+
+/* drawer 외부로 focus 이동 시 clear (단, edit-drawer 안 다른 input은 highlight 갱신) */
+document.addEventListener('focusout', function(e) {
+  try {
+    /* 약간 지연 후 다음 focus가 drawer 안인지 확인 */
+    setTimeout(function() {
+      var active = document.activeElement;
+      if (!active || !active.closest || !active.closest('#edit-drawer')) {
+        clearFieldHighlight();
+      }
+    }, 200);
+  } catch(e) {}
+});
 
 /* override 갱신 — 사용자가 값 변경 시 호출 */
 function updateAosOverride(sectionId, elementId, key, val) {
@@ -6547,6 +6629,19 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 14:00 (v0.35.13)',
+    items: [
+      '<strong>[v0.35.13]</strong> 우측 드로어 입력 focus 시 미리보기 자동 highlight (1차 안정 — 단순 schema 필드만)',
+      '<strong>[v0.35.13]</strong> buildFieldInput에 data-preview-section / data-preview-selector 자동 부여 (path에 \'.\' 없는 단순 필드만)',
+      '<strong>[v0.35.13]</strong> 신규: injectFieldHighlightCSS / highlightFieldElement / clearFieldHighlight (주황 outline #f59e0b)',
+      '<strong>[v0.35.13]</strong> delegated focusin/focusout — edit-drawer 안 input 자동 처리 (200ms 지연 cleanup 으로 input 간 이동 시 깜박임 방지)',
+      '<strong>[v0.35.13]</strong> 같은 selector 재진입 시 highlight 갱신 X (스크롤 멀미 방지)',
+      '<strong>[v0.35.13]</strong> 모든 처리 try/catch — selector 매칭 실패해도 silent fail (안전성)',
+      '<strong>[v0.35.13]</strong> 색상 구분: AOS 파랑 / 컬러 청록 / 필드 주황 — 시각 구분',
+      '<strong>[v0.35.13]</strong> 후속: repeater(nav/탭/cell) + customPanel(박람회/영상 그룹) — 검수 후 단계 진행',
+    ]
+  },
   {
     date: '2026.04.30 13:40 (v0.35.12)',
     items: [
