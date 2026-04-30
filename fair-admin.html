@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>박람회 빌더 ─ 관리자 대시보드</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Pretendard', -apple-system, sans-serif; background: #0d1117; color: #e5e7eb; padding: 24px; line-height: 1.6; }
+  .container { max-width: 1280px; margin: 0 auto; }
+  header { background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); padding: 22px 30px; border-radius: 10px; margin-bottom: 18px; position: relative; }
+  header h1 { font-size: 20px; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  header .meta { font-size: 12px; color: #c7d2fe; }
+  header .nav-link { position: absolute; top: 18px; right: 22px; background: #fff; color: #1e40af; padding: 7px 14px; border-radius: 5px; font-size: 12px; font-weight: 600; text-decoration: none; }
+
+  /* 비밀번호 게이트 */
+  #gate { background: #1f2937; border: 1px solid #2e3a52; border-radius: 10px; padding: 32px 36px; max-width: 420px; margin: 80px auto; text-align: center; }
+  #gate h2 { font-size: 16px; font-weight: 700; color: #a78bfa; margin-bottom: 14px; }
+  #gate p { font-size: 12px; color: #9ca3af; line-height: 1.6; margin-bottom: 18px; }
+  #gate input { width: 100%; background: #111827; border: 1px solid #2e3a52; border-radius: 5px; padding: 10px 12px; color: #e5e7eb; font-size: 14px; margin-bottom: 12px; }
+  #gate button { background: #7c3aed; border: none; color: #fff; padding: 9px 20px; border-radius: 5px; font-weight: 700; cursor: pointer; font-size: 13px; }
+  #gate .err { color: #f87171; font-size: 11px; margin-top: 8px; min-height: 14px; }
+
+  /* 대시보드 */
+  #dashboard { display: none; }
+  .kpi-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .kpi { background: #1f2937; border: 1px solid #2e3a52; border-radius: 8px; padding: 14px 16px; text-align: center; }
+  .kpi .label { font-size: 11px; color: #9ca3af; }
+  .kpi .value { font-size: 24px; font-weight: 800; color: #93c5fd; margin-top: 4px; }
+  .kpi .sub { font-size: 10px; color: #6b7280; margin-top: 2px; }
+
+  .panel { background: #1f2937; border: 1px solid #2e3a52; border-radius: 8px; padding: 16px 18px; margin-bottom: 16px; }
+  .panel h3 { font-size: 13px; font-weight: 700; color: #93c5fd; margin-bottom: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th { background: #111827; color: #9ca3af; padding: 8px 10px; text-align: left; font-weight: 600; border-bottom: 1px solid #2e3a52; }
+  tbody td { padding: 8px 10px; border-bottom: 1px solid #1f2937; color: #d1d5db; }
+  tbody tr:hover { background: #232f45; }
+  .empty { padding: 24px; text-align: center; color: #6b7280; font-size: 12px; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .badge.active { background: #064e3b; color: #6ee7b7; }
+  .badge.idle { background: #1f2937; color: #9ca3af; }
+
+  .refresh-btn { background: none; border: 1px solid #4b5563; color: #9ca3af; padding: 5px 12px; border-radius: 4px; font-size: 11px; cursor: pointer; float: right; }
+  .refresh-btn:hover { color: #93c5fd; border-color: #3b82f6; }
+
+  .warn { background: #422006; border: 1px solid #92400e; color: #fcd34d; padding: 10px 14px; border-radius: 6px; font-size: 12px; margin-bottom: 14px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<header>
+  <a href="fair-builder.html" class="nav-link">← 빌더</a>
+  <h1>👁 박람회 빌더 관리자 대시보드</h1>
+  <div class="meta">사용자별 활동 / 체류 시간 / 액션 로그 (사용자 v0.36.3+)</div>
+</header>
+
+<!-- 비밀번호 게이트 -->
+<div id="gate">
+  <h2>🔒 관리자 인증</h2>
+  <p>비밀번호를 입력하세요.<br>본 페이지는 내부 직원 활동 모니터링 용도입니다.</p>
+  <input id="gate-pw" type="password" placeholder="비밀번호" autocomplete="current-password">
+  <button onclick="checkPassword()">진입</button>
+  <div class="err" id="gate-err"></div>
+</div>
+
+<!-- 대시보드 -->
+<div id="dashboard">
+  <div class="warn" id="firebase-warn" style="display:none;">⚠ Firebase 미설정 — fair-firebase-config.js 추가 필요. 현재 데이터 없음.</div>
+
+  <div class="kpi-row">
+    <div class="kpi"><div class="label">전체 세션</div><div class="value" id="kpi-sessions">-</div><div class="sub">누적</div></div>
+    <div class="kpi"><div class="label">고유 사용자</div><div class="value" id="kpi-users">-</div><div class="sub">닉네임 기준</div></div>
+    <div class="kpi"><div class="label">평균 체류 시간</div><div class="value" id="kpi-avg-duration">-</div><div class="sub">분</div></div>
+    <div class="kpi"><div class="label">총 액션 수</div><div class="value" id="kpi-actions">-</div><div class="sub">편집/저장 등</div></div>
+    <div class="kpi"><div class="label">최근 24h 활성</div><div class="value" id="kpi-active24">-</div><div class="sub">사용자</div></div>
+  </div>
+
+  <div class="panel">
+    <button class="refresh-btn" onclick="loadDashboard()">🔄 새로고침</button>
+    <h3>👥 사용자별 활동 요약</h3>
+    <table>
+      <thead><tr><th>닉네임</th><th>이메일</th><th>세션 수</th><th>총 체류</th><th>총 액션</th><th>마지막 방문</th></tr></thead>
+      <tbody id="users-tbody"><tr><td colspan="6" class="empty">로딩 중...</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h3>🕒 최근 세션 (50개)</h3>
+    <table>
+      <thead><tr><th>시각</th><th>사용자</th><th>체류</th><th>액션 수</th><th>상태</th></tr></thead>
+      <tbody id="sessions-tbody"><tr><td colspan="5" class="empty">로딩 중...</td></tr></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <h3>📋 최근 액션 로그 (100개)</h3>
+    <table>
+      <thead><tr><th>시각</th><th>사용자</th><th>액션</th><th>상세</th></tr></thead>
+      <tbody id="actions-tbody"><tr><td colspan="4" class="empty">로딩 중...</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+  import { getFirestore, collection, query, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+  window.__adminFirebase = { initializeApp, getFirestore, collection, query, orderBy, limit, getDocs, app: null, db: null, ready: false };
+  if (window.FAIR_FIREBASE_CONFIG && window.FAIR_FIREBASE_CONFIG.apiKey) {
+    try {
+      window.__adminFirebase.app = initializeApp(window.FAIR_FIREBASE_CONFIG);
+      window.__adminFirebase.db = getFirestore(window.__adminFirebase.app);
+      window.__adminFirebase.ready = true;
+    } catch(e) { console.warn('[Admin] Firebase init 실패:', e); }
+  }
+</script>
+<script src="js/fair-firebase-config.js" onerror="console.info('[Admin] Firebase config 미설정')"></script>
+<script>
+/* 비밀번호 — 클라이언트 측 hash (간이 보안) */
+var ADMIN_PW_HASH = 'fair-admin-2026';  /* TODO: 실제 hash로 교체 */
+
+function checkPassword() {
+  var pw = document.getElementById('gate-pw').value;
+  if (pw === ADMIN_PW_HASH) {
+    document.getElementById('gate').style.display = 'none';
+    document.getElementById('dashboard').style.display = 'block';
+    sessionStorage.setItem('fair_admin_auth', '1');
+    loadDashboard();
+  } else {
+    document.getElementById('gate-err').textContent = '비밀번호가 틀렸습니다.';
+  }
+}
+document.getElementById('gate-pw').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') checkPassword();
+});
+/* 세션 인증 유지 (탭 닫을 때까지) */
+if (sessionStorage.getItem('fair_admin_auth') === '1') {
+  document.getElementById('gate').style.display = 'none';
+  document.getElementById('dashboard').style.display = 'block';
+  setTimeout(function() {
+    if (typeof loadDashboard === 'function') loadDashboard();
+  }, 600);
+}
+
+async function loadDashboard() {
+  var fb = window.__adminFirebase;
+  if (!fb || !fb.ready) {
+    document.getElementById('firebase-warn').style.display = 'block';
+    document.getElementById('users-tbody').innerHTML = '<tr><td colspan="6" class="empty">Firebase 미설정</td></tr>';
+    document.getElementById('sessions-tbody').innerHTML = '<tr><td colspan="5" class="empty">Firebase 미설정</td></tr>';
+    document.getElementById('actions-tbody').innerHTML = '<tr><td colspan="4" class="empty">Firebase 미설정</td></tr>';
+    return;
+  }
+  try {
+    var q = fb.query(fb.collection(fb.db, 'sessions'), fb.orderBy('enteredAt', 'desc'), fb.limit(200));
+    var snap = await fb.getDocs(q);
+    var sessions = [];
+    snap.forEach(function(d) { sessions.push(Object.assign({ _id: d.id }, d.data())); });
+    renderDashboard(sessions);
+  } catch(e) {
+    console.warn('[Admin] 데이터 로드 실패:', e);
+    document.getElementById('firebase-warn').textContent = '⚠ 데이터 로드 실패: ' + e.message;
+    document.getElementById('firebase-warn').style.display = 'block';
+  }
+}
+
+function renderDashboard(sessions) {
+  /* KPI */
+  document.getElementById('kpi-sessions').textContent = sessions.length;
+  var users = {};
+  var totalActions = 0;
+  var totalDuration = 0;
+  var durCount = 0;
+  var oneDayAgo = Date.now() - 24*60*60*1000;
+  var active24 = {};
+  sessions.forEach(function(s) {
+    var name = s.user && s.user.name ? s.user.name : '(unknown)';
+    users[name] = users[name] || { name: name, email: s.user && s.user.email || '', sessions: 0, totalDuration: 0, totalActions: 0, lastVisit: 0 };
+    users[name].sessions++;
+    users[name].totalActions += (s.actionCount || 0);
+    if (s.duration) { users[name].totalDuration += s.duration; totalDuration += s.duration; durCount++; }
+    var enteredMs = s.enteredAt && s.enteredAt.toMillis ? s.enteredAt.toMillis() : 0;
+    if (enteredMs > users[name].lastVisit) users[name].lastVisit = enteredMs;
+    if (enteredMs > oneDayAgo) active24[name] = true;
+    totalActions += (s.actionCount || 0);
+  });
+  document.getElementById('kpi-users').textContent = Object.keys(users).length;
+  document.getElementById('kpi-actions').textContent = totalActions;
+  document.getElementById('kpi-avg-duration').textContent = durCount ? (totalDuration / durCount / 60000).toFixed(1) : '0';
+  document.getElementById('kpi-active24').textContent = Object.keys(active24).length;
+
+  /* 사용자별 표 */
+  var ut = document.getElementById('users-tbody');
+  var userArr = Object.values(users).sort(function(a,b) { return b.lastVisit - a.lastVisit; });
+  ut.innerHTML = userArr.length ? userArr.map(function(u) {
+    return '<tr>' +
+      '<td><strong>' + escapeHtml(u.name) + '</strong></td>' +
+      '<td style="color:#9ca3af;">' + escapeHtml(u.email || '-') + '</td>' +
+      '<td>' + u.sessions + '</td>' +
+      '<td>' + (u.totalDuration / 60000).toFixed(1) + '분</td>' +
+      '<td>' + u.totalActions + '</td>' +
+      '<td style="color:#9ca3af;">' + (u.lastVisit ? new Date(u.lastVisit).toLocaleString() : '-') + '</td>' +
+    '</tr>';
+  }).join('') : '<tr><td colspan="6" class="empty">데이터 없음</td></tr>';
+
+  /* 최근 세션 표 */
+  var st = document.getElementById('sessions-tbody');
+  var recent = sessions.slice(0, 50);
+  st.innerHTML = recent.length ? recent.map(function(s) {
+    var enteredMs = s.enteredAt && s.enteredAt.toMillis ? s.enteredAt.toMillis() : 0;
+    var dur = s.duration ? (s.duration / 60000).toFixed(1) + '분' : '진행중';
+    var status = s.duration ? '<span class="badge idle">종료</span>' : '<span class="badge active">활성</span>';
+    return '<tr>' +
+      '<td style="color:#9ca3af;">' + (enteredMs ? new Date(enteredMs).toLocaleString() : '-') + '</td>' +
+      '<td>' + escapeHtml(s.user && s.user.name || '(unknown)') + '</td>' +
+      '<td>' + dur + '</td>' +
+      '<td>' + (s.actionCount || 0) + '</td>' +
+      '<td>' + status + '</td>' +
+    '</tr>';
+  }).join('') : '<tr><td colspan="5" class="empty">데이터 없음</td></tr>';
+
+  /* 최근 액션 — 모든 세션의 actions 합쳐서 정렬 */
+  var allActions = [];
+  sessions.forEach(function(s) {
+    if (Array.isArray(s.actions)) {
+      s.actions.forEach(function(a) {
+        allActions.push({ ts: a.ts, user: s.user && s.user.name || '(unknown)', type: a.type, details: a.details });
+      });
+    }
+  });
+  allActions.sort(function(a,b) { return b.ts - a.ts; });
+  var atb = document.getElementById('actions-tbody');
+  atb.innerHTML = allActions.length ? allActions.slice(0, 100).map(function(a) {
+    return '<tr>' +
+      '<td style="color:#9ca3af;">' + new Date(a.ts).toLocaleTimeString() + '</td>' +
+      '<td>' + escapeHtml(a.user) + '</td>' +
+      '<td><span style="color:#93c5fd;">' + escapeHtml(a.type) + '</span></td>' +
+      '<td style="color:#6b7280;font-size:11px;">' + (a.details ? escapeHtml(JSON.stringify(a.details)) : '-') + '</td>' +
+    '</tr>';
+  }).join('') : '<tr><td colspan="4" class="empty">데이터 없음</td></tr>';
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+</script>
+</body>
+</html>

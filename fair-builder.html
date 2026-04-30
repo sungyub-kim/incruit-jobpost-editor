@@ -439,6 +439,29 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <!-- v0.36.0: 검수 모드 핀 시스템 - 캡처 자동화 -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- v0.36.3: Firebase SDK (사용 통계 + 핀+보드 데이터 백엔드) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import { getFirestore, collection, addDoc, updateDoc, doc, query, where, orderBy, limit, getDocs, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+    /* config는 별도 파일 또는 윈도우 변수로 주입 — 사용자 Firebase 프로젝트 생성 후 채워짐 */
+    window.__fairBuilderFirebase = {
+      initializeApp, getFirestore, collection, addDoc, updateDoc, doc, query, where, orderBy, limit, getDocs, serverTimestamp,
+      ready: false,
+      app: null,
+      db: null,
+    };
+    /* config가 fair-firebase-config.js에서 주입되어 있으면 init */
+    if (window.FAIR_FIREBASE_CONFIG && typeof window.FAIR_FIREBASE_CONFIG === 'object' && window.FAIR_FIREBASE_CONFIG.apiKey) {
+      try {
+        window.__fairBuilderFirebase.app = initializeApp(window.FAIR_FIREBASE_CONFIG);
+        window.__fairBuilderFirebase.db = getFirestore(window.__fairBuilderFirebase.app);
+        window.__fairBuilderFirebase.ready = true;
+        if (typeof window.onFirebaseReady === 'function') window.onFirebaseReady();
+      } catch(e) { console.warn('[Firebase] init 실패:', e); }
+    }
+  </script>
+  <!-- 사용자가 firebaseConfig 채워야 활성화 — 미생성 시 정적 동작만 -->
+  <script src="js/fair-firebase-config.js" onerror="console.info('[Firebase] config 미생성 (정적 모드)')"></script>
 </head>
 <body>
 
@@ -472,7 +495,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.2</span>
+  <span id="ver-badge" title="배포 버전">v0.36.3</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3926,6 +3949,164 @@ function clearFieldHighlight() {
 }
 
 /* ============================================================================
+ * v0.36.3: 사용 통계 트래킹 (닉네임 + 세션 + 액션) + 관리자 페이지 연동
+ *  - Firebase 미설정 시 localStorage 만 (본인 활동 자가 진단)
+ *  - Firebase 설정 시 Firestore 자동 연동 (다중 사용자 통합)
+ *  - 데이터: sessions/{sessionId} { user, enteredAt, lastActivityAt, leftAt, duration, actions[] }
+ * ============================================================================ */
+var FAIR_USER = (function() {
+  try { return JSON.parse(localStorage.getItem('fair_user_v1') || 'null'); } catch(e) { return null; }
+})();
+var FAIR_SESSION = {
+  id: 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8),
+  enteredAt: Date.now(),
+  lastActivityAt: Date.now(),
+  actions: [],
+  fbDocRef: null,  /* Firestore doc ref, ready 시 채워짐 */
+};
+
+function ensureFairUser() {
+  if (FAIR_USER && FAIR_USER.name) return Promise.resolve(FAIR_USER);
+  return new Promise(function(resolve) {
+    showFairUserPrompt(function(name, email) {
+      FAIR_USER = {
+        id: 'u_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+        name: name,
+        email: email || '',
+        firstSeen: Date.now()
+      };
+      try { localStorage.setItem('fair_user_v1', JSON.stringify(FAIR_USER)); } catch(e) {}
+      resolve(FAIR_USER);
+    });
+  });
+}
+
+function showFairUserPrompt(cb) {
+  var modal = document.createElement('div');
+  modal.id = 'fair-user-modal';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9800;display:flex;align-items:center;justify-content:center;font-family:Pretendard,sans-serif;';
+  modal.innerHTML =
+    '<div style="background:#1f2937;border:1px solid #2e3a52;border-radius:10px;padding:24px 28px;width:380px;max-width:92vw;color:#e5e7eb;box-shadow:0 10px 30px rgba(0,0,0,.5);">' +
+      '<h3 style="font-size:15px;font-weight:700;color:#a78bfa;margin-bottom:12px;">👋 박람회 빌더 사용 등록</h3>' +
+      '<p style="font-size:11px;color:#9ca3af;line-height:1.6;margin-bottom:14px;">사용 통계를 위해 닉네임/이메일을 한 번만 입력합니다. 다음 방문부터는 자동.</p>' +
+      '<label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:4px;">닉네임 *</label>' +
+      '<input id="fum-name" type="text" placeholder="예: 김성엽" style="width:100%;background:#111827;border:1px solid #2e3a52;border-radius:4px;padding:8px 10px;color:#e5e7eb;font-size:13px;margin-bottom:10px;">' +
+      '<label style="display:block;font-size:11px;color:#9ca3af;margin-bottom:4px;">이메일 (선택)</label>' +
+      '<input id="fum-email" type="email" placeholder="kim.sy@incruit.com" style="width:100%;background:#111827;border:1px solid #2e3a52;border-radius:4px;padding:8px 10px;color:#e5e7eb;font-size:13px;margin-bottom:14px;">' +
+      '<div style="display:flex;justify-content:flex-end;gap:8px;">' +
+        '<button id="fum-save" style="background:#7c3aed;border:none;color:#fff;padding:7px 16px;border-radius:4px;font-weight:700;cursor:pointer;">시작</button>' +
+      '</div>' +
+    '</div>';
+  document.body.appendChild(modal);
+  var nameInput = document.getElementById('fum-name');
+  if (nameInput) nameInput.focus();
+  function submit() {
+    var name = (document.getElementById('fum-name').value || '').trim();
+    var email = (document.getElementById('fum-email').value || '').trim();
+    if (!name) { alert('닉네임을 입력해주세요.'); return; }
+    document.body.removeChild(modal);
+    cb(name, email);
+  }
+  document.getElementById('fum-save').onclick = submit;
+  modal.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') submit();
+  });
+}
+
+/* 활동 로그 — Firebase 미설정 시 localStorage 누적, ready 시 Firestore push */
+function trackAction(type, details) {
+  var entry = {
+    type: type,
+    ts: Date.now(),
+    details: details || null,
+  };
+  FAIR_SESSION.lastActivityAt = entry.ts;
+  FAIR_SESSION.actions.push(entry);
+  /* localStorage 백업 (Firebase 끊김/지연 대비) */
+  try {
+    var queue = JSON.parse(localStorage.getItem('fair_action_queue_v1') || '[]');
+    queue.push({ session: FAIR_SESSION.id, user: FAIR_USER, action: entry });
+    if (queue.length > 500) queue.length = 500;
+    localStorage.setItem('fair_action_queue_v1', JSON.stringify(queue));
+  } catch(e) {}
+  /* Firebase ready 시 Firestore 갱신 */
+  if (window.__fairBuilderFirebase && window.__fairBuilderFirebase.ready && FAIR_SESSION.fbDocRef) {
+    try {
+      var fb = window.__fairBuilderFirebase;
+      fb.updateDoc(FAIR_SESSION.fbDocRef, {
+        lastActivityAt: fb.serverTimestamp(),
+        actions: FAIR_SESSION.actions,
+        actionCount: FAIR_SESSION.actions.length,
+      });
+    } catch(e) { console.warn('[Track] update failed:', e); }
+  }
+}
+
+/* 세션 시작 — 사용자 등록 후 호출 */
+function startFairSession() {
+  if (!FAIR_USER) return;
+  if (!window.__fairBuilderFirebase || !window.__fairBuilderFirebase.ready) return;
+  var fb = window.__fairBuilderFirebase;
+  try {
+    fb.addDoc(fb.collection(fb.db, 'sessions'), {
+      sessionId: FAIR_SESSION.id,
+      user: FAIR_USER,
+      enteredAt: fb.serverTimestamp(),
+      lastActivityAt: fb.serverTimestamp(),
+      userAgent: navigator.userAgent,
+      referrer: document.referrer || '',
+      url: location.href,
+      actions: [],
+      actionCount: 0,
+    }).then(function(ref) {
+      FAIR_SESSION.fbDocRef = ref;
+      console.info('[Track] Firebase session 시작', FAIR_SESSION.id);
+    }).catch(function(e) { console.warn('[Track] session 시작 실패:', e); });
+  } catch(e) { console.warn('[Track] session 시작 오류:', e); }
+}
+
+/* 체류 시간 — 페이지 떠날 때 */
+window.addEventListener('beforeunload', function() {
+  if (window.__fairBuilderFirebase && window.__fairBuilderFirebase.ready && FAIR_SESSION.fbDocRef) {
+    var fb = window.__fairBuilderFirebase;
+    var duration = Date.now() - FAIR_SESSION.enteredAt;
+    try {
+      /* sendBeacon 또는 동기 업데이트 — Firestore는 비동기라 정확 종료 어려움 */
+      fb.updateDoc(FAIR_SESSION.fbDocRef, {
+        leftAt: fb.serverTimestamp(),
+        duration: duration,
+      });
+    } catch(e) {}
+  }
+});
+
+/* 페이지 visibility 변경 — 백그라운드 시 lastActivityAt 갱신 */
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') {
+    trackAction('focus', null);
+  } else {
+    trackAction('blur', null);
+  }
+});
+
+/* 페이지 로드 후 — Firebase ready 시에만 닉네임 모달 + 세션 시작
+ * Firebase 미설정 시 빌더 정상 사용 (anonymous, 모달 X) */
+function startFairTracking() {
+  if (!window.__fairBuilderFirebase || !window.__fairBuilderFirebase.ready) return;
+  ensureFairUser().then(function(user) {
+    trackAction('page_view', { url: location.pathname });
+    startFairSession();
+  });
+}
+window.onFirebaseReady = startFairTracking;
+window.addEventListener('DOMContentLoaded', function() {
+  /* Firebase가 이미 ready (config가 inline JS로 들어와 있음) */
+  if (window.__fairBuilderFirebase && window.__fairBuilderFirebase.ready) {
+    startFairTracking();
+  }
+});
+
+/* ============================================================================
  * v0.36.0: 검수 모드 + 핀 시스템 (Phase 1A — localStorage PoC)
  *  - 검수 모드 토글: 미리보기에 핀 추가/표시/제어
  *  - 핀 클릭 → 모달 (캡처 + 텍스트 + 상태)
@@ -6980,6 +7161,21 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 15:50 (v0.36.3)',
+    items: [
+      '<strong>[v0.36.3]</strong> 사용 통계 트래킹 인프라 구축 (Firebase Firestore) — 사용자 등록 / 세션 / 액션 / 체류 시간',
+      '<strong>[v0.36.3]</strong> Firebase SDK 10.12.2 CDN 로드 (module) + window.__fairBuilderFirebase 헬퍼',
+      '<strong>[v0.36.3]</strong> 신규: 닉네임 입력 모달 (첫 진입 시 1회) + localStorage `fair_user_v1`',
+      '<strong>[v0.36.3]</strong> 신규: trackAction(type, details) 액션 트래커 — Firestore push + localStorage 백업',
+      '<strong>[v0.36.3]</strong> 자동 트래킹: page_view / focus / blur / 체류 시간 (beforeunload)',
+      '<strong>[v0.36.3]</strong> 신규 페이지: fair-admin.html 관리자 대시보드 — 비밀번호 게이트 + KPI + 사용자별 표 + 최근 세션/액션',
+      '<strong>[v0.36.3]</strong> Firebase 미설정 시 빌더는 정적 모드로 정상 동작 (모달 X, 트래킹 X)',
+      '<strong>[v0.36.3]</strong> 사용자 액션 필요: js/fair-firebase-config.js 생성 → firebaseConfig 5줄 입력 (참고: js/fair-firebase-config.example.js)',
+      '<strong>[v0.36.3]</strong> 관리자 비밀번호 (placeholder): "fair-admin-2026" — fair-admin.html ADMIN_PW_HASH 변수에서 변경',
+      '<strong>[v0.36.3]</strong> 후속 (config 받으면): 빌더 모든 액션 (편집/저장/export/검수 핀)에 trackAction 호출 추가',
+    ]
+  },
   {
     date: '2026.04.30 15:15 (v0.36.2)',
     items: [
