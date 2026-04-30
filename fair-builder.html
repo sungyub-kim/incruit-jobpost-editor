@@ -436,7 +436,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.3</span>
+  <span id="ver-badge" title="배포 버전">v0.35.4</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -3608,8 +3608,16 @@ function buildAosPanelForSection(sectionId) {
   var activeIdx = window.aosActiveIdx[sectionId];
   var item = items[activeIdx];
 
+  /* 섹션에 override 적용된 요소 갯수 */
+  var overrideCount = items.filter(function(it) { return !!it.override; }).length;
+
   var h = '<div class="ep-spacing-group">' +
-    '<div class="ep-spacing-title">✨ 애니메이션 (요소별 개별 설정)</div>' +
+    '<div class="ep-spacing-title" style="display:flex;align-items:center;gap:6px;">' +
+      '<span style="flex:1;">✨ 애니메이션 (요소별 개별 설정)</span>' +
+      (overrideCount > 0
+        ? '<button onclick="resetAllAosInSection(\'' + sectionId + '\')" title="섹션 전체 기본값 복원" style="background:none;border:1px solid #2e3a52;color:#9ca3af;border-radius:3px;font-size:10px;padding:3px 8px;cursor:pointer;">↺ 전체 초기화 (' + overrideCount + ')</button>'
+        : '') +
+    '</div>' +
     '<div class="ep-hint" style="font-size:10px;color:#6b7280;margin-bottom:8px;">새창 미리보기에서 효과 확인 가능</div>';
 
   /* 요소 탭 버튼들 (가로 wrap) */
@@ -3705,6 +3713,16 @@ function rebuildAosPanel(sectionId) {
   if (!body || openEditPanelId !== sectionId) return;
   if (sectionId === 'section_visual') body.innerHTML = buildVisualPanel();
   else body.innerHTML = buildSectionPanel(sectionId);
+}
+
+/* v0.35.4: 섹션 전체 AOS override 초기화 */
+function resetAllAosInSection(sectionId) {
+  if (!sectionAosOverrides[sectionId]) return;
+  if (!confirm('섹션 [' + sectionId + ']의 모든 AOS 커스텀 설정을 기본값으로 되돌립니다. 계속할까요?')) return;
+  delete sectionAosOverrides[sectionId];
+  saveState();
+  applyAosOverridesForSection(sectionId);
+  rebuildAosPanel(sectionId);
 }
 
 /* 단일 섹션의 모든 AOS 요소에 override/seed 적용 */
@@ -6345,6 +6363,14 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 10:35 (v0.35.4)',
+    items: [
+      '<strong>[v0.35.4]</strong> ✨ 애니메이션 패널 섹션 전체 초기화 버튼 추가 — 커스텀 적용된 요소 갯수 표시 (예: "↺ 전체 초기화 (3)")',
+      '<strong>[v0.35.4]</strong> 클릭 시 confirm 후 sectionAosOverrides[sectionId] 전체 삭제 → 모든 요소 기본 시드값 복원',
+      '<strong>[v0.35.4]</strong> override가 1개 이상일 때만 버튼 노출',
+    ]
+  },
   {
     date: '2026.04.30 10:25 (v0.35.3)',
     items: [
