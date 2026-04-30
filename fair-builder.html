@@ -148,7 +148,7 @@
     #preview-toolbar .preview-url { font-size: 11px; color: #4b5563; background: #0d1117; padding: 3px 8px; border-radius: 4px; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     #preview-toolbar .device-btn { font-size: 11px; padding: 3px 8px; border-radius: 4px; border: 1px solid #2e3a52; background: none; color: #6b7280; cursor: pointer; flex-shrink: 0; }
     #preview-toolbar .device-btn.active { border-color: #0066cc; color: #60a5fa; }
-    #preview-frame-wrap { flex: 1; overflow: hidden; display: flex; justify-content: center; align-items: flex-start; background: #0d1117; padding: 0; }
+    #preview-frame-wrap { flex: 1; overflow: hidden; display: flex; justify-content: center; align-items: flex-start; background: #0d1117; padding: 0; position: relative; }
     #preview-frame { width: 100%; height: 100%; border: none; background: #fff; transition: width .3s; }
     #preview-frame-wrap.tablet #preview-frame { width: 768px; }
     #preview-frame-wrap.mobile #preview-frame { width: 375px; }
@@ -237,6 +237,36 @@
     .fmt-recent-wrap { display: inline-flex; gap: 2px; align-items: center; margin-right: 4px; }
     .fmt-recent-color { width: 16px; height: 16px; border-radius: 3px; border: 1px solid #2e3a52; cursor: pointer; padding: 0; transition: transform .12s, border-color .12s; }
     .fmt-recent-color:hover { transform: scale(1.15); border-color: #60a5fa; }
+
+    /* v0.36.0: 검수 모드 핀 시스템 */
+    #review-mode-btn.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
+    #review-pin-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; display: none; }
+    body.builder-review-mode #review-pin-layer { display: block; }
+    body.builder-review-mode #preview-frame { cursor: crosshair; }
+    .review-pin { position: absolute; transform: translate(-50%, -50%); width: 28px; height: 28px; border-radius: 50%; background: #7c3aed; color: #fff; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; pointer-events: auto; cursor: pointer; transition: transform .15s; z-index: 51; }
+    .review-pin:hover { transform: translate(-50%, -50%) scale(1.15); }
+    .review-pin.status-done { background: #10b981; }
+    .review-pin.status-progress { background: #f59e0b; }
+    /* 검수 모달 */
+    #review-modal { display: none; position: fixed; inset: 0; z-index: 9700; background: rgba(0,0,0,.55); align-items: center; justify-content: center; }
+    #review-modal.open { display: flex; }
+    .rm-card { background: #1f2937; border: 1px solid #2e3a52; border-radius: 8px; width: 480px; max-width: 92vw; max-height: 88vh; overflow-y: auto; padding: 18px 20px; color: #e5e7eb; }
+    .rm-title { font-size: 14px; font-weight: 700; color: #a78bfa; margin-bottom: 12px; }
+    .rm-card .rm-capture-wrap { background: #0d1117; border: 1px solid #2e3a52; border-radius: 6px; padding: 4px; margin-bottom: 10px; }
+    .rm-card .rm-capture-wrap img { width: 100%; max-height: 240px; object-fit: contain; display: block; }
+    .rm-card .rm-loading { font-size: 11px; color: #9ca3af; padding: 10px; text-align: center; }
+    .rm-card .rm-field { margin-bottom: 10px; }
+    .rm-card .rm-field label { display: block; font-size: 11px; color: #9ca3af; margin-bottom: 4px; }
+    .rm-card .rm-field input, .rm-card .rm-field textarea { width: 100%; background: #111827; border: 1px solid #2e3a52; border-radius: 4px; padding: 7px 9px; color: #e5e7eb; font-size: 12px; font-family: inherit; }
+    .rm-card .rm-field textarea { min-height: 80px; resize: vertical; }
+    .rm-card .rm-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 12px; }
+    .rm-card .rm-actions button { padding: 6px 14px; font-size: 12px; border-radius: 4px; cursor: pointer; border: 1px solid #4b5563; background: none; color: #9ca3af; }
+    .rm-card .rm-actions button.primary { background: #7c3aed; border-color: #7c3aed; color: #fff; font-weight: 600; }
+    .rm-card .rm-actions button.danger { color: #f87171; border-color: #7f1d1d; }
+    .rm-card .rm-meta { font-size: 10px; color: #6b7280; margin-top: 6px; }
+    .rm-card .rm-status { display: flex; gap: 6px; margin-bottom: 10px; }
+    .rm-card .rm-status button { flex: 1; padding: 5px 8px; font-size: 11px; border-radius: 4px; cursor: pointer; border: 1px solid #4b5563; background: none; color: #9ca3af; }
+    .rm-card .rm-status button.active { background: #7c3aed; border-color: #7c3aed; color: #fff; }
 
     /* v0.34.0: 커스텀 컬러 픽커 popover */
     .ccp-trigger { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: #111827; border: 1px solid #374151; border-radius: 3px; color: #9ca3af; font-size: 10px; cursor: pointer; padding: 0; flex-shrink: 0; transition: color .12s, border-color .12s; }
@@ -403,6 +433,8 @@
   </style>
   <!-- Step 6: JSZip CDN (일괄 다운로드용) -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <!-- v0.36.0: 검수 모드 핀 시스템 - 캡처 자동화 -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 </head>
 <body>
 
@@ -436,7 +468,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.35.15</span>
+  <span id="ver-badge" title="배포 버전">v0.36.0</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -585,6 +617,8 @@
       <button class="device-btn active" onclick="setDevice('pc', this)">PC</button>
       <button class="device-btn" onclick="setDevice('tablet', this)">태블릿</button>
       <button class="device-btn" onclick="setDevice('mobile', this)">모바일</button>
+      <!-- v0.36.0: 검수 모드 토글 (편집 종료 왼쪽) -->
+      <button id="review-mode-btn" onclick="toggleReviewMode()" title="검수 모드 — 미리보기에 핀 추가 (Shift+클릭) / 보기" style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid #7c3aed;background:none;color:#a78bfa;cursor:pointer;flex-shrink:0;">👁 검수 모드</button>
       <button id="edit-mode-btn" onclick="toggleEditMode()">✏ 편집 모드</button>
       <!-- v0.30.0: 미리보기 새창 (AOS 활성) -->
       <button id="preview-window-btn" onclick="openPreviewWindow()" title="새 창으로 미리보기 (AOS 애니메이션 활성)" style="font-size:11px;font-weight:600;padding:4px 10px;border-radius:4px;border:1px solid #2563eb;background:#1e40af;color:#fff;cursor:pointer;flex-shrink:0;">🔍 미리보기 새창</button>
@@ -672,6 +706,28 @@
     </div>
     <div id="preview-frame-wrap">
       <iframe id="preview-frame" src="temp.html"></iframe>
+      <!-- v0.36.0: 검수 모드 핀 레이어 -->
+      <div id="review-pin-layer"></div>
+    </div>
+    <!-- v0.36.0: 검수 핀 추가/편집 모달 -->
+    <div id="review-modal">
+      <div class="rm-card">
+        <div class="rm-title" id="rm-title">새 핀 추가</div>
+        <div class="rm-capture-wrap" id="rm-capture-wrap"><div class="rm-loading">캡처 중...</div></div>
+        <div class="rm-status" id="rm-status-row" style="display:none;">
+          <button data-status="open" onclick="setReviewModalStatus('open')">🔴 열림</button>
+          <button data-status="progress" onclick="setReviewModalStatus('progress')">🟡 진행중</button>
+          <button data-status="done" onclick="setReviewModalStatus('done')">🟢 완료</button>
+        </div>
+        <div class="rm-field"><label>제목</label><input id="rm-title-input" type="text" placeholder="예: 헤더 로고 위치 어긋남"></div>
+        <div class="rm-field"><label>내용</label><textarea id="rm-body-input" placeholder="문제/요청 사항..."></textarea></div>
+        <div class="rm-meta" id="rm-meta"></div>
+        <div class="rm-actions">
+          <button onclick="closeReviewModal()">취소</button>
+          <button class="danger" id="rm-delete-btn" style="display:none;" onclick="deleteReviewPin()">삭제</button>
+          <button class="primary" id="rm-save-btn" onclick="saveReviewPin()">저장</button>
+        </div>
+      </div>
     </div>
    </div>
    <!-- 2-1: 편집 드로어 -->
@@ -3865,6 +3921,261 @@ function clearFieldHighlight() {
   } catch(e) {}
 }
 
+/* ============================================================================
+ * v0.36.0: 검수 모드 + 핀 시스템 (Phase 1A — localStorage PoC)
+ *  - 검수 모드 토글: 미리보기에 핀 추가/표시/제어
+ *  - 핀 클릭 → 모달 (캡처 + 텍스트 + 상태)
+ *  - 데이터: localStorage `fair_review_pins_v1`
+ *  - Phase 1B (다음 세션): Firebase 연동 + 다중 사용자
+ * ============================================================================ */
+var reviewMode = false;
+var reviewPins = [];
+try { reviewPins = JSON.parse(localStorage.getItem('fair_review_pins_v1') || '[]'); } catch(e) {}
+var _editingPinId = null;  /* 편집 중인 핀 ID */
+var _newPinDraft = null;    /* 새 핀 임시 데이터 */
+
+function saveReviewPins() {
+  try { localStorage.setItem('fair_review_pins_v1', JSON.stringify(reviewPins)); } catch(e) {}
+}
+
+function toggleReviewMode() {
+  reviewMode = !reviewMode;
+  var btn = document.getElementById('review-mode-btn');
+  if (reviewMode) {
+    document.body.classList.add('builder-review-mode');
+    btn.classList.add('active');
+    btn.textContent = '✕ 검수 종료';
+    attachReviewClickListener();
+    renderReviewPins();
+  } else {
+    document.body.classList.remove('builder-review-mode');
+    btn.classList.remove('active');
+    btn.textContent = '👁 검수 모드';
+    /* 핀 layer는 CSS로 숨김 (display:none) */
+  }
+}
+
+/* iframe 안 Shift+클릭 → 새 핀 추가 흐름 */
+function attachReviewClickListener() {
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  if (doc.body.dataset.reviewClickBound) return;
+  doc.body.dataset.reviewClickBound = '1';
+  doc.body.addEventListener('click', function(e) {
+    if (!reviewMode) return;
+    if (!e.shiftKey) return;
+    e.preventDefault();
+    e.stopPropagation();
+    handleReviewClick(e);
+  }, true);
+}
+
+function handleReviewClick(e) {
+  var target = e.target;
+  var doc = getPreviewDoc();
+  if (!doc) return;
+  /* 가장 가까운 [data-builder-section] 찾기 */
+  var sectionEl = target.closest ? target.closest('[data-builder-section]') : null;
+  var sectionId = sectionEl ? sectionEl.getAttribute('data-builder-section') : '';
+  /* selector 추출 — id > tag.class chain */
+  var selector = buildSelectorPath(target, sectionEl);
+  /* iframe 좌표 비율 */
+  var rect = doc.body.getBoundingClientRect();
+  var bodyW = doc.body.scrollWidth || doc.body.clientWidth || 1;
+  var bodyH = doc.body.scrollHeight || doc.body.clientHeight || 1;
+  var offsetX = (e.pageX) / bodyW;
+  var offsetY = (e.pageY) / bodyH;
+  _newPinDraft = {
+    sectionId: sectionId,
+    selector: selector,
+    offsetX: offsetX,
+    offsetY: offsetY,
+    pageX: e.pageX,
+    pageY: e.pageY,
+  };
+  _editingPinId = null;
+  openReviewModal('new');
+}
+
+function buildSelectorPath(el, root) {
+  if (!el || el === root) return '';
+  if (el.id) return '#' + el.id;
+  var parts = [];
+  var cur = el;
+  while (cur && cur !== root && parts.length < 4) {
+    var part = cur.tagName.toLowerCase();
+    if (cur.className && typeof cur.className === 'string') {
+      var cls = cur.className.trim().split(/\s+/).slice(0, 2).join('.');
+      if (cls) part += '.' + cls;
+    }
+    parts.unshift(part);
+    cur = cur.parentElement;
+  }
+  return parts.join(' > ');
+}
+
+/* 모달 오픈 — mode: 'new' | 'edit' */
+function openReviewModal(mode) {
+  var modal = document.getElementById('review-modal');
+  if (!modal) return;
+  document.getElementById('rm-title').textContent = mode === 'new' ? '🆕 새 핀 추가' : '📝 핀 편집';
+  document.getElementById('rm-delete-btn').style.display = mode === 'edit' ? '' : 'none';
+  document.getElementById('rm-status-row').style.display = mode === 'edit' ? 'flex' : 'none';
+  /* 캡처 영역 */
+  var capWrap = document.getElementById('rm-capture-wrap');
+  capWrap.innerHTML = '<div class="rm-loading">캡처 중...</div>';
+  /* html2canvas로 미리보기 캡처 */
+  setTimeout(function() { captureReviewPreview(capWrap); }, 50);
+  if (mode === 'edit') {
+    var pin = reviewPins.find(function(p) { return p.id === _editingPinId; });
+    if (pin) {
+      document.getElementById('rm-title-input').value = pin.title || '';
+      document.getElementById('rm-body-input').value = pin.body || '';
+      document.getElementById('rm-meta').textContent = pin.sectionId + ' · ' + new Date(pin.createdAt).toLocaleString();
+      setReviewModalStatus(pin.status || 'open');
+      if (pin.capture) capWrap.innerHTML = '<img src="' + pin.capture + '">';
+    }
+  } else {
+    document.getElementById('rm-title-input').value = '';
+    document.getElementById('rm-body-input').value = '';
+    document.getElementById('rm-meta').textContent = (_newPinDraft && _newPinDraft.sectionId) ? _newPinDraft.sectionId : '';
+    setReviewModalStatus('open');
+  }
+  modal.classList.add('open');
+  setTimeout(function() {
+    var t = document.getElementById('rm-title-input');
+    if (t) t.focus();
+  }, 50);
+}
+
+function captureReviewPreview(capWrap) {
+  if (typeof html2canvas !== 'function') {
+    capWrap.innerHTML = '<div class="rm-loading">⚠ 캡처 라이브러리 로드 실패</div>';
+    return;
+  }
+  var doc = getPreviewDoc();
+  if (!doc) { capWrap.innerHTML = '<div class="rm-loading">⚠ 미리보기 미로드</div>'; return; }
+  try {
+    html2canvas(doc.body, { scale: 0.5, useCORS: true, logging: false, backgroundColor: '#fff' }).then(function(canvas) {
+      var dataURL = canvas.toDataURL('image/jpeg', 0.7);
+      capWrap.innerHTML = '<img src="' + dataURL + '">';
+      if (_newPinDraft) _newPinDraft._capture = dataURL;
+    }).catch(function(err) {
+      capWrap.innerHTML = '<div class="rm-loading">⚠ 캡처 실패: ' + (err.message || 'unknown') + '</div>';
+    });
+  } catch(e) {
+    capWrap.innerHTML = '<div class="rm-loading">⚠ 캡처 오류</div>';
+  }
+}
+
+var _modalStatus = 'open';
+function setReviewModalStatus(s) {
+  _modalStatus = s;
+  document.querySelectorAll('#rm-status-row button').forEach(function(b) {
+    b.classList.toggle('active', b.dataset.status === s);
+  });
+}
+
+function closeReviewModal() {
+  document.getElementById('review-modal').classList.remove('open');
+  _newPinDraft = null;
+  _editingPinId = null;
+}
+
+function saveReviewPin() {
+  var title = document.getElementById('rm-title-input').value.trim();
+  var body = document.getElementById('rm-body-input').value.trim();
+  if (!title && !body) { alert('제목 또는 내용을 입력해주세요.'); return; }
+  if (_editingPinId) {
+    var pin = reviewPins.find(function(p) { return p.id === _editingPinId; });
+    if (pin) {
+      pin.title = title;
+      pin.body = body;
+      pin.status = _modalStatus;
+      pin.updatedAt = Date.now();
+    }
+  } else if (_newPinDraft) {
+    var newPin = {
+      id: 'pin_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+      sectionId: _newPinDraft.sectionId,
+      selector: _newPinDraft.selector,
+      offsetX: _newPinDraft.offsetX,
+      offsetY: _newPinDraft.offsetY,
+      capture: _newPinDraft._capture || '',
+      title: title,
+      body: body,
+      status: 'open',
+      createdAt: Date.now(),
+    };
+    reviewPins.push(newPin);
+  }
+  saveReviewPins();
+  closeReviewModal();
+  renderReviewPins();
+}
+
+function deleteReviewPin() {
+  if (!_editingPinId) return;
+  if (!confirm('이 핀을 삭제하시겠습니까?')) return;
+  reviewPins = reviewPins.filter(function(p) { return p.id !== _editingPinId; });
+  saveReviewPins();
+  closeReviewModal();
+  renderReviewPins();
+}
+
+function renderReviewPins() {
+  var layer = document.getElementById('review-pin-layer');
+  if (!layer) return;
+  layer.innerHTML = '';
+  if (!reviewMode) return;
+  var iframe = document.getElementById('preview-frame');
+  if (!iframe) return;
+  var iframeRect = iframe.getBoundingClientRect();
+  var wrapRect = iframe.parentElement.getBoundingClientRect();
+  var doc = getPreviewDoc();
+  var bodyW = doc ? (doc.body.scrollWidth || doc.body.clientWidth) : iframeRect.width;
+  var bodyH = doc ? (doc.body.scrollHeight || doc.body.clientHeight) : iframeRect.height;
+  var scrollY = doc ? (doc.documentElement.scrollTop || doc.body.scrollTop || 0) : 0;
+  reviewPins.forEach(function(pin, i) {
+    var dot = document.createElement('div');
+    dot.className = 'review-pin status-' + (pin.status || 'open');
+    dot.textContent = (i + 1);
+    dot.title = pin.title || '';
+    /* iframe rect 기준 위치 */
+    var px = (iframeRect.left - wrapRect.left) + (pin.offsetX * bodyW * (iframeRect.width / bodyW));
+    var py = (iframeRect.top - wrapRect.top) + (pin.offsetY * bodyH * (iframeRect.height / bodyH)) - scrollY * (iframeRect.height / bodyH);
+    dot.style.left = px + 'px';
+    dot.style.top = py + 'px';
+    dot.onclick = function() {
+      _editingPinId = pin.id;
+      _newPinDraft = null;
+      openReviewModal('edit');
+    };
+    layer.appendChild(dot);
+  });
+}
+
+/* iframe 스크롤 시 핀 위치 갱신 */
+document.getElementById('preview-frame').addEventListener('load', function() {
+  if (reviewMode) {
+    attachReviewClickListener();
+    renderReviewPins();
+    var doc = getPreviewDoc();
+    if (doc) {
+      doc.addEventListener('scroll', function() { renderReviewPins(); }, { passive: true });
+      doc.defaultView && doc.defaultView.addEventListener('scroll', function() { renderReviewPins(); }, { passive: true });
+    }
+  }
+});
+
+/* ESC 키로 모달 닫기 */
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') {
+    var modal = document.getElementById('review-modal');
+    if (modal && modal.classList.contains('open')) closeReviewModal();
+  }
+});
+
 /* delegated focusin — 우측 드로어 안 모든 매핑 input 자동 처리 */
 document.addEventListener('focusin', function(e) {
   try {
@@ -6629,6 +6940,20 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 14:50 (v0.36.0)',
+    items: [
+      '<strong>[v0.36.0]</strong> ⭐ 검수 모드 + 핀 시스템 Phase 1A — 검수자/사용자/개발자 양방향 소통 기반 (PoC, localStorage)',
+      '<strong>[v0.36.0]</strong> 차주 W2 예정 작업을 사용자 요청으로 오늘 시작 — 하이브리드 (핀 + 보드 뷰)',
+      '<strong>[v0.36.0]</strong> 신규 토글 버튼: 👁 검수 모드 (편집 종료 왼쪽, 보라색 #7c3aed)',
+      '<strong>[v0.36.0]</strong> html2canvas CDN 추가 — 미리보기 캡처 자동화',
+      '<strong>[v0.36.0]</strong> 핀 추가 흐름: 검수 모드 ON → 미리보기 Shift+클릭 → html2canvas 캡처 → 모달 (제목/내용) → 저장 → 핀 dot 표시',
+      '<strong>[v0.36.0]</strong> 핀 dot: 보라색 번호 원, 클릭 시 편집 모달 (상태 변경 🔴열림/🟡진행중/🟢완료, 삭제)',
+      '<strong>[v0.36.0]</strong> 데이터: localStorage `fair_review_pins_v1` (id/sectionId/selector/offsetX/Y/capture/title/body/status)',
+      '<strong>[v0.36.0]</strong> Phase 1B (다음 세션): Firebase 연동 + 다중 사용자',
+      '<strong>[v0.36.0]</strong> Phase 2 (5/7): 댓글 스레드 / Phase 3 (5/8): 보드 페이지 (칸반 + 드래그&드롭)',
+    ]
+  },
   {
     date: '2026.04.30 14:25 (v0.35.15)',
     items: [
