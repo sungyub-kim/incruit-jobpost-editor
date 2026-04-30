@@ -243,10 +243,14 @@
     #review-pin-layer { position: absolute; inset: 0; pointer-events: none; z-index: 50; display: none; }
     body.builder-review-mode #review-pin-layer { display: block; }
     body.builder-review-mode #preview-frame { cursor: crosshair; }
-    .review-pin { position: absolute; transform: translate(-50%, -50%); width: 28px; height: 28px; border-radius: 50%; background: #7c3aed; color: #fff; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; pointer-events: auto; cursor: pointer; transition: transform .15s; z-index: 51; }
+    .review-pin { position: absolute; transform: translate(-50%, -50%); width: 28px; height: 28px; border-radius: 50%; background: #7c3aed; color: #fff; border: 2px solid #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; pointer-events: auto; cursor: pointer; transition: transform .15s, opacity .15s; z-index: 51; }
     .review-pin:hover { transform: translate(-50%, -50%) scale(1.15); }
     .review-pin.status-done { background: #10b981; }
     .review-pin.status-progress { background: #f59e0b; }
+    /* v0.36.12: 검색 매칭 강조 / 비매칭 흐림 */
+    .review-pin.search-matched { animation: review-pin-pulse 1s ease-in-out infinite; box-shadow: 0 0 0 6px rgba(124,58,237,0.4), 0 2px 8px rgba(0,0,0,0.4); }
+    .review-pin.search-dimmed { opacity: 0.25; }
+    @keyframes review-pin-pulse { 0%, 100% { transform: translate(-50%, -50%) scale(1); } 50% { transform: translate(-50%, -50%) scale(1.2); } }
     /* v0.36.6: 핀 hover preview tooltip */
     #review-pin-tooltip { position: fixed; background: #111827; border: 1px solid #7c3aed; border-radius: 6px; padding: 8px 12px; max-width: 260px; z-index: 9600; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); opacity: 0; transition: opacity .15s; }
     #review-pin-tooltip.show { opacity: 1; }
@@ -540,7 +544,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.11</span>
+  <span id="ver-badge" title="배포 버전">v0.36.12</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4555,7 +4559,12 @@ function renderReviewPins() {
   var scrollY = doc ? (doc.documentElement.scrollTop || doc.body.scrollTop || 0) : 0;
   reviewPins.forEach(function(pin, i) {
     var dot = document.createElement('div');
-    dot.className = 'review-pin status-' + (pin.status || 'open');
+    var classes = ['review-pin', 'status-' + (pin.status || 'open')];
+    /* v0.36.12: 검색 매칭 강조 / 비매칭 흐림 */
+    if (_reviewMatchedIds) {
+      classes.push(_reviewMatchedIds.has(pin.id) ? 'search-matched' : 'search-dimmed');
+    }
+    dot.className = classes.join(' ');
     dot.textContent = (i + 1);
     /* iframe rect 기준 위치 */
     var px = (iframeRect.left - wrapRect.left) + (pin.offsetX * bodyW * (iframeRect.width / bodyW));
@@ -4661,20 +4670,30 @@ function setReviewListFilter(status) {
   renderReviewList();
 }
 
+/* v0.36.12: 검색/필터 결과 ID 세트 (renderReviewPins에서 사용) */
+var _reviewMatchedIds = null;
+
 function renderReviewList() {
   var body = document.getElementById('rlp-body');
   var count = document.getElementById('rlp-count');
   if (!body || !count) return;
   var search = (document.getElementById('rlp-search') || {}).value || '';
   search = search.trim().toLowerCase();
+  /* v0.36.12: 검색이 있으면 매칭 ID 추적, 없으면 null (미리보기 강조 X) */
+  var hasSearch = !!search;
+  var matchedIds = hasSearch ? new Set() : null;
   var filtered = reviewPins.filter(function(p) {
     if (_reviewListFilter !== 'all' && (p.status || 'open') !== _reviewListFilter) return false;
     if (search) {
       var t = ((p.title || '') + ' ' + (p.body || '')).toLowerCase();
       if (t.indexOf(search) === -1) return false;
+      matchedIds.add(p.id);
     }
     return true;
   });
+  _reviewMatchedIds = matchedIds;
+  /* 미리보기 dot 매칭 강조 갱신 */
+  renderReviewPins();
   /* v0.36.11: 우선순위 → 최근 순 정렬 */
   var priorityRank = { urgent: 0, high: 1, normal: 2, low: 3 };
   filtered.sort(function(a, b) {
@@ -7509,6 +7528,16 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 16:50 (v0.36.12)',
+    items: [
+      '<strong>[v0.36.12]</strong> 사이드바 검색 시 미리보기 dot 강조 — 매칭 핀 펄스 + 비매칭 핀 흐림 (opacity 0.25)',
+      '<strong>[v0.36.12]</strong> .review-pin.search-matched: 펄스 애니메이션 + 보라 box-shadow 강조',
+      '<strong>[v0.36.12]</strong> .review-pin.search-dimmed: 비매칭 흐림',
+      '<strong>[v0.36.12]</strong> 보드 KPI 보강: 전체 / 🚨 긴급 / ⬆ 높음 / 🔴 열림 / 🟡 진행 / 🟢 완료 (6개)',
+      '<strong>[v0.36.12]</strong> 검색 비어있으면 모든 dot 정상 표시 (강조 X)',
+    ]
+  },
   {
     date: '2026.04.30 16:40 (v0.36.11)',
     items: [
