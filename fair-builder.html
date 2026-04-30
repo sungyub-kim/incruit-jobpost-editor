@@ -251,6 +251,7 @@
     #review-pin-tooltip { position: fixed; background: #111827; border: 1px solid #7c3aed; border-radius: 6px; padding: 8px 12px; max-width: 260px; z-index: 9600; pointer-events: none; box-shadow: 0 4px 12px rgba(0,0,0,0.5); opacity: 0; transition: opacity .15s; }
     #review-pin-tooltip.show { opacity: 1; }
     #review-pin-tooltip .rpt-title { font-size: 12px; font-weight: 700; color: #a78bfa; margin-bottom: 4px; line-height: 1.3; }
+    #review-pin-tooltip .rpt-thumb { width: 100%; max-width: 240px; max-height: 100px; object-fit: cover; border-radius: 3px; margin: 4px 0; background: #0d1117; }
     #review-pin-tooltip .rpt-body { font-size: 11px; color: #d1d5db; line-height: 1.5; max-height: 80px; overflow: hidden; }
     #review-pin-tooltip .rpt-meta { font-size: 10px; color: #6b7280; margin-top: 4px; padding-top: 4px; border-top: 1px solid #2e3a52; }
     /* 검수 모달 */
@@ -297,6 +298,8 @@
     .rlp-item .rlp-num { display: inline-block; width: 20px; height: 20px; line-height: 18px; text-align: center; background: #7c3aed; color: #fff; border-radius: 50%; font-size: 10px; font-weight: 700; margin-right: 6px; vertical-align: middle; }
     .rlp-item.status-progress .rlp-num { background: #f59e0b; }
     .rlp-item.status-done .rlp-num { background: #10b981; }
+    /* v0.36.10: 사이드바 카드 썸네일 */
+    .rlp-item-thumb { width: 100%; max-height: 60px; object-fit: cover; border-radius: 3px; margin: 6px 0 4px; background: #0d1117; display: block; border: 1px solid #2e3a52; }
     .rlp-item-title { font-size: 12px; color: #e5e7eb; font-weight: 600; margin-top: 4px; line-height: 1.3; }
     .rlp-item-meta { font-size: 10px; color: #6b7280; margin-top: 2px; }
     .rlp-count { font-size: 10px; color: #9ca3af; padding: 4px 12px; border-bottom: 1px solid #2e3a52; }
@@ -524,7 +527,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.9</span>
+  <span id="ver-badge" title="배포 버전">v0.36.10</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -4550,8 +4553,11 @@ function showReviewPinTooltip(pin, x, y) {
   }
   var statusLabel = pin.status === 'done' ? '🟢 완료' : (pin.status === 'progress' ? '🟡 진행중' : '🔴 열림');
   var date = pin.createdAt ? new Date(pin.createdAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+  /* v0.36.10: tooltip 썸네일 */
+  var thumb = pin.capture ? '<img class="rpt-thumb" src="' + pin.capture + '" alt="">' : '';
   tip.innerHTML =
     '<div class="rpt-title">' + esc(pin.title || '(제목 없음)') + '</div>' +
+    thumb +
     (pin.body ? '<div class="rpt-body">' + esc(pin.body).replace(/\n/g, '<br>') + '</div>' : '') +
     '<div class="rpt-meta">' + statusLabel + ' · ' + esc(pin.sectionId || '') + ' · ' + date + '</div>';
   positionReviewPinTooltip(x, y);
@@ -4646,9 +4652,12 @@ function renderReviewList() {
     var idx = reviewPins.indexOf(p) + 1;  /* 원본 배열 인덱스 (핀 번호 일관성) */
     var date = p.createdAt ? new Date(p.createdAt).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
     var statusEmoji = p.status === 'done' ? '🟢' : (p.status === 'progress' ? '🟡' : '🔴');
+    /* v0.36.10: 캡처 썸네일 추가 */
+    var thumb = p.capture ? '<img class="rlp-item-thumb" src="' + p.capture + '" alt="">' : '';
     return '<div class="rlp-item status-' + (p.status || 'open') + '" onclick="focusReviewPin(\'' + p.id + '\')">' +
       '<span class="rlp-num">' + idx + '</span>' +
       '<span style="font-size:11px;color:#9ca3af;">' + statusEmoji + ' ' + esc(p.sectionId || '?') + '</span>' +
+      thumb +
       '<div class="rlp-item-title">' + esc(p.title || '(제목 없음)') + '</div>' +
       '<div class="rlp-item-meta">' + date + (p.body ? ' · ' + esc(p.body.slice(0, 40)) + (p.body.length > 40 ? '…' : '') : '') + '</div>' +
     '</div>';
@@ -7459,7 +7468,16 @@ function exportZIP() {
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
   {
-    date: '2026.04.30 17:00 (v0.36.9)',
+    date: '2026.04.30 16:30 (v0.36.10)',
+    items: [
+      '<strong>[v0.36.10]</strong> 핀 시스템 시각 정보 보강 — 사이드바 카드 + tooltip에 캡처 썸네일 추가',
+      '<strong>[v0.36.10]</strong> 사이드바 카드: max-height 60px 썸네일 (보드와 일관)',
+      '<strong>[v0.36.10]</strong> hover tooltip: max 240×100 썸네일 + 제목 + 내용 + 메타',
+      '<strong>[v0.36.10]</strong> 사용자가 핀 위에 마우스 올리거나 사이드바에서 즉시 시각 인지 가능',
+    ]
+  },
+  {
+    date: '2026.04.30 16:20 (v0.36.9)',
     items: [
       '<strong>[v0.36.9]</strong> trackAction 핵심 함수 통합 — Firebase 연동 시 즉시 사용 통계 수집',
       '<strong>[v0.36.9]</strong> 추적 액션: edit_mode_on / edit_mode_off / section_edit_open / review_mode_on/off / pin_create / pin_update / pin_delete / export_css / export_asp / export_zip',
