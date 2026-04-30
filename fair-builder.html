@@ -524,7 +524,7 @@
   <span class="brand">⬡ Fair Builder</span>
   <div class="divider"></div>
   <input type="text" id="fair-code" placeholder="박람회 코드 (예: hyundai2026)" title="파일명에 사용됩니다" oninput="saveState()">
-  <span id="ver-badge" title="배포 버전">v0.36.8</span>
+  <span id="ver-badge" title="배포 버전">v0.36.9</span>
   <button class="btn btn-patch" onclick="togglePatchNotes()" title="패치노트 보기">패치노트</button>
   <div class="spacer"></div>
   <button class="btn btn-project" onclick="openProjectPanel()" title="프로젝트 저장/불러오기">📂 프로젝트</button>
@@ -2161,6 +2161,7 @@ function toggleSectionEdit(id) {
 }
 
 function openEditDrawer(id) {
+  if (typeof trackAction === 'function' && id !== openEditPanelId) trackAction('section_edit_open', { sectionId: id });
   var drawer = document.getElementById('edit-drawer');
   var body   = document.getElementById('edit-drawer-body');
   var title  = document.getElementById('edit-drawer-title');
@@ -4173,6 +4174,7 @@ function saveReviewPins() {
 
 function toggleReviewMode() {
   reviewMode = !reviewMode;
+  if (typeof trackAction === 'function') trackAction(reviewMode ? 'review_mode_on' : 'review_mode_off', { pinCount: reviewPins.length });
   var btn = document.getElementById('review-mode-btn');
   if (reviewMode) {
     document.body.classList.add('builder-review-mode');
@@ -4486,6 +4488,7 @@ function saveReviewPin() {
     reviewPins.push(newPin);
   }
   saveReviewPins();
+  if (typeof trackAction === 'function') trackAction(_editingPinId ? 'pin_update' : 'pin_create', { sectionId: (_newPinDraft || {}).sectionId, status: _modalStatus });
   closeReviewModal();
   renderReviewPins();
   renderReviewList();  /* v0.36.5: 사이드바 동기 */
@@ -4496,6 +4499,7 @@ function deleteReviewPin() {
   if (!confirm('이 핀을 삭제하시겠습니까?')) return;
   reviewPins = reviewPins.filter(function(p) { return p.id !== _editingPinId; });
   saveReviewPins();
+  if (typeof trackAction === 'function') trackAction('pin_delete', { pinId: _editingPinId });
   closeReviewModal();
   renderReviewPins();
   renderReviewList();  /* v0.36.5: 사이드바 동기 */
@@ -6490,6 +6494,7 @@ function toggleEditMode() {
 
 function enterEditMode() {
   if (!previewReady) { alert('미리보기가 로드된 후 편집 모드를 사용하세요.'); return; }
+  if (typeof trackAction === 'function') trackAction('edit_mode_on', null);
   var doc = getPreviewDoc();
   if (!doc) return;
   doc.body.classList.add('builder-edit-mode');
@@ -6523,6 +6528,7 @@ function enterEditMode() {
 }
 
 function exitEditMode() {
+  if (typeof trackAction === 'function') trackAction('edit_mode_off', null);
   var doc = getPreviewDoc();
   if (!doc) return;
   removeBtnEditUI(doc);
@@ -7324,6 +7330,7 @@ function buildOverrideCSS() {
 
 /* ── Step 6-A: CSS 다운로드 ── */
 function exportCSS() {
+  if (typeof trackAction === 'function') trackAction('export_css', { baseName: getFileBaseName() });
   var baseName = getFileBaseName();
   fetch('ui/static/css/specialty/fair_2026_temp.css')
     .then(function(r) { if (!r.ok) throw new Error('CSS 템플릿 로드 실패'); return r.text(); })
@@ -7409,6 +7416,7 @@ function buildExportASP() {
 
 /* ── Step 6-B: ASP 다운로드 ── */
 function exportASP() {
+  if (typeof trackAction === 'function') trackAction('export_asp', { baseName: getFileBaseName() });
   try {
     var baseName = getFileBaseName();
     var asp = buildExportASP();
@@ -7420,6 +7428,7 @@ function exportASP() {
 
 /* ── Step 6-C: ZIP 일괄 다운로드 ── */
 function exportZIP() {
+  if (typeof trackAction === 'function') trackAction('export_zip', { baseName: getFileBaseName() });
   if (typeof JSZip === 'undefined') { alert('JSZip 라이브러리 로드 실패. 새로고침 후 다시 시도하세요.'); return; }
   var baseName = getFileBaseName();
   fetch('ui/static/css/specialty/fair_2026_temp.css')
@@ -7449,6 +7458,15 @@ function exportZIP() {
 
 /* ── 패치노트 ── */
 var PATCH_NOTES = [
+  {
+    date: '2026.04.30 17:00 (v0.36.9)',
+    items: [
+      '<strong>[v0.36.9]</strong> trackAction 핵심 함수 통합 — Firebase 연동 시 즉시 사용 통계 수집',
+      '<strong>[v0.36.9]</strong> 추적 액션: edit_mode_on / edit_mode_off / section_edit_open / review_mode_on/off / pin_create / pin_update / pin_delete / export_css / export_asp / export_zip',
+      '<strong>[v0.36.9]</strong> 안전: typeof trackAction === function 체크 — Firebase 미설정 시 noop',
+      '<strong>[v0.36.9]</strong> Firebase config 받으면 fair-admin.html 대시보드에서 사용자별 활동 즉시 표시',
+    ]
+  },
   {
     date: '2026.04.30 16:50 (v0.36.8)',
     items: [
